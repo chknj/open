@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 미리보기</title>
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --border: #d1d5db;
+            --text: #111827;
+            --muted: #6b7280;
+            --accent: #2563eb;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            padding: 1rem;
+        }
+        .app {
+            width: min(1200px, 100%);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .desc {
+            margin: 0;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 70vh;
+        }
+        .pane {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .pane + .pane {
+            border-left: 1px solid var(--border);
+        }
+        .pane-head {
+            padding: 0.7rem 0.9rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            outline: none;
+            resize: none;
+            padding: 1rem;
+            font: 500 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            color: var(--text);
+            background: #fbfdff;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #fff;
+        }
+        .status {
+            margin-left: auto;
+            font-size: 0.78rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+        .status strong {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .pane + .pane { border-left: 0; border-top: 1px solid var(--border); }
+            .status { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <main class="app">
+        <header class="header">
+            <div>
+                <h1 class="title">HTML 뷰어</h1>
+                <p class="desc">왼쪽에 HTML 코드를 입력하면 오른쪽에서 즉시 미리보기 됩니다.</p>
+            </div>
+            <div id="status" class="status">업데이트: <strong>대기 중</strong></div>
+        </header>
+
+        <section class="layout">
+            <article class="pane">
+                <div class="pane-head">HTML 코드</div>
+                <textarea id="codeInput" spellcheck="false" aria-label="HTML 코드 입력"></textarea>
+            </article>
+
+            <article class="pane">
+                <div class="pane-head">미리보기</div>
+                <iframe id="previewFrame" title="HTML 미리보기" sandbox="allow-forms allow-modals allow-scripts"></iframe>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        const codeInput = document.getElementById("codeInput");
+        const previewFrame = document.getElementById("previewFrame");
+        const status = document.getElementById("status");
+        let timer = null;
+
+        const starter = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>미리보기 예시</title>
+</head>
+<body>
+  <h1>Hello HTML</h1>
+  <p>왼쪽 코드를 수정해 보세요.</p>
+</body>
+</html>`;
+
+        function updatePreview() {
+            previewFrame.srcdoc = codeInput.value;
+            status.innerHTML = `업데이트: <strong>${new Date().toLocaleTimeString("ko-KR")}</strong>`;
+        }
+
+        codeInput.addEventListener("input", () => {
+            clearTimeout(timer);
+            timer = setTimeout(updatePreview, 180);
+        });
+
+        codeInput.value = starter;
+        updatePreview();
+    </script>
+</body>
+</html>
