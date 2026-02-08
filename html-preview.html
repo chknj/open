@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTML 미리보기</title>
-    <link rel="icon" type="image/svg+xml" href="./favicon-text.svg">
+    <link rel="icon" type="image/svg+xml" href="./favicon-image.svg">
     <style>
         :root {
             --bg: #f3f4f6;
@@ -57,7 +57,6 @@
         .layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            min-height: 70vh;
         }
         .pane {
             display: flex;
@@ -76,7 +75,6 @@
         }
         textarea {
             width: 100%;
-            height: 100%;
             border: 0;
             outline: none;
             resize: none;
@@ -84,12 +82,15 @@
             font: 500 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             color: var(--text);
             background: #fbfdff;
+            min-height: 520px;
+            overflow-y: hidden;
         }
         iframe {
             width: 100%;
-            height: 100%;
             border: 0;
             background: #fff;
+            display: block;
+            min-height: 520px;
         }
         .status {
             margin-left: auto;
@@ -105,6 +106,11 @@
             .layout { grid-template-columns: 1fr; }
             .pane + .pane { border-left: 0; border-top: 1px solid var(--border); }
             .status { display: none; }
+            textarea {
+                min-height: 50vh;
+                max-height: 50vh;
+                overflow-y: auto;
+            }
         }
     </style>
 </head>
@@ -126,7 +132,7 @@
 
             <article class="pane">
                 <div class="pane-head">미리보기</div>
-                <iframe id="previewFrame" title="HTML 미리보기" sandbox="allow-forms allow-modals allow-scripts"></iframe>
+                <iframe id="previewFrame" title="HTML 미리보기" sandbox="allow-forms allow-modals allow-scripts allow-same-origin"></iframe>
             </article>
         </section>
     </main>
@@ -136,6 +142,7 @@
         const previewFrame = document.getElementById("previewFrame");
         const status = document.getElementById("status");
         let timer = null;
+        let fitTimer = null;
 
         const starter = `<!DOCTYPE html>
 <html lang="ko">
@@ -150,14 +157,86 @@
 </body>
 </html>`;
 
+        function isMobile() {
+            return window.matchMedia("(max-width: 900px)").matches;
+        }
+
+        function ensurePreviewBase(html) {
+            const fitCss = `<style id="preview-fit-style">
+html, body { width: 100% !important; max-width: 100% !important; margin: 0 !important; overflow-x: hidden !important; }
+img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !important; }
+* { box-sizing: border-box; }
+</style>`;
+
+            if (/<head[\s>]/i.test(html)) {
+                return html.replace(/<\/head>/i, `${fitCss}</head>`);
+            }
+            if (/<html[\s>]/i.test(html)) {
+                return html.replace(/<html[^>]*>/i, (m) => `${m}<head>${fitCss}</head>`);
+            }
+            return `<!DOCTYPE html><html><head><meta charset="UTF-8">${fitCss}</head><body>${html}</body></html>`;
+        }
+
+        function fitPreviewSize() {
+            const doc = previewFrame.contentDocument;
+            if (!doc || !doc.body || !doc.documentElement) return;
+
+            const frameWidth = previewFrame.clientWidth || 1;
+            const body = doc.body;
+            const html = doc.documentElement;
+
+            body.style.transform = "scale(1)";
+            body.style.transformOrigin = "top left";
+            body.style.width = "100%";
+
+            const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, frameWidth);
+            const scale = contentWidth > frameWidth ? frameWidth / contentWidth : 1;
+            body.style.transform = `scale(${scale})`;
+            body.style.width = `${100 / scale}%`;
+
+            const rawHeight = Math.max(html.scrollHeight, body.scrollHeight);
+            previewFrame.style.height = `${Math.max(360, Math.ceil(rawHeight * scale))}px`;
+        }
+
+        function resizeEditorHeight() {
+            if (isMobile()) {
+                codeInput.style.height = `${Math.round(window.innerHeight * 0.5)}px`;
+                return;
+            }
+
+            codeInput.style.height = "auto";
+            const minDesktop = Math.round(window.innerHeight * 0.65);
+            codeInput.style.height = `${Math.max(minDesktop, codeInput.scrollHeight)}px`;
+        }
+
+        function scheduleFit() {
+            clearTimeout(fitTimer);
+            fitTimer = setTimeout(() => {
+                fitPreviewSize();
+            }, 40);
+        }
+
         function updatePreview() {
-            previewFrame.srcdoc = codeInput.value;
+            const prepared = ensurePreviewBase(codeInput.value);
+            previewFrame.srcdoc = prepared;
             status.innerHTML = `업데이트: <strong>${new Date().toLocaleTimeString("ko-KR")}</strong>`;
+            resizeEditorHeight();
         }
 
         codeInput.addEventListener("input", () => {
             clearTimeout(timer);
             timer = setTimeout(updatePreview, 180);
+        });
+
+        previewFrame.addEventListener("load", () => {
+            scheduleFit();
+            setTimeout(scheduleFit, 180);
+            setTimeout(scheduleFit, 500);
+        });
+
+        window.addEventListener("resize", () => {
+            resizeEditorHeight();
+            scheduleFit();
         });
 
         codeInput.value = starter;
