@@ -60,11 +60,15 @@
             display: flex;
             width: 100%;
             align-items: stretch;
+            flex: 1;
+            min-height: 0;
         }
         .pane {
             display: flex;
             flex-direction: column;
             min-width: 0;
+            min-height: 0;
+            overflow: hidden;
         }
         .pane-left {
             flex: 0 0 calc(var(--split-left) * 1%);
@@ -99,7 +103,8 @@
             opacity: 1;
         }
         .pane-head {
-            padding: 0.7rem 0.9rem;
+            height: 44px;
+            padding: 0 0.9rem;
             border-bottom: 1px solid var(--border);
             font-size: 0.85rem;
             font-weight: 700;
@@ -125,6 +130,9 @@
         .editor-wrap {
             position: relative;
             width: 100%;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
         }
         .highlight-layer,
         textarea {
@@ -134,7 +142,8 @@
             padding: 1rem;
             font: 500 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             background: #fbfdff;
-            min-height: 520px;
+            height: 100%;
+            min-height: 0;
         }
         .highlight-layer {
             margin: 0;
@@ -157,7 +166,7 @@
             color: transparent;
             caret-color: var(--text);
             background: transparent;
-            overflow-y: hidden;
+            overflow: auto;
         }
         textarea::selection { background: #c7ddff; }
         .tok-tag { color: #0f766e; }
@@ -171,6 +180,12 @@
             background: #fff;
             display: block;
             min-height: 520px;
+        }
+        .preview-wrap {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            background: #fff;
         }
         .status {
             margin-left: auto;
@@ -202,9 +217,8 @@
                 min-height: 50vh;
                 max-height: 50vh;
             }
-            iframe {
-                min-height: 0;
-            }
+            .preview-wrap { overflow: visible; }
+            iframe { min-height: 0; }
         }
     </style>
 </head>
@@ -233,7 +247,9 @@
 
             <article class="pane pane-right">
                 <div class="pane-head">미리보기</div>
-                <iframe id="previewFrame" title="HTML 미리보기" sandbox="allow-forms allow-modals allow-scripts allow-same-origin"></iframe>
+                <div class="preview-wrap">
+                    <iframe id="previewFrame" title="HTML 미리보기" sandbox="allow-forms allow-modals allow-scripts allow-same-origin"></iframe>
+                </div>
             </article>
         </section>
     </main>
@@ -405,17 +421,6 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             previewFrame.style.height = `${Math.max(minHeight, Math.ceil(rawHeight * scale))}px`;
         }
 
-        function resizeEditorHeight() {
-            if (isMobile()) {
-                codeInput.style.height = `${Math.round(window.innerHeight * 0.5)}px`;
-                return;
-            }
-
-            codeInput.style.height = "auto";
-            const minDesktop = Math.round(window.innerHeight * 0.65);
-            codeInput.style.height = `${Math.max(minDesktop, codeInput.scrollHeight)}px`;
-        }
-
         function scheduleFit() {
             clearTimeout(fitTimer);
             fitTimer = setTimeout(() => {
@@ -427,7 +432,6 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             const prepared = ensurePreviewBase(codeInput.value);
             previewFrame.srcdoc = prepared;
             status.innerHTML = `업데이트: <strong>${new Date().toLocaleTimeString("ko-KR")}</strong>`;
-            resizeEditorHeight();
             renderHighlight();
         }
 
@@ -484,7 +488,6 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
         });
 
         window.addEventListener("resize", () => {
-            resizeEditorHeight();
             scheduleFit();
             renderHighlight();
         });
