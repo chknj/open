@@ -72,19 +72,67 @@
             font-size: 0.85rem;
             font-weight: 700;
             color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
         }
+        .clear-btn {
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #374151;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.22rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .clear-btn:hover {
+            background: #f3f4f6;
+        }
+        .editor-wrap {
+            position: relative;
+            width: 100%;
+        }
+        .highlight-layer,
         textarea {
             width: 100%;
             border: 0;
             outline: none;
-            resize: none;
             padding: 1rem;
             font: 500 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            color: var(--text);
             background: #fbfdff;
             min-height: 520px;
+        }
+        .highlight-layer {
+            margin: 0;
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            color: #1f2937;
+            white-space: pre-wrap;
+            word-break: break-word;
+            pointer-events: none;
+        }
+        .highlight-layer code {
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        textarea {
+            position: relative;
+            resize: none;
+            color: transparent;
+            caret-color: var(--text);
+            background: transparent;
             overflow-y: hidden;
         }
+        textarea::selection { background: #c7ddff; }
+        .tok-tag { color: #0f766e; }
+        .tok-attr { color: #7c3aed; }
+        .tok-value { color: #b45309; }
+        .tok-comment { color: #6b7280; font-style: italic; }
+        .tok-meta { color: #2563eb; }
         iframe {
             width: 100%;
             border: 0;
@@ -111,6 +159,13 @@
                 max-height: 50vh;
                 overflow-y: auto;
             }
+            .highlight-layer {
+                min-height: 50vh;
+                max-height: 50vh;
+            }
+            iframe {
+                min-height: 0;
+            }
         }
     </style>
 </head>
@@ -126,8 +181,14 @@
 
         <section class="layout">
             <article class="pane">
-                <div class="pane-head">HTML 코드</div>
-                <textarea id="codeInput" spellcheck="false" aria-label="HTML 코드 입력"></textarea>
+                <div class="pane-head">
+                    <span>HTML 코드</span>
+                    <button id="clearBtn" class="clear-btn" type="button">초기화</button>
+                </div>
+                <div class="editor-wrap">
+                    <pre id="highlightLayer" class="highlight-layer" aria-hidden="true"><code id="highlightCode"></code></pre>
+                    <textarea id="codeInput" spellcheck="false" aria-label="HTML 코드 입력"></textarea>
+                </div>
             </article>
 
             <article class="pane">
@@ -141,6 +202,9 @@
         const codeInput = document.getElementById("codeInput");
         const previewFrame = document.getElementById("previewFrame");
         const status = document.getElementById("status");
+        const clearBtn = document.getElementById("clearBtn");
+        const highlightLayer = document.getElementById("highlightLayer");
+        const highlightCode = document.getElementById("highlightCode");
         let timer = null;
         let fitTimer = null;
 
@@ -177,6 +241,88 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             return `<!DOCTYPE html><html><head><meta charset="UTF-8">${fitCss}</head><body>${html}</body></html>`;
         }
 
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function highlightAttributes(attrs) {
+            const attrRe = /([^\s=\/>]+)(\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/g;
+            let result = "";
+            let last = 0;
+            let match;
+
+            while ((match = attrRe.exec(attrs)) !== null) {
+                result += escapeHtml(attrs.slice(last, match.index));
+                result += `<span class="tok-attr">${escapeHtml(match[1])}</span>`;
+
+                if (match[2]) {
+                    const eqMatch = match[2].match(/^(\s*=\s*)([\s\S]+)$/);
+                    if (eqMatch) {
+                        result += escapeHtml(eqMatch[1]);
+                        result += `<span class="tok-value">${escapeHtml(eqMatch[2])}</span>`;
+                    } else {
+                        result += escapeHtml(match[2]);
+                    }
+                }
+                last = attrRe.lastIndex;
+            }
+
+            result += escapeHtml(attrs.slice(last));
+            return result;
+        }
+
+        function highlightTagToken(token) {
+            if (/^<!--[\s\S]*-->$/.test(token)) {
+                return `<span class="tok-comment">${escapeHtml(token)}</span>`;
+            }
+
+            if (/^<!doctype[\s\S]*>$/i.test(token)) {
+                return `<span class="tok-meta">${escapeHtml(token)}</span>`;
+            }
+
+            const close = token.startsWith("</");
+            const selfClose = token.endsWith("/>");
+            const openBracket = close ? "&lt;/" : "&lt;";
+            const closeBracket = selfClose ? "/&gt;" : "&gt;";
+            const innerStart = close ? 2 : 1;
+            const innerEnd = selfClose ? 2 : 1;
+            const inner = token.slice(innerStart, token.length - innerEnd);
+            const innerTrim = inner.trim();
+            const nameMatch = innerTrim.match(/^([^\s/>]+)/);
+            const tagName = nameMatch ? nameMatch[1] : "";
+            const attrs = nameMatch ? innerTrim.slice(tagName.length) : innerTrim;
+
+            return `${openBracket}<span class="tok-tag">${escapeHtml(tagName)}</span>${highlightAttributes(attrs)}${closeBracket}`;
+        }
+
+        function highlightHtml(source) {
+            const tagRe = /<!--[\s\S]*?-->|<!doctype[\s\S]*?>|<\/?[a-zA-Z][\s\S]*?>/gi;
+            let out = "";
+            let last = 0;
+            let match;
+
+            while ((match = tagRe.exec(source)) !== null) {
+                out += escapeHtml(source.slice(last, match.index));
+                out += highlightTagToken(match[0]);
+                last = tagRe.lastIndex;
+            }
+
+            out += escapeHtml(source.slice(last));
+            if (source.endsWith("\n")) out += "\n";
+            return out;
+        }
+
+        function renderHighlight() {
+            highlightCode.innerHTML = highlightHtml(codeInput.value);
+            highlightLayer.scrollTop = codeInput.scrollTop;
+            highlightLayer.scrollLeft = codeInput.scrollLeft;
+        }
+
         function fitPreviewSize() {
             const doc = previewFrame.contentDocument;
             if (!doc || !doc.body || !doc.documentElement) return;
@@ -185,6 +331,8 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             const body = doc.body;
             const html = doc.documentElement;
 
+            // Avoid viewport-height feedback loops when measuring iframe content height.
+            previewFrame.style.height = "0px";
             body.style.transform = "scale(1)";
             body.style.transformOrigin = "top left";
             body.style.width = "100%";
@@ -195,7 +343,8 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             body.style.width = `${100 / scale}%`;
 
             const rawHeight = Math.max(html.scrollHeight, body.scrollHeight);
-            previewFrame.style.height = `${Math.max(360, Math.ceil(rawHeight * scale))}px`;
+            const minHeight = isMobile() ? 120 : 360;
+            previewFrame.style.height = `${Math.max(minHeight, Math.ceil(rawHeight * scale))}px`;
         }
 
         function resizeEditorHeight() {
@@ -221,11 +370,22 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             previewFrame.srcdoc = prepared;
             status.innerHTML = `업데이트: <strong>${new Date().toLocaleTimeString("ko-KR")}</strong>`;
             resizeEditorHeight();
+            renderHighlight();
         }
 
         codeInput.addEventListener("input", () => {
             clearTimeout(timer);
             timer = setTimeout(updatePreview, 180);
+        });
+        codeInput.addEventListener("scroll", () => {
+            highlightLayer.scrollTop = codeInput.scrollTop;
+            highlightLayer.scrollLeft = codeInput.scrollLeft;
+        });
+
+        clearBtn.addEventListener("click", () => {
+            codeInput.value = "";
+            updatePreview();
+            codeInput.focus();
         });
 
         previewFrame.addEventListener("load", () => {
@@ -237,6 +397,7 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
         window.addEventListener("resize", () => {
             resizeEditorHeight();
             scheduleFit();
+            renderHighlight();
         });
 
         codeInput.value = starter;
