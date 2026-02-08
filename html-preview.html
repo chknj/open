@@ -190,16 +190,6 @@
             display: flex;
             flex-direction: column;
         }
-        .status {
-            margin-left: auto;
-            font-size: 0.78rem;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-        .status strong {
-            color: var(--accent);
-            font-weight: 700;
-        }
         body.resizing {
             user-select: none;
             cursor: col-resize;
@@ -210,7 +200,6 @@
             .pane-right { width: 100%; }
             .pane-right { border-top: 1px solid var(--border); }
             .splitter { display: none; }
-            .status { display: none; }
             textarea {
                 min-height: 50vh;
                 max-height: 50vh;
@@ -232,7 +221,6 @@
                 <h1 class="title">HTML 뷰어</h1>
                 <p class="desc">왼쪽에 HTML 코드를 입력하면 오른쪽에서 즉시 미리보기 됩니다.</p>
             </div>
-            <div id="status" class="status">업데이트: <strong>대기 중</strong></div>
         </header>
 
         <section id="layout" class="layout">
@@ -260,7 +248,6 @@
     <script>
         const codeInput = document.getElementById("codeInput");
         const previewFrame = document.getElementById("previewFrame");
-        const status = document.getElementById("status");
         const clearBtn = document.getElementById("clearBtn");
         const layout = document.getElementById("layout");
         const splitter = document.getElementById("splitter");
@@ -401,7 +388,6 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
         function updatePreview() {
             const prepared = ensurePreviewBase(codeInput.value);
             previewFrame.srcdoc = prepared;
-            status.innerHTML = `업데이트: <strong>${new Date().toLocaleTimeString("ko-KR")}</strong>`;
             renderHighlight();
         }
 
