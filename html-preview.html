@@ -127,6 +127,11 @@
         .clear-btn:hover {
             background: #f3f4f6;
         }
+        .pane-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
         .editor-wrap {
             position: relative;
             width: 100%;
@@ -227,7 +232,10 @@
             <article class="pane pane-left">
                 <div class="pane-head">
                     <span>HTML 코드</span>
-                    <button id="clearBtn" class="clear-btn" type="button">초기화</button>
+                    <div class="pane-actions">
+                        <button id="formatBtn" class="clear-btn" type="button">정렬</button>
+                        <button id="clearBtn" class="clear-btn" type="button">초기화</button>
+                    </div>
                 </div>
                 <div class="editor-wrap">
                     <pre id="highlightLayer" class="highlight-layer" aria-hidden="true"><code id="highlightCode"></code></pre>
@@ -249,6 +257,7 @@
         const codeInput = document.getElementById("codeInput");
         const previewFrame = document.getElementById("previewFrame");
         const clearBtn = document.getElementById("clearBtn");
+        const formatBtn = document.getElementById("formatBtn");
         const layout = document.getElementById("layout");
         const splitter = document.getElementById("splitter");
         const highlightLayer = document.getElementById("highlightLayer");
@@ -379,6 +388,94 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             return out;
         }
 
+        function formatHtml(source) {
+            const voidTags = new Set([
+                "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+                "meta", "param", "source", "track", "wbr"
+            ]);
+            const rawTextTags = new Set(["script", "style", "pre", "textarea"]);
+            const indentUnit = "  ";
+            const tokens = source.match(/<!--[\s\S]*?-->|<!doctype[\s\S]*?>|<\/?[a-zA-Z][^>]*>|[^<]+/gi) || [];
+            const lines = [];
+            let depth = 0;
+            let i = 0;
+
+            function pushLine(text, level) {
+                if (!text) return;
+                lines.push(`${indentUnit.repeat(Math.max(0, level))}${text}`);
+            }
+
+            while (i < tokens.length) {
+                const token = tokens[i];
+                const trimmed = token.trim();
+
+                if (!trimmed) {
+                    i += 1;
+                    continue;
+                }
+
+                if (/^<!--[\s\S]*-->$/.test(trimmed) || /^<!doctype[\s\S]*>$/i.test(trimmed)) {
+                    pushLine(trimmed, depth);
+                    i += 1;
+                    continue;
+                }
+
+                if (/^<\//.test(trimmed)) {
+                    depth = Math.max(0, depth - 1);
+                    pushLine(trimmed, depth);
+                    i += 1;
+                    continue;
+                }
+
+                if (/^</.test(trimmed)) {
+                    const tagMatch = trimmed.match(/^<\s*([a-zA-Z0-9-:]+)/);
+                    const tagName = tagMatch ? tagMatch[1].toLowerCase() : "";
+                    const selfClosing = /\/>$/.test(trimmed) || voidTags.has(tagName);
+                    pushLine(trimmed, depth);
+
+                    if (!selfClosing) {
+                        if (rawTextTags.has(tagName)) {
+                            depth += 1;
+                            i += 1;
+                            while (i < tokens.length) {
+                                const rawToken = tokens[i];
+                                const rawTrimmed = rawToken.trim();
+                                if (new RegExp(`^<\\/\\s*${tagName}\\s*>$`, "i").test(rawTrimmed)) {
+                                    depth = Math.max(0, depth - 1);
+                                    pushLine(rawTrimmed, depth);
+                                    i += 1;
+                                    break;
+                                }
+                                if (rawTrimmed) {
+                                    const rawLines = rawToken.replace(/\r\n?/g, "\n").split("\n");
+                                    for (const rawLine of rawLines) {
+                                        const clean = rawLine.trim();
+                                        if (clean) pushLine(clean, depth);
+                                    }
+                                }
+                                i += 1;
+                            }
+                        } else {
+                            depth += 1;
+                            i += 1;
+                        }
+                    } else {
+                        i += 1;
+                    }
+                    continue;
+                }
+
+                const textLines = token.replace(/\r\n?/g, "\n").split("\n");
+                for (const line of textLines) {
+                    const normalized = line.replace(/\s+/g, " ").trim();
+                    if (normalized) pushLine(normalized, depth);
+                }
+                i += 1;
+            }
+
+            return lines.join("\n");
+        }
+
         function renderHighlight() {
             highlightCode.innerHTML = highlightHtml(codeInput.value);
             highlightLayer.scrollTop = codeInput.scrollTop;
@@ -405,6 +502,24 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             setSplit(DEFAULT_SPLIT);
             updatePreview();
             codeInput.focus();
+        });
+
+        function runFormat() {
+            const formatted = formatHtml(codeInput.value);
+            codeInput.value = formatted;
+            updatePreview();
+            codeInput.focus();
+        }
+
+        formatBtn.addEventListener("click", () => {
+            runFormat();
+        });
+
+        codeInput.addEventListener("keydown", (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "f") {
+                event.preventDefault();
+                runFormat();
+            }
         });
 
         splitter.addEventListener("pointerdown", (event) => {
