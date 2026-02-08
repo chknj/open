@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>글자수 측정기 | CHK System</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon-text.svg">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f7; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 600px; }
@@ -16,14 +17,6 @@
         .result-item span { font-size: 1.25rem; font-weight: 600; color: #1d1d1f; }
         .total { grid-column: span 2; background: #e8f2ff; }
         .total span { color: #0071e3; }
-        .check-panel { margin-top: 1.25rem; border: 1px solid #e5e5ea; border-radius: 10px; overflow: hidden; }
-        .check-header { display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 0.75rem 1rem; border-bottom: 1px solid #e5e5ea; }
-        .check-header strong { font-size: 0.95rem; color: #1d1d1f; }
-        .check-status { font-size: 0.8rem; font-weight: 600; color: #6e6e73; }
-        .check-status.active { color: #0071e3; }
-        .issue-list { margin: 0; padding: 0.75rem 1rem; list-style: none; max-height: 160px; overflow: auto; }
-        .issue-list li { font-size: 0.9rem; line-height: 1.45; color: #3a3a3c; }
-        .issue-list li + li { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px dashed #e5e5ea; }
         .check-note { margin-top: 0.85rem; font-size: 0.78rem; color: #8e8e93; }
     </style>
 </head>
@@ -46,15 +39,6 @@
                 <span id="totalCount">0</span>
             </div>
         </div>
-        <div class="check-panel">
-            <div class="check-header">
-                <strong>맞춤법/띄어쓰기/스펠링 자동 체크</strong>
-                <span id="checkStatus" class="check-status">입력 대기</span>
-            </div>
-            <ul id="issueList" class="issue-list">
-                <li>텍스트를 입력하면 자동으로 오류 의심 항목을 검사합니다.</li>
-            </ul>
-        </div>
     </div>
 
     <script>
@@ -62,24 +46,6 @@
         const koCount = document.getElementById('koCount');
         const enCount = document.getElementById('enCount');
         const totalCount = document.getElementById('totalCount');
-        const checkStatus = document.getElementById('checkStatus');
-        const issueList = document.getElementById('issueList');
-
-        function setCheckStatus(message, mode = '') {
-            checkStatus.textContent = message;
-            checkStatus.className = `check-status ${mode}`.trim();
-        }
-
-        function renderBrowserCheckHint(text) {
-            if (!text.trim()) {
-                setCheckStatus('입력 대기');
-                issueList.innerHTML = '<li>텍스트를 입력하면 자동으로 오류 의심 항목을 검사합니다.</li>';
-                return;
-            }
-
-            setCheckStatus('브라우저 기본 검사 사용 중', 'active');
-            issueList.innerHTML = '<li>맞춤법/띄어쓰기/스펠링 오류는 브라우저 밑줄로 표시됩니다.</li><li>밑줄이 있는 단어를 클릭하거나 우클릭해 교정 제안을 적용하세요.</li>';
-        }
 
         textarea.addEventListener('input', () => {
             const val = textarea.value;
@@ -94,7 +60,6 @@
 
             // 전체 글자수
             totalCount.textContent = val.length;
-            renderBrowserCheckHint(val);
         });
     </script>
 </body>
