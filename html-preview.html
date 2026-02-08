@@ -179,13 +179,16 @@
             border: 0;
             background: #fff;
             display: block;
-            min-height: 520px;
+            flex: 1;
+            min-height: 0;
         }
         .preview-wrap {
             flex: 1;
             min-height: 0;
-            overflow: auto;
+            overflow: hidden;
             background: #fff;
+            display: flex;
+            flex-direction: column;
         }
         .status {
             margin-left: auto;
@@ -217,8 +220,8 @@
                 min-height: 50vh;
                 max-height: 50vh;
             }
-            .preview-wrap { overflow: visible; }
-            iframe { min-height: 0; }
+            .preview-wrap { overflow: visible; display: block; }
+            iframe { min-height: 50vh; }
         }
     </style>
 </head>
@@ -264,7 +267,6 @@
         const highlightLayer = document.getElementById("highlightLayer");
         const highlightCode = document.getElementById("highlightCode");
         let timer = null;
-        let fitTimer = null;
         const DEFAULT_SPLIT = 70;
         const MIN_SPLIT = 20;
         const MAX_SPLIT = 80;
@@ -289,7 +291,6 @@
         function setSplit(percent) {
             const clamped = Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, percent));
             layout.style.setProperty("--split-left", clamped.toFixed(2));
-            scheduleFit();
         }
 
         function updateSplitFromClientX(clientX) {
@@ -301,7 +302,7 @@
 
         function ensurePreviewBase(html) {
             const fitCss = `<style id="preview-fit-style">
-html, body { width: 100% !important; max-width: 100% !important; margin: 0 !important; overflow-x: hidden !important; }
+html, body { width: 100% !important; max-width: 100% !important; margin: 0 !important; }
 img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !important; }
 * { box-sizing: border-box; }
 </style>`;
@@ -397,37 +398,6 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             highlightLayer.scrollLeft = codeInput.scrollLeft;
         }
 
-        function fitPreviewSize() {
-            const doc = previewFrame.contentDocument;
-            if (!doc || !doc.body || !doc.documentElement) return;
-
-            const frameWidth = previewFrame.clientWidth || 1;
-            const body = doc.body;
-            const html = doc.documentElement;
-
-            // Avoid viewport-height feedback loops when measuring iframe content height.
-            previewFrame.style.height = "0px";
-            body.style.transform = "scale(1)";
-            body.style.transformOrigin = "top left";
-            body.style.width = "100%";
-
-            const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, frameWidth);
-            const scale = contentWidth > frameWidth ? frameWidth / contentWidth : 1;
-            body.style.transform = `scale(${scale})`;
-            body.style.width = `${100 / scale}%`;
-
-            const rawHeight = Math.max(html.scrollHeight, body.scrollHeight);
-            const minHeight = isMobile() ? 120 : 360;
-            previewFrame.style.height = `${Math.max(minHeight, Math.ceil(rawHeight * scale))}px`;
-        }
-
-        function scheduleFit() {
-            clearTimeout(fitTimer);
-            fitTimer = setTimeout(() => {
-                fitPreviewSize();
-            }, 40);
-        }
-
         function updatePreview() {
             const prepared = ensurePreviewBase(codeInput.value);
             previewFrame.srcdoc = prepared;
@@ -481,14 +451,7 @@ img, video, canvas, svg, iframe, table, pre, object, embed { max-width: 100% !im
             stopSplitterDrag(event.pointerId);
         });
 
-        previewFrame.addEventListener("load", () => {
-            scheduleFit();
-            setTimeout(scheduleFit, 180);
-            setTimeout(scheduleFit, 500);
-        });
-
         window.addEventListener("resize", () => {
-            scheduleFit();
             renderHighlight();
         });
 
