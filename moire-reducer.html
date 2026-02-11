@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moire Reducer</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d9d9d9'/%3E%3Ccircle cx='22' cy='25' r='5' fill='%23222'/%3E%3Ccircle cx='42' cy='25' r='5' fill='%23222'/%3E%3Cpath d='M18 40c4 7 10 10 14 10s10-3 14-10' fill='none' stroke='%23222' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #efefef;
+      --panel: #ffffff;
+      --line: #cfcfcf;
+      --text: #1f1f1f;
+      --accent: #111111;
+      --accent-soft: #ececec;
+      --ok: #2e2e2e;
+      --warn: #5a5a5a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #f3f3f3 0%, var(--bg) 100%);
+      min-height: 100vh;
+      padding: 28px 16px 48px;
+    }
+
+    .app {
+      width: min(1020px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+    }
+
+    h1 {
+      font-size: clamp(1.2rem, 2vw, 1.6rem);
+      margin: 0 0 8px;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.55;
+      color: #3f3f3f;
+    }
+
+    .drop-zone {
+      display: block;
+      width: 100%;
+      border: 2px dashed #8f8f8f;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      background: #f7f7f7;
+      transition: 0.2s ease;
+      cursor: pointer;
+    }
+
+    .drop-zone.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .hidden-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover { border-color: #8a8a8a; }
+    button.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: #111111;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background: #222222;
+      border-color: #222222;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    button.primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .meta {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      color: #4f4f4f;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      min-height: 1.2em;
+    }
+    .status.ok { color: var(--ok); }
+    .status.warn { color: var(--warn); }
+
+    .preview-wrap {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .preview-box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfbfb;
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    .preview-box h2 {
+      margin: 0 0 8px;
+      font-size: 0.98rem;
+      color: #2f2f2f;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 5 / 3;
+      background: #ececec;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .footer-note {
+      font-size: 0.86rem;
+      color: #656565;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .preview-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel">
+      <h1>이미지 무아레(물결) 완화 리사이저</h1>
+      <p>고해상도 원본을 목표 너비까지 여러 단계로 축소해 패턴 간섭을 줄입니다. 이미 저해상도 상태에서 발생한 무아레는 복원이 어렵습니다.</p>
+    </section>
+
+    <section class="panel">
+      <label class="drop-zone" id="dropZone" for="fileInput">
+        <strong>이미지 드래그 앤 드롭</strong><br>
+        또는 클릭해서 파일 선택 (JPG, PNG, WEBP)
+      </label>
+      <input class="hidden-input" id="fileInput" type="file" accept="image/png,image/jpeg,image/webp">
+
+      <div class="controls">
+        <button type="button" id="btn500">500px 출력</button>
+        <button type="button" id="btn1000" class="active">1000px 출력</button>
+        <button type="button" id="processBtn" class="primary" disabled>무아레 완화 실행</button>
+        <button type="button" id="downloadBtn" disabled>결과 다운로드</button>
+      </div>
+
+      <div class="meta" id="meta">원본 이미지를 넣어주세요.</div>
+      <div class="status" id="status"></div>
+      <p class="footer-note">알고리즘: Canvas 기반 다단계 축소(기본 10단계), 고급 보간 활성화</p>
+    </section>
+
+    <section class="panel preview-wrap">
+      <div class="preview-box">
+        <h2>원본</h2>
+        <canvas id="srcCanvas" width="1200" height="720"></canvas>
+      </div>
+      <div class="preview-box">
+        <h2>결과</h2>
+        <canvas id="dstCanvas" width="1200" height="720"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const btn500 = document.getElementById("btn500");
+    const btn1000 = document.getElementById("btn1000");
+    const processBtn = document.getElementById("processBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const meta = document.getElementById("meta");
+    const statusEl = document.getElementById("status");
+    const srcCanvas = document.getElementById("srcCanvas");
+    const dstCanvas = document.getElementById("dstCanvas");
+    const srcCtx = srcCanvas.getContext("2d");
+    const dstCtx = dstCanvas.getContext("2d");
+    const picaEngine = typeof window.pica === "function" ? window.pica({ features: ["js", "wasm", "ww"] }) : null;
+
+    let sourceImage = null;
+    let targetWidth = 1000;
+    let outputBlobUrl = "";
+
+    function setStatus(message, type = "") {
+      statusEl.className = "status";
+      if (type) statusEl.classList.add(type);
+      statusEl.textContent = message;
+    }
+
+    function clearCanvas(ctx, canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#edf2ff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawFit(canvas, ctx, imageLike) {
+      clearCanvas(ctx, canvas);
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const iw = imageLike.width;
+      const ih = imageLike.height;
+      const scale = Math.min(cw / iw, ch / ih);
+      const w = iw * scale;
+      const h = ih * scale;
+      const x = (cw - w) / 2;
+      const y = (ch - h) / 2;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(imageLike, x, y, w, h);
+    }
+
+    function setTarget(width) {
+      targetWidth = width;
+      btn500.classList.toggle("active", width === 500);
+      btn1000.classList.toggle("active", width === 1000);
+      if (sourceImage) {
+        meta.textContent = `원본: ${sourceImage.width} x ${sourceImage.height}px | 목표 너비: ${targetWidth}px`;
+      }
+    }
+
+    function loadImageFromObjectUrl(url) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("이미지 로드 실패"));
+        img.src = url;
+      });
+    }
+
+    async function loadImageFile(file) {
+      if (!file || !file.type.startsWith("image/")) {
+        setStatus("이미지 파일만 가능합니다.", "warn");
+        return;
+      }
+
+      let imageLike;
+      try {
+        imageLike = await createImageBitmap(file);
+      } catch {
+        const objectUrl = URL.createObjectURL(file);
+        try {
+          imageLike = await loadImageFromObjectUrl(objectUrl);
+        } finally {
+          URL.revokeObjectURL(objectUrl);
+        }
+      }
+
+      sourceImage = imageLike;
+      processBtn.disabled = false;
+      downloadBtn.disabled = true;
+
+      if (outputBlobUrl) {
+        URL.revokeObjectURL(outputBlobUrl);
+        outputBlobUrl = "";
+      }
+
+      meta.textContent = `원본: ${imageLike.width} x ${imageLike.height}px | 목표 너비: ${targetWidth}px`;
+      setStatus("이미지가 로드되었습니다. 실행 버튼을 눌러주세요.");
+      drawFit(srcCanvas, srcCtx, imageLike);
+      clearCanvas(dstCtx, dstCanvas);
+    }
+
+    async function resizeStage(fromCanvas, toCanvas) {
+      if (picaEngine) {
+        await picaEngine.resize(fromCanvas, toCanvas, { quality: 3 });
+        return;
+      }
+
+      const stageCtx = toCanvas.getContext("2d");
+      stageCtx.imageSmoothingEnabled = true;
+      stageCtx.imageSmoothingQuality = "high";
+      stageCtx.drawImage(fromCanvas, 0, 0, toCanvas.width, toCanvas.height);
+    }
+
+    async function progressiveResize(imageLike, widthTarget, steps = 10) {
+      const ow = imageLike.width;
+      const oh = imageLike.height;
+      const tw = widthTarget;
+      const th = Math.max(1, Math.round((oh / ow) * tw));
+      const scaleRatio = tw / ow;
+
+      if (scaleRatio >= 1) {
+        return { canvas: null, reason: "원본 너비가 목표보다 작거나 같아서 축소 기반 무아레 완화가 어렵습니다." };
+      }
+
+      const workCanvas = document.createElement("canvas");
+      workCanvas.width = ow;
+      workCanvas.height = oh;
+      const workCtx = workCanvas.getContext("2d");
+      workCtx.imageSmoothingEnabled = true;
+      workCtx.imageSmoothingQuality = "high";
+      workCtx.drawImage(imageLike, 0, 0);
+
+      for (let i = 1; i <= steps; i += 1) {
+        const ratio = Math.pow(scaleRatio, i / steps);
+        const nextW = Math.max(tw, Math.round(ow * ratio));
+        const nextH = Math.max(th, Math.round(oh * ratio));
+
+        if (nextW === workCanvas.width && nextH === workCanvas.height) {
+          continue;
+        }
+
+        const stageCanvas = document.createElement("canvas");
+        stageCanvas.width = nextW;
+        stageCanvas.height = nextH;
+        await resizeStage(workCanvas, stageCanvas);
+
+        workCanvas.width = nextW;
+        workCanvas.height = nextH;
+        workCtx.imageSmoothingEnabled = true;
+        workCtx.imageSmoothingQuality = "high";
+        workCtx.clearRect(0, 0, nextW, nextH);
+        workCtx.drawImage(stageCanvas, 0, 0);
+      }
+
+      if (workCanvas.width !== tw || workCanvas.height !== th) {
+        const finalCanvas = document.createElement("canvas");
+        finalCanvas.width = tw;
+        finalCanvas.height = th;
+        const finalCtx = finalCanvas.getContext("2d");
+        finalCtx.imageSmoothingEnabled = true;
+        finalCtx.imageSmoothingQuality = "high";
+        finalCtx.drawImage(workCanvas, 0, 0, tw, th);
+        return { canvas: finalCanvas, reason: "" };
+      }
+
+      return { canvas: workCanvas, reason: "" };
+    }
+
+    function canvasToBlob(canvas, type = "image/jpeg", quality = 0.92) {
+      return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+    }
+
+    async function processImage() {
+      if (!sourceImage) return;
+
+      processBtn.disabled = true;
+      const engineName = picaEngine ? "pica" : "Canvas";
+      setStatus(`처리 중... (10단계 리사이징, 엔진: ${engineName})`, "ok");
+
+      try {
+        const result = await progressiveResize(sourceImage, targetWidth, 10);
+        if (!result.canvas) {
+          setStatus(result.reason, "warn");
+          processBtn.disabled = false;
+          downloadBtn.disabled = true;
+          return;
+        }
+
+        drawFit(dstCanvas, dstCtx, result.canvas);
+        const blob = await canvasToBlob(result.canvas);
+        if (!blob) throw new Error("Blob 생성 실패");
+
+        if (outputBlobUrl) URL.revokeObjectURL(outputBlobUrl);
+        outputBlobUrl = URL.createObjectURL(blob);
+        downloadBtn.disabled = false;
+        setStatus(`완료: ${result.canvas.width} x ${result.canvas.height}px`, "ok");
+      } catch (error) {
+        setStatus(`오류: ${error.message}`, "warn");
+      } finally {
+        processBtn.disabled = false;
+      }
+    }
+
+    function downloadResult() {
+      if (!outputBlobUrl) return;
+      const a = document.createElement("a");
+      a.href = outputBlobUrl;
+      a.download = `moire-reduced-${targetWidth}px.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.add("active"), false);
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.remove("active"), false);
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) loadImageFile(file);
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) loadImageFile(file);
+    });
+
+    btn500.addEventListener("click", () => setTarget(500));
+    btn1000.addEventListener("click", () => setTarget(1000));
+    processBtn.addEventListener("click", processImage);
+    downloadBtn.addEventListener("click", downloadResult);
+
+    clearCanvas(srcCtx, srcCanvas);
+    clearCanvas(dstCtx, dstCanvas);
+  </script>
+</body>
+</html>
