@@ -1,28 +1,16 @@
 ## Musinsa 조직도 웹 실행
 
-이 저장소는 Vite + React로 실행됩니다.
+GitHub Pages에서 바로 보이도록 정적 엔트리로 구성되어 있습니다.
 
-### 1) 설치
+### GitHub Pages URL
 
-```bash
-npm install
-```
+`https://chknj.github.io/open/musinsa-org-v3-1-web/index.html`
 
-### 2) 개발 서버 실행
+### 파일 구성
 
-```bash
-npm run dev
-```
-
-브라우저에서 터미널에 표시된 주소(기본 `http://localhost:5173`)를 열면 됩니다.
-
-### 3) 배포 빌드
-
-```bash
-npm run build
-```
-
-`dist/` 폴더가 생성되며, Vercel/Netlify에서 GitHub 저장소를 연결해 바로 배포할 수 있습니다.
+- `index.html`: React/ReactDOM/Babel CDN 로더
+- `musinsa-org-v3-1.browser.jsx`: 브라우저 실행용 JSX 엔트리
+- `musinsa-org-v3-1.jsx`: 원본 컴포넌트 소스
 
 ## 라이선스
 
