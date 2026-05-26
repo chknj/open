@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하반기 신규 상세 SKU 비교</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  * { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --jp-blue:#13294B; --jp-red:#782E40; --jp-grey:#A19A98;
+    --m-blue:#327C95; --m-orange:#CA592A;
+    --bg:#F5F4F0; --line:#C9C6BD; --muted:#6C7278;
+  }
+  body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--jp-blue); padding:40px; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1060px; margin:0 auto; }
+  .card { background:#fff; border-radius:14px; padding:30px 32px 24px; box-shadow:0 1px 3px rgba(19,41,75,.06), 0 8px 24px rgba(19,41,75,.04); margin-bottom:28px; }
+  .card:last-child { margin-bottom:0; }
+  .title { font-size:1.05rem; font-weight:700; color:var(--jp-blue); margin-bottom:4px; display:flex; align-items:center; gap:10px; }
+  .title::before { content:""; width:4px; height:18px; background:var(--jp-red); border-radius:2px; }
+  .sub { font-size:0.8rem; color:var(--muted); margin-bottom:24px; padding-left:14px; }
+  .chart-wrap { position:relative; height:440px; }
+  .chart-wrap.cmp { height:460px; }
+  .summary { display:flex; gap:0; margin-top:22px; border-top:1px solid var(--line); padding-top:20px; }
+  .stat { flex:1; text-align:center; border-right:1px solid var(--line); }
+  .stat:last-child { border-right:none; }
+  .stat .v { font-family:'Inter',sans-serif; font-size:1.8rem; font-weight:800; line-height:1; }
+  .stat .v.l { color:var(--jp-grey); }
+  .stat .v.t { color:var(--jp-blue); }
+  .stat .v.c { color:var(--m-orange); }
+  .stat .k { font-size:0.74rem; color:var(--muted); margin-top:7px; font-weight:500; }
+  @media (max-width:768px){ body{padding:16px;} .chart-wrap{height:340px;} .chart-wrap.cmp{height:380px;} .stat .v{font-size:1.3rem;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 그래프 1: 월별 전체 요청 건수 -->
+  <div class="card">
+    <div class="title">1본부 월별 업무 요청 건수 (작년 실측)</div>
+    <div class="sub">단위: 업무 요청 건수 · 다우오피스 2025년 실측 · 2본부 제외</div>
+    <div class="chart-wrap"><canvas id="chartMonthly"></canvas></div>
+  </div>
+
+  <!-- 그래프 2: 작년 vs 올해 브랜드별 비교 -->
+  <div class="card">
+    <div class="title">하반기 1본부 신규 상세페이지 SKU — 작년 vs 올해(26FW)</div>
+    <div class="sub">단위: 신규 제작 SKU · 작년 = 다우오피스 7~12월 실측, 올해 = 26FW 라인업 예측 · 2본부 제외</div>
+    <div class="chart-wrap cmp"><canvas id="chart"></canvas></div>
+    <div class="summary">
+      <div class="stat"><div class="v l">1,424</div><div class="k">작년 하반기</div></div>
+      <div class="stat"><div class="v t">1,546</div><div class="k">올해 확정분</div></div>
+      <div class="stat"><div class="v c">1,799</div><div class="k">콜라보+신규예상 포함</div></div>
+      <div class="stat"><div class="v t">최소 10%</div><div class="k">증가율</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const C = { blue:"#13294B", red:"#782E40", grey:"#A19A98", mBlue:"#327C95", mOrange:"#CA592A", line:"#C9C6BD", muted:"#6C7278" };
+Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+Chart.defaults.color = C.muted;
+
+// ============================================================
+// 그래프 1: 1본부 월별 업무 요청 건수 (작년 실측)
+// ============================================================
+const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
+const MONTHLY_REQ = [61, 84, 48, 87, 62, 88, 77, 42, 100, 77, 79, 67]; // 작년 1본부 월별 전체 요청 건수 (연 872)
+
+// 막대 상단 건수 라벨
+const reqValueLabel = {
+  id:'reqValueLabel',
+  afterDatasetsDraw(chart){
+    const { ctx, scales:{y} } = chart;
+    const m0 = chart.getDatasetMeta(0);
+    if(!m0) return;
+    ctx.save(); ctx.textAlign='center';
+    ctx.font="700 11px 'Inter', sans-serif"; ctx.fillStyle=C.blue;
+    m0.data.forEach((bar,i)=>{
+      ctx.fillText(MONTHLY_REQ[i], bar.x, y.getPixelForValue(MONTHLY_REQ[i])-7);
+    });
+    ctx.restore();
+  }
+};
+
+new Chart(document.getElementById('chartMonthly'), {
+  type:'bar',
+  data:{
+    labels:MONTHS,
+    datasets:[
+      { label:'월별 요청 건수', data:MONTHLY_REQ, backgroundColor:C.blue,
+        barPercentage:0.66, borderRadius:2 },
+    ],
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout:{ padding:{ top:18 } },
+    plugins:{
+      legend:{ display:false },
+      tooltip:{
+        backgroundColor:C.blue, padding:12, titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
+        callbacks:{ label:(ctx)=> ctx.raw+'건' },
+      },
+    },
+    scales:{
+      x:{ grid:{display:false}, ticks:{font:{size:12}} },
+      y:{ grid:{color:C.line}, ticks:{font:{size:11}}, beginAtZero:true,
+          title:{ display:true, text:'요청 건수', font:{size:11} } },
+    },
+  },
+  plugins:[reqValueLabel],
+});
+
+// ============================================================
+// 그래프 2: 작년 vs 올해 브랜드별 비교
+// ============================================================
+const CATS   = ["챔피온", "디키즈", "잔스포츠", "이스트팩", "미진행 브랜드", "신규 브랜드"];
+const LAST   = [454, 231, 145, 0,   272, 0];      // 작년 (2본부·유지기타 제외)
+const THIS   = [303, 311, 195, 292, 0,   123];    // 올해 확정
+const COLLAB = [50,  30,  10,  0,   0,   0];       // 콜라보 예상 (작년 수준 약간 상향)
+const EXPECT = [0,   0,   0,   0,   0,   123];     // 신규 추가 예상분 (확정의 2배)
+
+const centerSingleBarPlugin = {
+  id:'centerSingleBarPlugin',
+  beforeDatasetsDraw(chart){
+    CATS.forEach((_,i)=>{
+      const centerX = chart.scales.x.getPixelForTick(i);
+      const lastTotal = LAST[i];
+      const thisTotal = THIS[i]+COLLAB[i]+EXPECT[i];
+      if(lastTotal>0 && thisTotal===0){
+        chart.getDatasetMeta(0).data[i].x = centerX;
+      }
+      if(lastTotal===0 && thisTotal>0){
+        [1,2,3].forEach((datasetIndex)=>{
+          chart.getDatasetMeta(datasetIndex).data[i].x = centerX;
+        });
+      }
+    });
+  }
+};
+
+const labelPlugin = {
+  id:'labelPlugin',
+  afterDatasetsDraw(chart){
+    const { ctx, scales:{y} } = chart;
+    const mThis = chart.getDatasetMeta(1);
+    const mCollab = chart.getDatasetMeta(2);
+    const mExpect = chart.getDatasetMeta(3);
+    ctx.save(); ctx.textAlign='center';
+    CATS.forEach((_,i)=>{
+      const total = THIS[i]+COLLAB[i]+EXPECT[i];
+      if(total===0) return;
+      let bar = mThis.data[i];
+      if(EXPECT[i]>0) bar = mExpect.data[i];
+      else if(COLLAB[i]>0) bar = mCollab.data[i];
+      const inc = total - LAST[i];
+      let rate, col;
+      if(CATS[i]==='신규 브랜드'){ rate='NEW (최소+예상)'; col=C.mOrange; }
+      else if(LAST[i]===0){ rate='NEW'; col=C.mOrange; }
+      else { rate=(inc>=0?'+':'')+Math.round(inc/LAST[i]*100)+'%'; col = inc>=0?C.blue:C.red; }
+      ctx.font="700 12px 'Inter', sans-serif";
+      ctx.fillStyle = col;
+      ctx.fillText(rate, bar.x, y.getPixelForValue(total)-8);
+    });
+    ctx.restore();
+  }
+};
+
+new Chart(document.getElementById('chart'), {
+  type:'bar',
+  data:{
+    labels:CATS,
+    datasets:[
+      { label:'작년 하반기', data:LAST, backgroundColor:C.grey,
+        categoryPercentage:0.64, barPercentage:0.85, borderRadius:2, stack:'last' },
+      { label:'올해 확정', data:THIS,
+        backgroundColor: CATS.map((c)=> (c==='이스트팩' || c==='신규 브랜드') ? C.mOrange : C.blue),
+        categoryPercentage:0.64, barPercentage:0.85, borderRadius:2, stack:'this' },
+      { label:'콜라보 예상', data:COLLAB,
+        backgroundColor:'rgba(19,41,75,0.42)',
+        categoryPercentage:0.64, barPercentage:0.85, borderRadius:2, stack:'this' },
+      { label:'신규 예상 추가분', data:EXPECT, backgroundColor:'rgba(202,89,42,0.45)',
+        categoryPercentage:0.64, barPercentage:0.85, borderRadius:2, stack:'this' },
+    ],
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout:{ padding:{ top:24 } },
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ position:'top', align:'end', labels:{ boxWidth:14, boxHeight:14, padding:14, font:{size:12, weight:'600'} } },
+      tooltip:{
+        backgroundColor:C.blue, padding:12, titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
+        callbacks:{
+          label:(ctx)=>{
+            if(ctx.raw===0) return null;
+            return ctx.dataset.label+': '+ctx.raw+' SKU';
+          },
+          footer:(items)=>{
+            const i=items[0].dataIndex;
+            const total=THIS[i]+COLLAB[i]+EXPECT[i];
+            if(CATS[i]==='신규 브랜드') return '확정 '+THIS[i]+' + 예상 '+EXPECT[i]+' = '+total+' SKU';
+            if(total===0 && LAST[i]>0) return '올해 없음 (작년 '+LAST[i]+')';
+            if(LAST[i]===0 && total>0) return '올해 신규: '+total+' SKU';
+            if(COLLAB[i]>0) return LAST[i]+' → 확정 '+THIS[i]+'+콜라보 '+COLLAB[i]+' = '+total;
+            return LAST[i]+' → '+total+' SKU ('+(total-LAST[i]>=0?'+':'')+(total-LAST[i])+')';
+          },
+        },
+      },
+    },
+    scales:{
+      x:{ grid:{display:false}, ticks:{font:{size:12, weight:'600'}} },
+      y:{ grid:{color:C.line}, ticks:{font:{size:11}}, beginAtZero:true,
+          title:{ display:true, text:'신규 SKU', font:{size:11} } },
+    },
+  },
+  plugins:[centerSingleBarPlugin, labelPlugin],
+});
+</script>
+</body>
+</html>

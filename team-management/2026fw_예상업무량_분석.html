@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>업무량 분석</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --jp-blue:#13294B; --jp-red:#782E40; --jp-grey:#A19A98;
+    --m-blue:#327C95; --m-orange:#CA592A;
+    --bg:#F5F4F0; --line:#C9C6BD; --muted:#6C7278;
+  }
+  body {
+    font-family:'Noto Sans KR',sans-serif;
+    background:var(--bg); color:var(--jp-blue);
+    -webkit-font-smoothing:antialiased;
+    padding:40px;
+  }
+  .wrap { max-width:1120px; margin:0 auto; }
+  .chart-card {
+    background:#fff; border-radius:14px;
+    padding:28px 30px 22px;
+    box-shadow:0 1px 3px rgba(19,41,75,.06), 0 8px 24px rgba(19,41,75,.04);
+    margin-bottom:32px;
+  }
+  .chart-title {
+    font-size:1rem; font-weight:700; color:var(--jp-blue);
+    margin-bottom:20px; display:flex; align-items:center; gap:10px;
+  }
+  .chart-title::before {
+    content:""; width:4px; height:18px; background:var(--jp-red); border-radius:2px;
+  }
+  .chart-wrap { position:relative; height:440px; }
+
+  /* 토글 버튼 */
+  .btn-row { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  .toggle-btn {
+    font-family:'Noto Sans KR',sans-serif;
+    font-size:0.82rem; font-weight:600;
+    padding:9px 18px; border-radius:8px;
+    border:1.5px solid var(--jp-blue); background:#fff; color:var(--jp-blue);
+    cursor:pointer; transition:all .15s ease;
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .toggle-btn:hover { background:var(--card-sky); }
+  .toggle-btn .dot { width:8px; height:8px; border-radius:50%; background:var(--line); transition:background .15s; }
+  .toggle-btn.on { background:var(--jp-blue); color:#fff; border-color:var(--jp-blue); }
+  .toggle-btn.on .dot { background:var(--m-orange); }
+  .toggle-btn.on.alt { background:var(--m-blue); border-color:var(--m-blue); }
+  .toggle-btn.on.alt .dot { background:#fff; }
+
+  @media (max-width:768px){ body{padding:16px;} .chart-wrap{height:340px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="chart-card">
+    <div class="chart-title">1본부 vs 2본부 — 월별 업무량 및 비율</div>
+    <div class="chart-wrap"><canvas id="chartHQ"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">브랜드1본부 — 팀별 월별 업무량 (리테일기획 예상치 반영)</div>
+    <div class="chart-wrap"><canvas id="chartTeam"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">26FW 신규 라인업 합류 시 월별 부하 전망 — 하반기(6~10월) 집중</div>
+    <div class="btn-row">
+      <button id="btnIncrease" class="toggle-btn"><span class="dot"></span>증가예상</button>
+      <button id="btnDistribute" class="toggle-btn alt"><span class="dot"></span>분배예상</button>
+    </div>
+    <div class="chart-wrap"><canvas id="chartForecast"></canvas></div>
+    <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line); display:flex; gap:24px; flex-wrap:wrap; font-size:0.78rem; color:var(--muted);">
+      <span><b style="color:var(--jp-blue);">증가예상</b> 26FW 신규 요청 +55건/년(+6%) · 1인당 부담 라인 표시</span>
+      <span><b style="color:var(--m-blue);">분배예상</b> 8·9월 집중분을 6·7·10월로 분산 → 피크 완화</span>
+      <span><b style="color:var(--jp-red);">9월</b> 1인당 23.6건(평월 16건의 1.5배) · 8월은 휴가공백</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// 데이터 (수정 시 이 부분만 변경)
+// ============================================================
+const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
+
+// [그래프1] 본부별 월별 건수 (실측)
+const HQ1 = [61, 84, 48, 87, 62, 88, 83, 45, 106, 80, 85, 76];
+const HQ2 = [35, 42, 55, 35, 41, 32, 43, 32, 40, 24, 25, 25];
+
+// [그래프2] 1본부 팀별 월별 건수 — 기타 제외
+//  · 온라인리테일/트레이딩마케팅/오프라인리테일: 2025 실측
+//  · 리테일기획: 2026 상반기 추세(약 8%) 반영한 예상치 (실측 23 → 예상 62)
+const TEAMS = {
+  "온라인리테일":   [34, 57, 38, 63, 48, 62, 57, 35, 77, 59, 43, 54],
+  "트레이딩마케팅": [1, 4, 3, 8, 3, 5, 6, 1, 6, 7, 8, 1],
+  "오프라인리테일": [3, 4, 1, 2, 3, 6, 2, 1, 2, 2, 5, 2],
+  "리테일기획":     [3, 6, 4, 6, 5, 6, 6, 3, 7, 6, 5, 5],  // 예상치
+};
+
+const C = { blue:"#13294B", red:"#782E40", mBlue:"#327C95", mOrange:"#CA592A", grey:"#A19A98", line:"#C9C6BD", muted:"#6C7278" };
+
+// [그래프3] 26FW 신규 라인업 합류 시 월별 부하 전망
+//  · 단위: 모두 '업무 요청 건수' (그래프1·2와 일치)
+//  · NEWWORK: 26FW 신규분 = 신규 SKU 385개를 2025 실측 중앙값(건당 7 SKU)으로 환산 → 연 55건
+//    - NEWWORK_CONC: 집중형 (가방 6~10월 셋업 + 어패럴 8~9월 런칭, 8·9월 몰림)
+//    - NEWWORK_DIST: 분배형 (8·9월 집중분 일부를 6·7·10월로 이동 → 피크 완화)
+//  · 1인당 부담 = (기존+신규) ÷ 가용인력 (평월 5명, 8월 1명 휴가공백 → 4명)
+//  · 참고: 신규 상세 제작 SKU 자체는 385개(232→704, 약 3배). 건수와 작업량은 별개 지표.
+const HQ1_REAL      = [61, 84, 48, 87, 62, 88, 83, 45, 106, 80, 85, 76];
+const NEWWORK_CONC  = [0, 0, 0, 1, 2, 7, 11, 14, 12, 6, 2, 0];   // 집중형 55건
+const NEWWORK_DIST  = [0, 0, 0, 1, 2, 11, 15, 8, 7, 9, 2, 0];   // 분배형 55건 (8·9월→6·7·10월)
+const FTE           = [5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5];      // 8월만 4명
+
+
+
+
+Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+Chart.defaults.color = C.muted;
+
+// 막대 상단 합계 라벨 플러그인 (스택 합계를 직접 계산)
+const totalLabel = {
+  id: 'totalLabel',
+  afterDatasetsDraw(chart) {
+    const { ctx, scales:{ y } } = chart;
+    const meta0 = chart.getDatasetMeta(0);
+    if (!meta0) return;
+    const datasets = chart.data.datasets;
+    ctx.save();
+    ctx.font = "700 12px 'Inter', sans-serif";
+    ctx.fillStyle = C.blue;
+    ctx.textAlign = 'center';
+    meta0.data.forEach((bar, i) => {
+      // 모든 보이는 데이터셋의 i번째 값 합산
+      let total = 0;
+      datasets.forEach((ds, di) => {
+        if (!chart.getDatasetMeta(di).hidden) total += (ds.data[i] || 0);
+      });
+      const topY = y.getPixelForValue(total);
+      ctx.fillText(total, bar.x, topY - 8);
+    });
+    ctx.restore();
+  }
+};
+
+// ============================================================
+// 그래프1: 본부별 누적 막대(건수) + 합계 라벨
+// ============================================================
+const hqTotals = MONTHS.map((_,i)=> HQ1[i]+HQ2[i]);
+const chart1 = new Chart(document.getElementById('chartHQ'), {
+  type:'bar',
+  data:{ labels:MONTHS, datasets:[
+    { label:'1본부', data:HQ1, backgroundColor:C.blue, stack:'hq', barPercentage:0.64, borderRadius:2 },
+    { label:'2본부', data:HQ2, backgroundColor:C.mBlue, stack:'hq', barPercentage:0.64, borderRadius:2 },
+  ]},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ position:'top', align:'end', labels:{ boxWidth:14, boxHeight:14, padding:16, font:{size:12, weight:'600'} } },
+      tooltip:{
+        backgroundColor:C.blue, padding:12,
+        titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
+        callbacks:{
+          label:(ctx)=>{
+            const i=ctx.dataIndex, v=ctx.raw, tot=hqTotals[i];
+            return `${ctx.dataset.label}: ${v}건 (${(v/tot*100).toFixed(1)}%)`;
+          },
+          footer:(items)=>`합계: ${hqTotals[items[0].dataIndex]}건`,
+        },
+      },
+    },
+    scales:{
+      x:{ stacked:true, grid:{display:false}, ticks:{font:{size:12}} },
+      y:{ stacked:true, grid:{color:C.line}, ticks:{font:{size:11}}, suggestedMax: Math.max(...hqTotals)*1.15 },
+    },
+  },
+  plugins:[totalLabel],
+});
+
+// ============================================================
+// 그래프2: 1본부 팀별 누적 막대(건수) + 합계 라벨
+// ============================================================
+const teamColors = {
+  "온라인리테일":C.blue, "트레이딩마케팅":C.mBlue,
+  "오프라인리테일":C.mOrange, "리테일기획":C.red,
+};
+const teamNames = Object.keys(TEAMS);
+const teamTotals = MONTHS.map((_,i)=> teamNames.reduce((s,n)=>s+TEAMS[n][i],0));
+
+const chart2 = new Chart(document.getElementById('chartTeam'), {
+  type:'bar',
+  data:{ labels:MONTHS, datasets: teamNames.map(n=>({
+    label:n, data:TEAMS[n], backgroundColor:teamColors[n], stack:'team', barPercentage:0.66, borderRadius:2,
+  })) },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ position:'top', align:'end', labels:{ boxWidth:14, boxHeight:14, padding:14, font:{size:12, weight:'600'} } },
+      tooltip:{
+        backgroundColor:C.blue, padding:12,
+        titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
+        callbacks:{
+          label:(ctx)=>{
+            const i=ctx.dataIndex, v=ctx.raw, tot=teamTotals[i];
+            const tag = ctx.dataset.label==='리테일기획' ? ' ※예상' : '';
+            return `${ctx.dataset.label}: ${v}건 (${tot?(v/tot*100).toFixed(0):0}%)${tag}`;
+          },
+          footer:(items)=>`합계: ${teamTotals[items[0].dataIndex]}건`,
+        },
+      },
+    },
+    scales:{
+      x:{ stacked:true, grid:{display:false}, ticks:{font:{size:12}} },
+      y:{ stacked:true, grid:{color:C.line}, ticks:{font:{size:11}}, suggestedMax: Math.max(...teamTotals)*1.15 },
+    },
+  },
+  plugins:[totalLabel],
+});
+
+// ============================================================
+// 그래프3: 26FW 신규 합류 월별 부하 (버튼 토글)
+//  · 버튼1 증가예상: 신규분 막대 + 1인당 부담 라인 ON/OFF
+//  · 버튼2 분배예상: 집중형 ↔ 분배형(피크 완화) 전환
+//  · 12개월 전체 표시, 6~9월 강조
+// ============================================================
+const HL_FROM = 5, HL_TO = 10;  // 강조: 6월(idx5)~10월(idx9)
+const isHL = (i)=> i>=HL_FROM && i<HL_TO;
+const hexA = (hex, a)=> { const n=parseInt(hex,16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; };
+
+// 토글 상태
+let showIncrease = false;   // 증가예상 (신규분+라인)
+let showDistribute = false; // 분배예상 (분산)
+
+// 현재 상태에 맞는 신규분 데이터 반환
+function currentNew(){
+  if(!showIncrease) return MONTHS.map(()=>0);          // 증가예상 OFF면 신규분 0
+  return showDistribute ? NEWWORK_DIST : NEWWORK_CONC; // ON이면 집중/분배 선택
+}
+
+const colHq  = MONTHS.map((_,i)=> isHL(i) ? hexA('13294B',1) : hexA('13294B',0.28));
+function colNewArr(){
+  // 분배형일 땐 청록(완화) 톤, 집중형일 땐 오렌지(경고) 톤
+  const base = showDistribute ? '327C95' : 'CA592A';
+  return MONTHS.map((_,i)=> isHL(i) ? hexA(base,1) : hexA(base,0.30));
+}
+
+// 막대 상단 합계 라벨
+const fcTotalLabel = {
+  id:'fcTotalLabel',
+  afterDatasetsDraw(chart){
+    const { ctx, scales:{ y } } = chart;
+    const meta0 = chart.getDatasetMeta(0);
+    if(!meta0) return;
+    const nw = currentNew();
+    const totals = MONTHS.map((_,i)=> HQ1_REAL[i]+nw[i]);
+    const accent = showDistribute ? C.mBlue : C.mOrange;
+    ctx.save();
+    ctx.textAlign='center';
+    meta0.data.forEach((bar,i)=>{
+      if(isHL(i) && showIncrease){ ctx.font="700 13px 'Inter', sans-serif"; ctx.fillStyle=accent; }
+      else { ctx.font="600 11px 'Inter', sans-serif"; ctx.fillStyle=hexA('6C7278',0.7); }
+      ctx.fillText(totals[i], bar.x, y.getPixelForValue(totals[i])-8);
+    });
+    ctx.restore();
+  }
+};
+
+const chart3 = new Chart(document.getElementById('chartForecast'), {
+  data:{
+    labels:MONTHS,
+    datasets:[
+      { type:'bar', label:'기존 1본부', data:HQ1_REAL, backgroundColor:colHq,
+        stack:'load', barPercentage:0.66, borderRadius:2, yAxisID:'y', order:3 },
+      { type:'bar', label:'26FW 신규분', data:currentNew(), backgroundColor:colNewArr(),
+        stack:'load', barPercentage:0.66, borderRadius:2, yAxisID:'y', order:3 },
+      { type:'line', label:'1인당 부담', data:MONTHS.map(()=>null), borderColor:C.red,
+        backgroundColor:C.red, borderWidth:2.5, tension:0.3, yAxisID:'y1', order:1,
+        pointBackgroundColor: MONTHS.map((_,i)=> isHL(i)?C.red:hexA('782E40',0.35)),
+        pointBorderColor: MONTHS.map((_,i)=> isHL(i)?C.red:hexA('782E40',0.35)),
+        pointStyle: MONTHS.map((_,i)=> (i===7||i===8)?'rectRot':'circle'),
+        pointRadius: MONTHS.map((_,i)=> (i===7||i===8)?7:(isHL(i)?4.5:3)),
+        segment:{ borderColor:(c)=> isHL(c.p1DataIndex)&&isHL(c.p0DataIndex)?C.red:hexA('782E40',0.3) } },
+    ],
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ position:'top', align:'end', labels:{ boxWidth:14, boxHeight:14, padding:14, font:{size:12, weight:'600'}, usePointStyle:true,
+        filter:(item)=> showIncrease || item.text==='기존 1본부' } },
+      tooltip:{
+        backgroundColor:C.blue, padding:12,
+        titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
+        callbacks:{
+          label:(ctx)=>{
+            const i=ctx.dataIndex;
+            const nw=currentNew();
+            const tot=HQ1_REAL[i]+nw[i];
+            if(ctx.dataset.label==='1인당 부담'){
+              if(ctx.raw==null) return null;
+              if(i===7) return `1인당: ${ctx.raw}건 (정상 5명이면 ${(tot/5).toFixed(1)}건)`;
+              return `1인당: ${ctx.raw}건`;
+            }
+            if(ctx.dataset.label==='26FW 신규분' && !showIncrease) return null;
+            return `${ctx.dataset.label}: ${ctx.raw}건`;
+          },
+          footer:(items)=>{
+            const i=items[0].dataIndex;
+            const nw=currentNew();
+            let s = `총 ${HQ1_REAL[i]+nw[i]}건 · 가용 ${FTE[i]}명`;
+            if(i===7) s += ' (1명 휴가공백)';
+            return s;
+          },
+        },
+      },
+    },
+    scales:{
+      x:{ stacked:true, grid:{display:false}, ticks:{font:{size:12}} },
+      y:{ stacked:true, position:'left', grid:{color:C.line}, ticks:{font:{size:11}},
+          suggestedMax: Math.max(...MONTHS.map((_,i)=>HQ1_REAL[i]+NEWWORK_CONC[i]))*1.18,
+          title:{ display:true, text:'월 업무량(건)', font:{size:11} } },
+      y1:{ position:'right', grid:{display:false}, ticks:{font:{size:11}, callback:(v)=>v+'건'},
+           min:0, suggestedMax: 30,
+           title:{ display:true, text:'1인당 부담(건)', font:{size:11}, color:C.red } },
+    },
+  },
+  plugins:[fcTotalLabel],
+});
+
+// 차트 갱신 함수
+function refreshChart3(){
+  const nw = currentNew();
+  chart3.data.datasets[1].data = nw;
+  chart3.data.datasets[1].backgroundColor = colNewArr();
+  // 1인당 부담: 증가예상 ON일 때만 표시
+  chart3.data.datasets[2].data = showIncrease
+    ? MONTHS.map((_,i)=> +((HQ1_REAL[i]+nw[i])/FTE[i]).toFixed(1))
+    : MONTHS.map(()=>null);
+  chart3.update();
+}
+
+// 버튼 이벤트
+const btnInc = document.getElementById('btnIncrease');
+const btnDist = document.getElementById('btnDistribute');
+
+btnInc.addEventListener('click', ()=>{
+  showIncrease = !showIncrease;
+  btnInc.classList.toggle('on', showIncrease);
+  // 증가예상 끄면 분배예상도 의미 없으므로 함께 해제
+  if(!showIncrease && showDistribute){
+    showDistribute = false;
+    btnDist.classList.remove('on');
+  }
+  refreshChart3();
+});
+
+btnDist.addEventListener('click', ()=>{
+  // 분배예상은 증가예상이 켜져 있어야 의미 있음 → 자동으로 증가예상도 켜줌
+  if(!showIncrease){
+    showIncrease = true;
+    btnInc.classList.add('on');
+  }
+  showDistribute = !showDistribute;
+  btnDist.classList.toggle('on', showDistribute);
+  refreshChart3();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JanSport — Visual Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --jansport-blue: #13294B;
+    --jansport-red: #782E40;
+    --jansport-grey: #D9D9D6;
+    --main-blue: #327C95;
+    --main-orange: #CA592A;
+    --bg: #F5F4F0;
+    --text: #13294B;
+    --muted: #6C7278;
+  }
+
+  body {
+    font-family: 'Inter', 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
+
+  /* Header */
+  header {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid rgba(19, 41, 75, 0.1);
+  }
+  header .label {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--main-blue);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  header h1 {
+    font-size: 4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--jansport-blue);
+  }
+
+  /* Section */
+  section { padding: 80px 0; border-bottom: 1px solid rgba(19, 41, 75, 0.08); }
+  .section-label {
+    font-size: 0.875rem;
+    color: var(--main-blue);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--jansport-blue);
+    letter-spacing: -0.015em;
+    margin-bottom: 48px;
+    line-height: 1.15;
+  }
+
+  /* Brand Logo Colors */
+  .logo-colors {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 60px;
+  }
+  .logo-color {
+    border-radius: 12px;
+    padding: 32px;
+    color: white;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .logo-color.blue { background: var(--jansport-blue); }
+  .logo-color.red { background: var(--jansport-red); }
+  .logo-color.grey { background: var(--jansport-grey); color: var(--jansport-blue); }
+  .logo-color .name { font-size: 1.125rem; font-weight: 600; margin-bottom: 8px; }
+  .logo-color .specs { font-size: 0.875rem; opacity: 0.85; line-height: 1.8; }
+  .logo-color .hex {
+    font-family: 'Inter', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 16px;
+  }
+
+  /* Always With You showcase */
+  .aw-showcase {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .aw-tile {
+    border-radius: 12px;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .aw-tile.on-color { background: var(--main-orange); }
+  .aw-tile.on-photo {
+    background: linear-gradient(135deg, #8FA8B8 0%, #5D7585 100%);
+  }
+  .aw-tile .tag {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .aw-label {
+    background: var(--jansport-blue);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 6px;
+    text-align: center;
+    transform: rotate(-2deg);
+  }
+  .aw-label .top {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--jansport-red);
+    text-shadow: 1px 1px 0 white;
+  }
+  .aw-label .bottom {
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin-top: 4px;
+    letter-spacing: 0.15em;
+  }
+
+  /* Main palette */
+  .main-palette {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .main-color {
+    border-radius: 12px;
+    padding: 32px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: white;
+  }
+  .main-color.blue { background: var(--main-blue); }
+  .main-color.orange { background: var(--main-orange); }
+  .main-color .name { font-size: 1.25rem; font-weight: 600; }
+  .main-color .hex { font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }
+
+  /* ADA Palette - 6 column grid */
+  .ada-palette {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .ada-swatch {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: monospace;
+  }
+
+  /* Tertiary palette - 6 column grid */
+  .tertiary-palette {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tert-swatch {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: monospace;
+  }
+
+  /* Section description */
+  .section-desc {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 720px;
+    margin-bottom: 40px;
+    line-height: 1.7;
+  }
+
+  footer {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    header h1 { font-size: 2.5rem; }
+    .section-title { font-size: 1.875rem; }
+    .logo-colors, .main-palette, .aw-showcase { grid-template-columns: 1fr; }
+    .ada-palette, .tertiary-palette { grid-template-columns: repeat(4, 1fr); }
+    .container { padding: 0 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="label">JanSport · Visual Guide</div>
+    <h1>Brand Visual System</h1>
+  </div>
+</header>
+
+<!-- BRAND LOGO COLORS -->
+<section>
+  <div class="container">
+    <div class="section-label">01 — Brand Logo</div>
+    <h2 class="section-title">Always With You™<br>Woven Label</h2>
+    <p class="section-desc">Always With You 로고 락업을 재현할 때는 아래 PMS 컬러를 정확히 매칭해야 합니다.</p>
+
+    <div class="logo-colors">
+      <div class="logo-color blue">
+        <div>
+          <div class="name">JanSport Blue</div>
+          <div class="specs">
+            PMS 2767<br>
+            CMYK 100·86·42·41<br>
+            RGB 19·41·75
+          </div>
+        </div>
+        <div class="hex">#13294B</div>
+      </div>
+      <div class="logo-color red">
+        <div>
+          <div class="name">JanSport Red</div>
+          <div class="specs">
+            PMS 195<br>
+            CMYK 38·87·59·35<br>
+            RGB 120·46·64
+          </div>
+        </div>
+        <div class="hex">#782E40</div>
+      </div>
+      <div class="logo-color grey">
+        <div>
+          <div class="name">JanSport Grey</div>
+          <div class="specs">
+            PMS Cool Gray 1<br>
+            CMYK 14·10·13·0<br>
+            RGB 217·217·214
+          </div>
+        </div>
+        <div class="hex">#D9D9D6</div>
+      </div>
+    </div>
+
+    <div class="aw-showcase">
+      <div class="aw-tile on-color">
+        <span class="tag">On Color</span>
+        <div class="aw-label">
+          <div class="top">JANSPORT</div>
+          <div class="bottom">ALWAYS With YOU</div>
+        </div>
+      </div>
+      <div class="aw-tile on-photo">
+        <span class="tag">On Photo</span>
+        <div class="aw-label">
+          <div class="top">JANSPORT</div>
+          <div class="bottom">ALWAYS With YOU</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN BRAND COLORS -->
+<section>
+  <div class="container">
+    <div class="section-label">02 — Brand Color</div>
+    <h2 class="section-title">Main Palette</h2>
+
+    <div class="main-palette">
+      <div class="main-color blue">
+        <div class="name">Main Blue · PMS 299C</div>
+        <div class="hex">#327C95</div>
+      </div>
+      <div class="main-color orange">
+        <div class="name">Main Orange · PMS 1595C</div>
+        <div class="hex">#CA592A</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADA COMPLIANT -->
+<section>
+  <div class="container">
+    <div class="section-label">03 — Brand Color</div>
+    <h2 class="section-title">ADA Compliant Palette</h2>
+    <p class="section-desc">AA / AAA 대비 기준을 충족하는 웹 접근성 컬러 시스템입니다.</p>
+
+    <div class="ada-palette">
+      <div class="ada-swatch" style="background:#EBF2F4; color:#13294B;">#EBF2F4</div>
+      <div class="ada-swatch" style="background:#C2D8DF; color:#13294B;">#C2D8DF</div>
+      <div class="ada-swatch" style="background:#72ADC0; color:white;">#72ADC0</div>
+      <div class="ada-swatch" style="background:#4F98B0; color:white;">#4F98B0</div>
+      <div class="ada-swatch" style="background:#235768; color:white;">#235768</div>
+      <div class="ada-swatch" style="background:#15343E; color:white;">#15343E</div>
+
+      <div class="ada-swatch" style="background:#FAEEEA; color:#13294B;">#FAEEEA</div>
+      <div class="ada-swatch" style="background:#EABDAA; color:#13294B;">#EABDAA</div>
+      <div class="ada-swatch" style="background:#D57A55; color:white;">#D57A55</div>
+      <div class="ada-swatch" style="background:#B65026; color:white;">#B65026</div>
+      <div class="ada-swatch" style="background:#793519; color:white;">#793519</div>
+      <div class="ada-swatch" style="background:#49200F; color:white;">#49200F</div>
+
+      <div class="ada-swatch" style="background:#EEE8EA; color:#13294B;">#EEE8EA</div>
+      <div class="ada-swatch" style="background:#BBA5AA; color:white;">#BBA5AA</div>
+      <div class="ada-swatch" style="background:#774A55; color:white;">#774A55</div>
+      <div class="ada-swatch" style="background:#551D2B; color:white;">#551D2B</div>
+      <div class="ada-swatch" style="background:#360D19; color:white;">#360D19</div>
+      <div class="ada-swatch" style="background:#260912; color:white;">#260912</div>
+
+      <div class="ada-swatch" style="background:#F9F9F8; color:#13294B;">#F9F9F8</div>
+      <div class="ada-swatch" style="background:#F0EFED; color:#13294B;">#F0EFED</div>
+      <div class="ada-swatch" style="background:#D2CFCA; color:#13294B;">#D2CFCA</div>
+      <div class="ada-swatch" style="background:#8F8E8E; color:white;">#8F8E8E</div>
+      <div class="ada-swatch" style="background:#656565; color:white;">#656565</div>
+      <div class="ada-swatch" style="background:#4C4C4C; color:white;">#4C4C4C</div>
+    </div>
+  </div>
+</section>
+
+<!-- TERTIARY -->
+<section>
+  <div class="container">
+    <div class="section-label">04 — Brand Color</div>
+    <h2 class="section-title">Tertiary Palette</h2>
+    <p class="section-desc">Gen Z 감성의 트렌드 컬러. 시즌별로 업데이트되며, 일러스트와 캠페인에 에너지를 더하는 데 사용합니다.</p>
+
+    <div class="tertiary-palette">
+      <div class="tert-swatch" style="background:#4999C3; color:white;">#4999C3</div>
+      <div class="tert-swatch" style="background:#2AA6E0; color:white;">#2AA6E0</div>
+      <div class="tert-swatch" style="background:#2988A0; color:white;">#2988A0</div>
+      <div class="tert-swatch" style="background:#0B8BC0; color:white;">#0B8BC0</div>
+      <div class="tert-swatch" style="background:#00DCF8; color:#13294B;">#00DCF8</div>
+      <div class="tert-swatch" style="background:#E44453; color:white;">#E44453</div>
+
+      <div class="tert-swatch" style="background:#E13C54; color:white;">#E13C54</div>
+      <div class="tert-swatch" style="background:#B32B48; color:white;">#B32B48</div>
+      <div class="tert-swatch" style="background:#8E1F2E; color:white;">#8E1F2E</div>
+      <div class="tert-swatch" style="background:#F93E9F; color:white;">#F93E9F</div>
+      <div class="tert-swatch" style="background:#E39CF7; color:white;">#E39CF7</div>
+      <div class="tert-swatch" style="background:#E66137; color:white;">#E66137</div>
+
+      <div class="tert-swatch" style="background:#23763E; color:white;">#23763E</div>
+      <div class="tert-swatch" style="background:#F4E8A0; color:#13294B;">#F4E8A0</div>
+      <div class="tert-swatch" style="background:#E6B702; color:#13294B;">#E6B702</div>
+      <div class="tert-swatch" style="background:#F4A000; color:#13294B;">#F4A000</div>
+      <div class="tert-swatch" style="background:#A19A98; color:white;">#A19A98</div>
+      <div class="tert-swatch" style="background:#1A1A1A; color:white;">#1A1A1A</div>
+
+      <div class="tert-swatch" style="background:#C0B6D1; color:white;">#C0B6D1</div>
+      <div class="tert-swatch" style="background:#7B819A; color:white;">#7B819A</div>
+      <div class="tert-swatch" style="background:#657996; color:white;">#657996</div>
+      <div class="tert-swatch" style="background:#F29D8D; color:white;">#F29D8D</div>
+      <div class="tert-swatch" style="background:#9C5D7C; color:white;">#9C5D7C</div>
+      <div class="tert-swatch" style="background:#8DA2A0; color:white;">#8DA2A0</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">JanSport · Brand Guidelines · For Internal Use Only</div>
+</footer>
+
+</body>
+</html>
