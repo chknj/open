@@ -20,7 +20,7 @@
   .title { font-size:1.05rem; font-weight:700; color:var(--jp-blue); margin-bottom:4px; display:flex; align-items:center; gap:10px; }
   .title::before { content:""; width:4px; height:18px; background:var(--jp-red); border-radius:2px; }
   .sub { font-size:0.8rem; color:var(--muted); margin-bottom:24px; padding-left:14px; }
-  .chart-wrap { position:relative; height:440px; }
+  .chart-wrap { position:relative; height:460px; }
   .chart-wrap.cmp { height:460px; }
   .summary { display:flex; gap:0; margin-top:22px; border-top:1px solid var(--line); padding-top:20px; }
   .stat { flex:1; text-align:center; border-right:1px solid var(--line); }
@@ -123,7 +123,8 @@ const chartMonthly = new Chart(document.getElementById('chartMonthly'), {
   },
   options:{
     responsive:true, maintainAspectRatio:false,
-    layout:{ padding:{ top:18 } },
+    layout:{ padding:{ top:window.innerWidth >= 1200 ? 76 : 18 } },
+    onResize:(chart)=>{ chart.options.layout.padding.top = window.innerWidth >= 1200 ? 76 : 18; },
     plugins:{
       legend:{ display:false },
       colorPulse:{ bars:[{ datasetIndex:0, dataIndex:8, from:'#9F3D1A', to:'#F1A36F' }] },
