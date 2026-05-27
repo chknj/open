@@ -14,8 +14,8 @@
     --bg:#F5F4F0; --line:#C9C6BD; --muted:#6C7278;
   }
   body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--jp-blue); padding:40px; -webkit-font-smoothing:antialiased; }
-  .wrap { max-width:1060px; margin:0 auto; }
-  .card { background:#fff; border-radius:14px; padding:30px 32px 24px; box-shadow:0 1px 3px rgba(19,41,75,.06), 0 8px 24px rgba(19,41,75,.04); margin-bottom:28px; }
+  .wrap { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:28px; }
+  .card { background:#fff; border-radius:14px; padding:30px 32px 24px; box-shadow:0 1px 3px rgba(19,41,75,.06), 0 8px 24px rgba(19,41,75,.04); margin-bottom:0; }
   .card:last-child { margin-bottom:0; }
   .title { font-size:1.05rem; font-weight:700; color:var(--jp-blue); margin-bottom:4px; display:flex; align-items:center; gap:10px; }
   .title::before { content:""; width:4px; height:18px; background:var(--jp-red); border-radius:2px; }
@@ -29,7 +29,10 @@
   .stat .v.l { color:var(--jp-grey); }
   .stat .v.t { color:var(--jp-blue); }
   .stat .v.c { color:var(--m-orange); }
+  .stat .v.range { display:flex; flex-direction:column; gap:4px; font-size:1.22rem; line-height:1.18; }
+  .stat .v.range span:last-child { color:var(--m-orange); }
   .stat .k { font-size:0.74rem; color:var(--muted); margin-top:7px; font-weight:500; }
+  @media (max-width:1199px){ .wrap{grid-template-columns:1fr;} }
   @media (max-width:768px){ body{padding:16px;} .chart-wrap{height:340px;} .chart-wrap.cmp{height:380px;} .stat .v{font-size:1.3rem;} }
 </style>
 </head>
@@ -52,7 +55,7 @@
       <div class="stat"><div class="v l">1,424</div><div class="k">작년 하반기</div></div>
       <div class="stat"><div class="v t">1,546</div><div class="k">올해 확정분</div></div>
       <div class="stat"><div class="v c">1,799</div><div class="k">콜라보+신규예상 포함</div></div>
-      <div class="stat"><div class="v t">최소 10%</div><div class="k">증가율</div></div>
+      <div class="stat"><div class="v t range"><span>최소 10%</span><span>예상 최대 26%</span></div><div class="k">증가율 범위</div></div>
     </div>
   </div>
 
@@ -62,6 +65,41 @@
 const C = { blue:"#13294B", red:"#782E40", grey:"#A19A98", mBlue:"#327C95", mOrange:"#CA592A", line:"#C9C6BD", muted:"#6C7278" };
 Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
 Chart.defaults.color = C.muted;
+
+const flashingBarsPlugin = {
+  id:'flashingBarsPlugin',
+  afterDatasetsDraw(chart, args, opts){
+    if(!opts || !opts.bars || !opts.bars.length) return;
+    const pulse = (Math.sin(performance.now() / 520) + 1) / 2;
+    const alpha = 0.14 + pulse * 0.22;
+    const blur = 8 + pulse * 12;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.shadowColor = opts.shadowColor || 'rgba(202,89,42,0.72)';
+    ctx.shadowBlur = blur;
+    opts.bars.forEach(({ datasetIndex, dataIndex, color })=>{
+      const bar = chart.getDatasetMeta(datasetIndex).data[dataIndex];
+      const value = chart.data.datasets[datasetIndex].data[dataIndex];
+      if(!bar || !value) return;
+      const { x, y, base, width } = bar.getProps(['x','y','base','width'], true);
+      const left = x - width / 2;
+      const top = Math.min(y, base);
+      const height = Math.abs(base - y);
+      ctx.fillStyle = color || `rgba(202,89,42,${alpha})`;
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(left, top, width, height, 3);
+      else ctx.rect(left, top, width, height);
+      ctx.fill();
+    });
+    ctx.restore();
+    if(!chart.$flashFrame){
+      chart.$flashFrame = requestAnimationFrame(()=>{
+        chart.$flashFrame = null;
+        chart.draw();
+      });
+    }
+  }
+};
 
 // ============================================================
 // 그래프 1: 1본부 월별 업무 요청 건수 (작년 실측)
@@ -79,6 +117,7 @@ const reqValueLabel = {
     ctx.save(); ctx.textAlign='center';
     ctx.font="700 11px 'Inter', sans-serif"; ctx.fillStyle=C.blue;
     m0.data.forEach((bar,i)=>{
+      ctx.fillStyle = MONTHS[i]==='9월' ? C.mOrange : C.blue;
       ctx.fillText(MONTHLY_REQ[i], bar.x, y.getPixelForValue(MONTHLY_REQ[i])-7);
     });
     ctx.restore();
@@ -90,7 +129,8 @@ new Chart(document.getElementById('chartMonthly'), {
   data:{
     labels:MONTHS,
     datasets:[
-      { label:'월별 요청 건수', data:MONTHLY_REQ, backgroundColor:C.blue,
+      { label:'월별 요청 건수', data:MONTHLY_REQ,
+        backgroundColor:MONTHS.map((m)=> m==='9월' ? C.mOrange : C.blue),
         barPercentage:0.66, borderRadius:2 },
     ],
   },
@@ -99,6 +139,7 @@ new Chart(document.getElementById('chartMonthly'), {
     layout:{ padding:{ top:18 } },
     plugins:{
       legend:{ display:false },
+      flashingBars:{ bars:[{ datasetIndex:0, dataIndex:8 }], shadowColor:'rgba(202,89,42,0.72)' },
       tooltip:{
         backgroundColor:C.blue, padding:12, titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
         callbacks:{ label:(ctx)=> ctx.raw+'건' },
@@ -110,7 +151,7 @@ new Chart(document.getElementById('chartMonthly'), {
           title:{ display:true, text:'요청 건수', font:{size:11} } },
     },
   },
-  plugins:[reqValueLabel],
+  plugins:[flashingBarsPlugin, reqValueLabel],
 });
 
 // ============================================================
@@ -191,6 +232,14 @@ new Chart(document.getElementById('chart'), {
     interaction:{ mode:'index', intersect:false },
     plugins:{
       legend:{ position:'top', align:'end', labels:{ boxWidth:14, boxHeight:14, padding:14, font:{size:12, weight:'600'} } },
+      flashingBars:{
+        bars:[
+          { datasetIndex:1, dataIndex:3 },
+          { datasetIndex:1, dataIndex:5 },
+          { datasetIndex:3, dataIndex:5 },
+        ],
+        shadowColor:'rgba(202,89,42,0.72)',
+      },
       tooltip:{
         backgroundColor:C.blue, padding:12, titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
         callbacks:{
@@ -216,7 +265,7 @@ new Chart(document.getElementById('chart'), {
           title:{ display:true, text:'신규 SKU', font:{size:11} } },
     },
   },
-  plugins:[centerSingleBarPlugin, labelPlugin],
+  plugins:[centerSingleBarPlugin, flashingBarsPlugin, labelPlugin],
 });
 </script>
 </body>
