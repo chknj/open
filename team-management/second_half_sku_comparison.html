@@ -66,38 +66,25 @@ const C = { blue:"#13294B", red:"#782E40", grey:"#A19A98", mBlue:"#327C95", mOra
 Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
 Chart.defaults.color = C.muted;
 
-const flashingBarsPlugin = {
-  id:'flashingBarsPlugin',
-  afterDatasetsDraw(chart, args, opts){
+const mixColor = (from, to, amount)=>{
+  const a = from.replace('#','').match(/.{1,2}/g).map((v)=>parseInt(v,16));
+  const b = to.replace('#','').match(/.{1,2}/g).map((v)=>parseInt(v,16));
+  const c = a.map((v,i)=>Math.round(v + (b[i] - v) * amount));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+};
+
+const colorPulsePlugin = {
+  id:'colorPulsePlugin',
+  beforeDatasetsDraw(chart, args, pluginOpts){
+    const opts = chart.options.plugins.colorPulse || pluginOpts;
     if(!opts || !opts.bars || !opts.bars.length) return;
-    const pulse = (Math.sin(performance.now() / 520) + 1) / 2;
-    const alpha = 0.14 + pulse * 0.22;
-    const blur = 8 + pulse * 12;
-    const { ctx } = chart;
-    ctx.save();
-    ctx.shadowColor = opts.shadowColor || 'rgba(202,89,42,0.72)';
-    ctx.shadowBlur = blur;
-    opts.bars.forEach(({ datasetIndex, dataIndex, color })=>{
+    const pulse = (Math.sin(performance.now() / 620) + 1) / 2;
+    opts.bars.forEach(({ datasetIndex, dataIndex, from, to })=>{
       const bar = chart.getDatasetMeta(datasetIndex).data[dataIndex];
       const value = chart.data.datasets[datasetIndex].data[dataIndex];
       if(!bar || !value) return;
-      const { x, y, base, width } = bar.getProps(['x','y','base','width'], true);
-      const left = x - width / 2;
-      const top = Math.min(y, base);
-      const height = Math.abs(base - y);
-      ctx.fillStyle = color || `rgba(202,89,42,${alpha})`;
-      ctx.beginPath();
-      if(ctx.roundRect) ctx.roundRect(left, top, width, height, 3);
-      else ctx.rect(left, top, width, height);
-      ctx.fill();
+      bar.options.backgroundColor = mixColor(from || '#CA592A', to || '#F1A36F', pulse);
     });
-    ctx.restore();
-    if(!chart.$flashFrame){
-      chart.$flashFrame = requestAnimationFrame(()=>{
-        chart.$flashFrame = null;
-        chart.draw();
-      });
-    }
   }
 };
 
@@ -124,7 +111,7 @@ const reqValueLabel = {
   }
 };
 
-new Chart(document.getElementById('chartMonthly'), {
+const chartMonthly = new Chart(document.getElementById('chartMonthly'), {
   type:'bar',
   data:{
     labels:MONTHS,
@@ -139,7 +126,7 @@ new Chart(document.getElementById('chartMonthly'), {
     layout:{ padding:{ top:18 } },
     plugins:{
       legend:{ display:false },
-      flashingBars:{ bars:[{ datasetIndex:0, dataIndex:8 }], shadowColor:'rgba(202,89,42,0.72)' },
+      colorPulse:{ bars:[{ datasetIndex:0, dataIndex:8, from:'#9F3D1A', to:'#F1A36F' }] },
       tooltip:{
         backgroundColor:C.blue, padding:12, titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
         callbacks:{ label:(ctx)=> ctx.raw+'건' },
@@ -151,7 +138,7 @@ new Chart(document.getElementById('chartMonthly'), {
           title:{ display:true, text:'요청 건수', font:{size:11} } },
     },
   },
-  plugins:[flashingBarsPlugin, reqValueLabel],
+  plugins:[colorPulsePlugin, reqValueLabel],
 });
 
 // ============================================================
@@ -209,7 +196,7 @@ const labelPlugin = {
   }
 };
 
-new Chart(document.getElementById('chart'), {
+const skuChart = new Chart(document.getElementById('chart'), {
   type:'bar',
   data:{
     labels:CATS,
@@ -232,13 +219,12 @@ new Chart(document.getElementById('chart'), {
     interaction:{ mode:'index', intersect:false },
     plugins:{
       legend:{ position:'top', align:'end', labels:{ boxWidth:14, boxHeight:14, padding:14, font:{size:12, weight:'600'} } },
-      flashingBars:{
+      colorPulse:{
         bars:[
-          { datasetIndex:1, dataIndex:3 },
-          { datasetIndex:1, dataIndex:5 },
-          { datasetIndex:3, dataIndex:5 },
+          { datasetIndex:1, dataIndex:3, from:'#9F3D1A', to:'#F1A36F' },
+          { datasetIndex:1, dataIndex:5, from:'#9F3D1A', to:'#F1A36F' },
+          { datasetIndex:3, dataIndex:5, from:'#B65325', to:'#F4C1A1' },
         ],
-        shadowColor:'rgba(202,89,42,0.72)',
       },
       tooltip:{
         backgroundColor:C.blue, padding:12, titleFont:{size:13,weight:'700'}, bodyFont:{size:12},
@@ -265,8 +251,15 @@ new Chart(document.getElementById('chart'), {
           title:{ display:true, text:'신규 SKU', font:{size:11} } },
     },
   },
-  plugins:[centerSingleBarPlugin, flashingBarsPlugin, labelPlugin],
+  plugins:[centerSingleBarPlugin, colorPulsePlugin, labelPlugin],
 });
+
+const pulseCharts = [chartMonthly, skuChart];
+const drawPulseFrames = ()=>{
+  pulseCharts.forEach((chart)=> chart.draw());
+  requestAnimationFrame(drawPulseFrames);
+};
+requestAnimationFrame(drawPulseFrames);
 </script>
 </body>
 </html>
