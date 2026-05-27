@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상품 이미지 일괄 재단 도구</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='32' y='52' text-anchor='middle' font-size='54'%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FFFFFF;
+    --panel: #FAFAFA;
+    --panel-2: #F0F0F0;
+    --line: #E0E0E0;
+    --line-2: #CCCCCC;
+    --text: #111111;
+    --muted: #888888;
+    --accent: #111111;
+    --accent-text: #FFFFFF;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', 'Archivo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 24px 60px;
+  }
+
+  .wrap { max-width: 1220px; margin: 0 auto; }
+
+  header { margin-bottom: 28px; padding-bottom: 22px; border-bottom: 2px solid var(--text); }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: .28em; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  h1 { font-family: 'Archivo', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 7px; }
+
+  .layout { display: grid; grid-template-columns: 330px 1fr; gap: 22px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 24px; }
+  .panel h2 {
+    font-size: 12px; font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--text);
+    margin-bottom: 20px; padding-bottom: 13px; border-bottom: 1px solid var(--line-2);
+  }
+
+  .drop {
+    border: 2px dashed var(--line-2); border-radius: 4px; padding: 30px 18px;
+    text-align: center; cursor: pointer; transition: all .15s; background: var(--bg);
+  }
+  .drop:hover, .drop.over { border-color: var(--text); background: var(--panel-2); }
+  .drop .ico { font-size: 24px; margin-bottom: 9px; }
+  .drop p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .drop b { color: var(--text); }
+  input[type=file] { display: none; }
+
+  .ctrl { margin-bottom: 20px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; margin-bottom: 9px; font-weight: 500;
+  }
+  .ctrl label .val {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text); background: var(--panel-2); padding: 2px 8px; border-radius: 3px;
+    border: 1px solid var(--line);
+  }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 7px; line-height: 1.55; }
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 2px;
+    background: var(--line-2); border-radius: 0; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--text); cursor: pointer; border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--text);
+  }
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1; min-width: 0; padding: 9px 4px; font-size: 12px; font-family: inherit;
+    background: var(--bg); color: var(--muted); border: 1px solid var(--line-2);
+    border-radius: 3px; cursor: pointer; transition: all .12s; white-space: nowrap;
+  }
+  .seg button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+  .field { display:flex; gap:8px; align-items:center; }
+  .field input[type=number] {
+    flex:1; background: var(--bg); border:1px solid var(--line-2); color: var(--text);
+    border-radius:3px; padding:9px 11px; font-family:'JetBrains Mono',monospace; font-size:13px;
+  }
+  .field input[type=color] {
+    width: 44px; height: 38px; padding: 2px; background: var(--bg);
+    border: 1px solid var(--line-2); border-radius: 3px; cursor: pointer;
+  }
+  .field span { color: var(--muted); font-size:12px; }
+
+  .field-col { display: flex; flex-direction: column; gap: 8px; }
+  .field-row { display: flex; gap: 8px; align-items: center; }
+  .field-row input[type=number] {
+    flex: 1; background: var(--bg); border: 1px solid var(--line-2); color: var(--text);
+    border-radius: 3px; padding: 9px 11px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  }
+  .field-row .fl {
+    width: 20px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    font-weight: 600; color: var(--text);
+  }
+  .field-row .fu { color: var(--muted); font-size: 12px; width: 22px; }
+
+  .btn {
+    width: 100%; padding: 14px; font-size: 14px; font-weight: 700; font-family: inherit;
+    border: 1px solid var(--accent); border-radius: 3px; cursor: pointer; transition: all .15s; margin-top: 6px;
+  }
+  .btn-go { background: var(--accent); color: var(--accent-text); }
+  .btn-go:hover { background: #333; }
+  .btn-go:disabled { background: var(--panel-2); color: var(--muted); border-color: var(--line-2); cursor: not-allowed; }
+  .btn-dl { background: var(--bg); color: var(--accent); margin-top: 10px; }
+  .btn-dl:hover { background: var(--panel-2); }
+
+  .stage { display: flex; flex-direction: column; }
+  .stat {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);
+    margin-bottom: 16px; padding: 12px 14px; background: var(--panel-2); border-radius: 3px; line-height: 1.7;
+  }
+  .stat b { color: var(--text); }
+
+  .progress-wrap { margin-bottom: 16px; display: none; }
+  .progress-bar { height: 4px; background: var(--line-2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width .2s; }
+  .progress-txt { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* 결과 그리드 */
+  .results {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px;
+  }
+  .res-card { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--bg); }
+  .res-thumb {
+    aspect-ratio: 10 / 13; background:
+      linear-gradient(45deg, #eee 25%, transparent 25%),
+      linear-gradient(-45deg, #eee 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #eee 75%),
+      linear-gradient(-45deg, transparent 75%, #eee 75%);
+    background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .res-thumb canvas, .res-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .res-meta { padding: 9px 10px; font-size: 11px; border-top: 1px solid var(--line); }
+  .res-meta .fn { font-weight: 600; word-break: break-all; line-height: 1.4; }
+  .res-meta .folder { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 10px; margin-bottom: 3px; }
+  .res-meta .fail { color: #C0392B; font-weight: 600; }
+
+  .empty-state { text-align: center; color: var(--muted); font-size: 13px; padding: 80px 20px; border: 1px dashed var(--line-2); border-radius: 4px; }
+  .open-source-footer {
+    margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line);
+    color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">BATCH PRODUCT IMAGE PIPELINE</div>
+    <h1>상품 이미지 일괄 재단 도구</h1>
+    <div class="sub">폴더 단위 업로드 → 피사체 자동 인식·크롭 → 가로 리사이즈 → 캔버스 배치 → ZIP 다운로드</div>
+  </header>
+
+  <div class="layout">
+    <div class="panel">
+      <h2>설정</h2>
+
+      <div class="ctrl">
+        <label>폴더 업로드</label>
+        <div class="drop" id="drop">
+          <div class="ico">⊞</div>
+          <p><b>클릭</b>해서 폴더 선택<br>여러 폴더·하위 폴더 모두 처리</p>
+        </div>
+        <input type="file" id="file" webkitdirectory directory multiple>
+      </div>
+
+      <div class="ctrl">
+        <label>배경 인식 방식</label>
+        <div class="seg" id="bgmode">
+          <button data-m="auto" class="on">모서리 자동</button>
+          <button data-m="white">흰색 고정</button>
+        </div>
+        <div class="hint">각 이미지의 모서리에서 배경색을 자동 감지 (단색 배경 대응)</div>
+      </div>
+
+      <div class="ctrl">
+        <label>배경 허용 오차 <span class="val" id="tolVal">32</span></label>
+        <input type="range" id="tol" min="5" max="120" value="32">
+        <div class="hint">크게: 그림자까지 제거 / 작게: 배경색과 비슷한 피사체 보존</div>
+      </div>
+
+      <div class="ctrl">
+        <label>상품 크기 기준</label>
+        <div class="seg" id="sizebasis">
+          <button data-s="width" class="on">가로 기준</button>
+          <button data-s="height">세로 기준</button>
+        </div>
+        <div class="hint">선택한 한 변만 기준이 되고, 다른 변은 비율에 맞춰 자동 결정됩니다.</div>
+      </div>
+
+      <div class="ctrl">
+        <label>상품 <span id="basisLabel">가로</span> 크기 <span class="val" id="psVal">600px</span></label>
+        <input type="range" id="ps" min="200" max="1300" value="600" step="10">
+      </div>
+
+      <div class="ctrl">
+        <label>최종 캔버스</label>
+        <div class="field-col">
+          <div class="field-row">
+            <span class="fl">W</span>
+            <input type="number" id="cw" value="1000">
+            <span class="fu">px</span>
+          </div>
+          <div class="field-row">
+            <span class="fl">H</span>
+            <input type="number" id="ch" value="1300">
+            <span class="fu">px</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>새 배경색</label>
+        <div class="seg" id="fillmode">
+          <button data-f="white" class="on">흰색</button>
+          <button data-f="origin">원본</button>
+          <button data-f="custom">직접</button>
+        </div>
+        <div class="field" id="customColorWrap" style="margin-top:9px; display:none;">
+          <input type="color" id="fillColor" value="#ffffff">
+          <span id="fillColorTxt">#FFFFFF</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>세로 위치 기준</label>
+        <div class="seg" id="vmode">
+          <button data-v="center" class="on">정중앙</button>
+          <button data-v="bottom">하단 기준</button>
+        </div>
+        <div class="field" id="bottomGapWrap" style="margin-top:9px; display:none;">
+          <span>하단에서</span>
+          <input type="number" id="bottomGap" value="100">
+          <span>px 위</span>
+        </div>
+      </div>
+
+      <button class="btn btn-go" id="run" disabled>일괄 처리</button>
+      <button class="btn btn-dl" id="dl" style="display:none;">ZIP 다운로드</button>
+    </div>
+
+    <div class="panel stage">
+      <h2>결과</h2>
+      <div class="stat" id="stat" style="display:none;"></div>
+      <div class="progress-wrap" id="progWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+        <div class="progress-txt" id="progTxt">처리 중…</div>
+      </div>
+      <div id="resultsArea">
+        <div class="empty-state">폴더를 업로드하고 "일괄 처리"를 누르세요</div>
+      </div>
+    </div>
+  </div>
+  <footer class="open-source-footer">Open Source · 이 도구는 오픈소스입니다.</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let files = [];        // {relPath, folder, name, img}
+let results = [];      // {folder, name, canvas, ok}
+
+$('tol').oninput = e => $('tolVal').textContent = e.target.value;
+$('ps').oninput = e => $('psVal').textContent = e.target.value + 'px';
+
+function seg(id, cb) {
+  document.querySelectorAll('#'+id+' button').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('#'+id+' button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on'); cb(b.dataset);
+    };
+  });
+}
+let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width';
+seg('bgmode', d => bgMode=d.m);
+seg('sizebasis', d => {
+  sizeBasis = d.s;
+  $('basisLabel').textContent = (d.s === 'width') ? '가로' : '세로';
+});
+seg('fillmode', d => {
+  fillMode=d.f;
+  $('customColorWrap').style.display = (d.f==='custom') ? 'flex' : 'none';
+});
+seg('vmode', d => {
+  vMode=d.v;
+  $('bottomGapWrap').style.display = (d.v==='bottom') ? 'flex' : 'none';
+});
+$('fillColor').oninput = e => $('fillColorTxt').textContent = e.target.value.toUpperCase();
+
+// 폴더 업로드
+const drop=$('drop'), fileInput=$('file');
+drop.onclick = () => fileInput.click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); handleItems(e.dataTransfer); };
+fileInput.onchange = e => handleFileList(e.target.files);
+
+function handleFileList(fl) {
+  const imgs = [...fl].filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) return;
+  files = [];
+  let loaded = 0;
+  imgs.forEach((f) => {
+    // webkitRelativePath: "최상위폴더/하위/파일.jpg"
+    const rel = f.webkitRelativePath || f.name;
+    const parts = rel.split('/');
+    const name = parts[parts.length-1];
+    const folder = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
+    const img = new Image();
+    img.onload = () => {
+      files.push({ relPath: rel, folder, name, img });
+      loaded++;
+      if (loaded === imgs.length) {
+        const folderSet = new Set(files.map(f=>f.folder.split('/')[0]));
+        drop.querySelector('p').innerHTML =
+          `<b>${folderSet.size}개 폴더 · ${files.length}장</b><br>다시 클릭하면 교체`;
+        $('run').disabled = false;
+      }
+    };
+    img.onerror = () => { loaded++; };
+    img.src = URL.createObjectURL(f);
+  });
+}
+
+// 드래그앤드롭으로 폴더 (webkitGetAsEntry)
+function handleItems(dt) {
+  if (dt.items && dt.items.length && dt.items[0].webkitGetAsEntry) {
+    const entries = [...dt.items].map(i => i.webkitGetAsEntry()).filter(Boolean);
+    const collected = [];
+    let pending = 0;
+    const done = () => {
+      if (pending === 0) loadCollected(collected);
+    };
+    function walk(entry, path) {
+      if (entry.isFile) {
+        pending++;
+        entry.file(f => {
+          if (f.type.startsWith('image/')) collected.push({ file:f, rel: path + f.name });
+          pending--; done();
+        });
+      } else if (entry.isDirectory) {
+        pending++;
+        const reader = entry.createReader();
+        const readBatch = () => {
+          reader.readEntries(ents => {
+            if (ents.length) {
+              ents.forEach(e => walk(e, path + entry.name + '/'));
+              readBatch();
+            } else { pending--; done(); }
+          });
+        };
+        readBatch();
+      }
+    }
+    entries.forEach(e => walk(e, ''));
+  } else {
+    handleFileList(dt.files);
+  }
+}
+
+function loadCollected(collected) {
+  if (!collected.length) return;
+  files = [];
+  let loaded = 0;
+  collected.forEach(({file, rel}) => {
+    const parts = rel.split('/').filter(Boolean);
+    const name = parts[parts.length-1];
+    const folder = parts.length > 1 ? parts.slice(0,-1).join('/') : '';
+    const img = new Image();
+    img.onload = () => {
+      files.push({ relPath: rel, folder, name, img });
+      loaded++;
+      if (loaded === collected.length) {
+        const folderSet = new Set(files.map(f=>f.folder.split('/')[0]||'(루트)'));
+        drop.querySelector('p').innerHTML =
+          `<b>${folderSet.size}개 폴더 · ${files.length}장</b><br>다시 클릭하면 교체`;
+        $('run').disabled = false;
+      }
+    };
+    img.onerror = () => { loaded++; };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// 배경색 추출
+function getBgColor(data, w, h) {
+  const pts = [[2,2],[w-3,2],[2,h-3],[w-3,h-3],
+    [Math.floor(w/2),2],[Math.floor(w/2),h-3],[2,Math.floor(h/2)],[w-3,Math.floor(h/2)]];
+  let r=0,g=0,b=0,n=0;
+  pts.forEach(([x,y]) => { const i=(y*w+x)*4; r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; });
+  return { r:Math.round(r/n), g:Math.round(g/n), b:Math.round(b/n) };
+}
+
+function findBounds(data, w, h, bg, tol) {
+  let top=h, bottom=0, left=w, right=0;
+  for (let y=0; y<h; y++) for (let x=0; x<w; x++) {
+    const i=(y*w+x)*4, a=data[i+3];
+    const dr=data[i]-bg.r, dg=data[i+1]-bg.g, db=data[i+2]-bg.b;
+    const dist=Math.sqrt(dr*dr+dg*dg+db*db);
+    if (!((a<10)||(dist<=tol))) {
+      if (x<left)left=x; if(x>right)right=x; if(y<top)top=y; if(y>bottom)bottom=y;
+    }
+  }
+  if (right<left||bottom<top) return null;
+  return { left, top, right, bottom };
+}
+
+function processOne(img) {
+  const tol=+$('tol').value, targetSize=+$('ps').value;
+  const cw=+$('cw').value, ch=+$('ch').value;
+  const bottomGap=+$('bottomGap').value;
+
+  const src=document.createElement('canvas');
+  src.width=img.naturalWidth; src.height=img.naturalHeight;
+  const sctx=src.getContext('2d'); sctx.drawImage(img,0,0);
+  const { data }=sctx.getImageData(0,0,src.width,src.height);
+
+  const bg = (bgMode==='white') ? {r:255,g:255,b:255} : getBgColor(data, src.width, src.height);
+  const b=findBounds(data, src.width, src.height, bg, tol);
+  if (!b) return null;
+
+  const cropW=b.right-b.left+1, cropH=b.bottom-b.top+1;
+  let scale;
+  if (sizeBasis === 'height') scale = targetSize / cropH;
+  else scale = targetSize / cropW;
+  const drawW=Math.round(cropW*scale), drawH=Math.round(cropH*scale);
+
+  const out=document.createElement('canvas');
+  out.width=cw; out.height=ch;
+  const octx=out.getContext('2d');
+  let fill;
+  if (fillMode==='origin') fill=`rgb(${bg.r},${bg.g},${bg.b})`;
+  else if (fillMode==='custom') fill=$('fillColor').value;
+  else fill='#FFFFFF';
+  octx.fillStyle=fill; octx.fillRect(0,0,cw,ch);
+
+  const x=Math.round((cw-drawW)/2);
+  let y;
+  if (vMode==='bottom') y = ch - drawH - bottomGap;
+  else y = Math.round((ch-drawH)/2);
+
+  octx.imageSmoothingQuality='high';
+  octx.drawImage(src, b.left, b.top, cropW, cropH, x, y, drawW, drawH);
+  return out;
+}
+
+$('run').onclick = async () => {
+  if (!files.length) return;
+  results = [];
+  $('progWrap').style.display='block';
+  $('resultsArea').innerHTML='';
+  $('dl').style.display='none';
+
+  let ok=0, fail=0;
+  for (let i=0; i<files.length; i++) {
+    const f = files[i];
+    let canvas=null;
+    try { canvas = processOne(f.img); } catch(e) { canvas=null; }
+    if (canvas) { results.push({ folder:f.folder, name:f.name, canvas, ok:true }); ok++; }
+    else { results.push({ folder:f.folder, name:f.name, canvas:null, ok:false }); fail++; }
+
+    const pct = Math.round((i+1)/files.length*100);
+    $('progFill').style.width = pct+'%';
+    $('progTxt').textContent = `처리 중… ${i+1} / ${files.length}`;
+    if (i % 3 === 0) await new Promise(r=>setTimeout(r,0)); // UI 갱신
+  }
+
+  $('progTxt').textContent = `완료 · 성공 ${ok} / 실패 ${fail}`;
+  renderResults();
+  $('stat').style.display='block';
+  $('stat').innerHTML = `총 <b>${files.length}</b>장 · 성공 <b>${ok}</b> · 실패 <b>${fail}</b><br>캔버스 <b>${$('cw').value}×${$('ch').value}</b> · 상품 ${sizeBasis==='width'?'가로':'세로'} <b>${$('ps').value}px</b> 기준`;
+  if (ok>0) $('dl').style.display='block';
+};
+
+function renderResults() {
+  const area=$('resultsArea');
+  area.innerHTML='';
+  const grid=document.createElement('div'); grid.className='results';
+  results.forEach(r => {
+    const card=document.createElement('div'); card.className='res-card';
+    const thumb=document.createElement('div'); thumb.className='res-thumb';
+    if (r.ok) thumb.appendChild(r.canvas);
+    else thumb.innerHTML='<span style="color:#C0392B;font-size:11px;">인식 실패</span>';
+    const meta=document.createElement('div'); meta.className='res-meta';
+    meta.innerHTML = `<div class="folder">${r.folder||'(루트)'}</div><div class="fn ${r.ok?'':'fail'}">${r.name}</div>`;
+    card.appendChild(thumb); card.appendChild(meta);
+    grid.appendChild(card);
+  });
+  area.appendChild(grid);
+}
+
+// ZIP 다운로드 (폴더 구조·파일명 유지)
+$('dl').onclick = async () => {
+  const okResults = results.filter(r=>r.ok);
+  if (!okResults.length) return;
+  $('dl').textContent='ZIP 생성 중…'; $('dl').disabled=true;
+
+  const zip = new JSZip();
+  for (const r of okResults) {
+    const blob = await new Promise(res => r.canvas.toBlob(res, 'image/png'));
+    const path = (r.folder ? r.folder + '/' : '') + r.name.replace(/\.[^.]+$/, '') + '.png';
+    zip.file(path, blob);
+  }
+  const content = await zip.generateAsync({ type:'blob' });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(content);
+  a.download='재단결과.zip';
+  a.click();
+
+  $('dl').textContent='ZIP 다운로드'; $('dl').disabled=false;
+};
+</script>
+</body>
+</html>
