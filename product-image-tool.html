@@ -479,9 +479,9 @@ function resizeCropMultiPass(src, sx, sy, sw, sh, dw, dh) {
 
   const resizeRatio=Math.max(sw/dw, sh/dh);
   if (resizeRatio >= 1.2) {
-    while ((cur.width / dw > 1.25) || (cur.height / dh > 1.25)) {
-      const nextW=Math.max(dw, Math.round(cur.width * 0.8));
-      const nextH=Math.max(dh, Math.round(cur.height * 0.8));
+    while ((cur.width / dw > 1.15) || (cur.height / dh > 1.15)) {
+      const nextW=Math.max(dw, Math.round(cur.width * 0.85));
+      const nextH=Math.max(dh, Math.round(cur.height * 0.85));
       if (nextW === cur.width && nextH === cur.height) break;
       cur=drawResized(cur, nextW, nextH);
     }
