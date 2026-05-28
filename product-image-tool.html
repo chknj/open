@@ -219,15 +219,6 @@
       </div>
 
       <div class="ctrl">
-        <label>축소 방식</label>
-        <div class="seg" id="resizemode">
-          <button data-r="basic" class="on">기본</button>
-          <button data-r="moire">패턴완화</button>
-        </div>
-        <div class="hint">패턴완화: 체크·니트·잔패턴 축소 시 물결 왜곡을 일부 줄입니다.</div>
-      </div>
-
-      <div class="ctrl">
         <label>최종 캔버스</label>
         <div class="field-col">
           <div class="field-row">
@@ -318,13 +309,12 @@ function seg(id, cb) {
     };
   });
 }
-let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', resizeMode='basic', layerMode='none';
+let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', layerMode='none';
 seg('bgmode', d => bgMode=d.m);
 seg('sizebasis', d => {
   sizeBasis = d.s;
   $('basisLabel').textContent = (d.s === 'width') ? '가로' : '세로';
 });
-seg('resizemode', d => resizeMode=d.r);
 seg('fillmode', d => {
   fillMode=d.f;
   $('customColorWrap').style.display = (d.f==='custom') ? 'flex' : 'none';
@@ -458,46 +448,6 @@ function findBounds(data, w, h, bg, tol) {
   return { left, top, right, bottom };
 }
 
-function resizeCropMultiPass(src, sx, sy, sw, sh, dw, dh) {
-  let cur=document.createElement('canvas');
-  cur.width=sw; cur.height=sh;
-  let ctx=cur.getContext('2d');
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
-  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
-
-  function drawResized(source, w, h, blurPx) {
-    const next=document.createElement('canvas');
-    next.width=Math.max(1, Math.round(w));
-    next.height=Math.max(1, Math.round(h));
-    const nctx=next.getContext('2d');
-    nctx.imageSmoothingEnabled=true;
-    nctx.imageSmoothingQuality='high';
-    if (blurPx > 0) nctx.filter=`blur(${blurPx}px)`;
-    nctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, next.width, next.height);
-    nctx.filter='none';
-    return next;
-  }
-
-  const resizeRatio=Math.max(sw/dw, sh/dh);
-  if (resizeRatio >= 1.2) {
-    while ((cur.width / dw > 1.45) || (cur.height / dh > 1.45)) {
-      const nextW=Math.max(dw, Math.round(cur.width * 0.68));
-      const nextH=Math.max(dh, Math.round(cur.height * 0.68));
-      if (nextW === cur.width && nextH === cur.height) break;
-      cur=drawResized(cur, nextW, nextH, 0.8);
-    }
-    if (cur.width !== dw || cur.height !== dh) {
-      const finalBlur=Math.min(0.9, 0.42 + (resizeRatio - 1.2) * 0.12);
-      cur=drawResized(cur, dw, dh, finalBlur);
-    }
-  } else if (cur.width !== dw || cur.height !== dh) {
-    cur=drawResized(cur, dw, dh, 0);
-  }
-
-  return cur;
-}
-
 function processOne(img) {
   const tol=+$('tol').value, targetSize=+$('ps').value;
   const cw=+$('cw').value, ch=+$('ch').value;
@@ -533,12 +483,7 @@ function processOne(img) {
   else y = Math.round((ch-drawH)/2);
 
   octx.imageSmoothingQuality='high';
-  if (resizeMode === 'moire') {
-    const resized=resizeCropMultiPass(src, b.left, b.top, cropW, cropH, drawW, drawH);
-    octx.drawImage(resized, x, y);
-  } else {
-    octx.drawImage(src, b.left, b.top, cropW, cropH, x, y, drawW, drawH);
-  }
+  octx.drawImage(src, b.left, b.top, cropW, cropH, x, y, drawW, drawH);
   if (layerMode !== 'none') {
     octx.globalCompositeOperation = layerMode;
     octx.fillStyle = $('layerColor').value;
