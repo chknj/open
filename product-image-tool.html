@@ -466,24 +466,20 @@ function resizeCropMultiPass(src, sx, sy, sw, sh, dw, dh) {
   ctx.imageSmoothingQuality='high';
   ctx.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
 
-  let baseSteps=0, stepW=sw, stepH=sh;
-  while (stepW / dw > 2 || stepH / dh > 2) {
-    baseSteps++;
-    stepW=Math.max(dw, Math.round(stepW * 0.5));
-    stepH=Math.max(dh, Math.round(stepH * 0.5));
-  }
-
-  for (let i=1; i<=baseSteps*3; i++) {
-    const t=i/(baseSteps*3+1);
-    const next=document.createElement('canvas');
-    next.width=Math.max(dw, Math.round(sw * Math.pow(dw / sw, t)));
-    next.height=Math.max(dh, Math.round(sh * Math.pow(dh / sh, t)));
-    if (next.width === cur.width && next.height === cur.height) continue;
-    const nctx=next.getContext('2d');
-    nctx.imageSmoothingEnabled=true;
-    nctx.imageSmoothingQuality='high';
-    nctx.drawImage(cur, 0, 0, cur.width, cur.height, 0, 0, next.width, next.height);
-    cur=next;
+  const resizeRatio=Math.max(sw/dw, sh/dh);
+  if (resizeRatio >= 1.3) {
+    for (let i=1; i<=5; i++) {
+      const t=i/5;
+      const next=document.createElement('canvas');
+      next.width=Math.max(1, Math.round(sw + (dw - sw) * t));
+      next.height=Math.max(1, Math.round(sh + (dh - sh) * t));
+      if (next.width === cur.width && next.height === cur.height) continue;
+      const nctx=next.getContext('2d');
+      nctx.imageSmoothingEnabled=true;
+      nctx.imageSmoothingQuality='high';
+      nctx.drawImage(cur, 0, 0, cur.width, cur.height, 0, 0, next.width, next.height);
+      cur=next;
+    }
   }
 
   if (cur.width === dw && cur.height === dh) return cur;
