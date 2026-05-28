@@ -224,7 +224,7 @@
           <button data-r="basic" class="on">기본</button>
           <button data-r="moire">패턴완화</button>
         </div>
-        <div class="hint">패턴완화: 체크·니트·잔패턴 축소 시 물결 왜곡을 줄입니다.</div>
+        <div class="hint">패턴완화: 체크·니트·잔패턴 축소 시 물결 왜곡을 일부 줄입니다.</div>
       </div>
 
       <div class="ctrl">
@@ -257,6 +257,19 @@
       </div>
 
       <div class="ctrl">
+        <label>마지막 색 입히기</label>
+        <div class="seg" id="layermode">
+          <button data-l="none" class="on">선택 안함</button>
+          <button data-l="darken">어둡게</button>
+          <button data-l="multiply">곱하기</button>
+        </div>
+        <div class="field" id="layerColorWrap" style="margin-top:9px; display:none;">
+          <input type="color" id="layerColor" value="#ebebeb">
+          <span id="layerColorTxt">#EBEBEB</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
         <label>세로 위치 기준</label>
         <div class="seg" id="vmode">
           <button data-v="center" class="on">정중앙</button>
@@ -270,6 +283,7 @@
       </div>
 
       <button class="btn btn-go" id="run" disabled>일괄 처리</button>
+      <button class="btn btn-dl" id="dlEach" style="display:none;">개별이미지 일괄 다운로드</button>
       <button class="btn btn-dl" id="dl" style="display:none;">ZIP 다운로드</button>
     </div>
 
@@ -304,7 +318,7 @@ function seg(id, cb) {
     };
   });
 }
-let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', resizeMode='basic';
+let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', resizeMode='basic', layerMode='none';
 seg('bgmode', d => bgMode=d.m);
 seg('sizebasis', d => {
   sizeBasis = d.s;
@@ -315,11 +329,16 @@ seg('fillmode', d => {
   fillMode=d.f;
   $('customColorWrap').style.display = (d.f==='custom') ? 'flex' : 'none';
 });
+seg('layermode', d => {
+  layerMode=d.l;
+  $('layerColorWrap').style.display = (d.l==='none') ? 'none' : 'flex';
+});
 seg('vmode', d => {
   vMode=d.v;
   $('bottomGapWrap').style.display = (d.v==='bottom') ? 'flex' : 'none';
 });
 $('fillColor').oninput = e => $('fillColorTxt').textContent = e.target.value.toUpperCase();
+$('layerColor').oninput = e => $('layerColorTxt').textContent = e.target.value.toUpperCase();
 
 // 폴더 업로드
 const drop=$('drop'), fileInput=$('file');
@@ -510,6 +529,12 @@ function processOne(img) {
   } else {
     octx.drawImage(src, b.left, b.top, cropW, cropH, x, y, drawW, drawH);
   }
+  if (layerMode !== 'none') {
+    octx.globalCompositeOperation = layerMode;
+    octx.fillStyle = $('layerColor').value;
+    octx.fillRect(0, 0, cw, ch);
+    octx.globalCompositeOperation = 'source-over';
+  }
   return out;
 }
 
@@ -518,6 +543,7 @@ $('run').onclick = async () => {
   results = [];
   $('progWrap').style.display='block';
   $('resultsArea').innerHTML='';
+  $('dlEach').style.display='none';
   $('dl').style.display='none';
 
   let ok=0, fail=0;
@@ -538,7 +564,10 @@ $('run').onclick = async () => {
   renderResults();
   $('stat').style.display='block';
   $('stat').innerHTML = `총 <b>${files.length}</b>장 · 성공 <b>${ok}</b> · 실패 <b>${fail}</b><br>캔버스 <b>${$('cw').value}×${$('ch').value}</b> · 상품 ${sizeBasis==='width'?'가로':'세로'} <b>${$('ps').value}px</b> 기준`;
-  if (ok>0) $('dl').style.display='block';
+  if (ok>0) {
+    $('dlEach').style.display='block';
+    $('dl').style.display='block';
+  }
 };
 
 function renderResults() {
@@ -556,7 +585,7 @@ function renderResults() {
       const singleBtn=document.createElement('button');
       singleBtn.type='button';
       singleBtn.className='res-download';
-      singleBtn.textContent='PNG 다운로드';
+      singleBtn.textContent='JPG 다운로드';
       singleBtn.onclick = () => downloadResult(r);
       meta.appendChild(singleBtn);
     }
@@ -567,16 +596,30 @@ function renderResults() {
 }
 
 function resultFileName(r) {
-  return r.name.replace(/\.[^.]+$/, '') + '.png';
+  return r.name.replace(/\.[^.]+$/, '') + '.jpg';
 }
 
 function downloadResult(r) {
   if (!r.ok || !r.canvas) return;
   const a=document.createElement('a');
-  a.href=r.canvas.toDataURL('image/png');
+  a.href=r.canvas.toDataURL('image/jpeg', 0.95);
   a.download=resultFileName(r);
   a.click();
 }
+
+// 개별 JPG 일괄 다운로드
+$('dlEach').onclick = async () => {
+  const okResults = results.filter(r=>r.ok);
+  if (!okResults.length) return;
+  $('dlEach').textContent='개별 다운로드 중…'; $('dlEach').disabled=true;
+
+  for (const r of okResults) {
+    downloadResult(r);
+    await new Promise(res => setTimeout(res, 120));
+  }
+
+  $('dlEach').textContent='개별이미지 일괄 다운로드'; $('dlEach').disabled=false;
+};
 
 // ZIP 다운로드 (폴더 구조·파일명 유지)
 $('dl').onclick = async () => {
@@ -586,7 +629,7 @@ $('dl').onclick = async () => {
 
   const zip = new JSZip();
   for (const r of okResults) {
-    const blob = await new Promise(res => r.canvas.toBlob(res, 'image/png'));
+    const blob = await new Promise(res => r.canvas.toBlob(res, 'image/jpeg', 0.95));
     const path = (r.folder ? r.folder + '/' : '') + resultFileName(r);
     zip.file(path, blob);
   }
