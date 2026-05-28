@@ -154,6 +154,12 @@
   .res-meta .fn { font-weight: 600; word-break: break-all; line-height: 1.4; }
   .res-meta .folder { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 10px; margin-bottom: 3px; }
   .res-meta .fail { color: #C0392B; font-weight: 600; }
+  .res-download {
+    width: 100%; margin-top: 8px; padding: 7px 8px; border: 1px solid var(--line-2);
+    border-radius: 3px; background: var(--bg); color: var(--text); font-family: inherit;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+  .res-download:hover { background: var(--panel-2); }
 
   .empty-state { text-align: center; color: var(--muted); font-size: 13px; padding: 80px 20px; border: 1px dashed var(--line-2); border-radius: 4px; }
   .open-source-footer {
@@ -215,8 +221,8 @@
       <div class="ctrl">
         <label>축소 방식</label>
         <div class="seg" id="resizemode">
-          <button data-r="basic">기본</button>
-          <button data-r="moire" class="on">패턴완화</button>
+          <button data-r="basic" class="on">기본</button>
+          <button data-r="moire">패턴완화</button>
         </div>
         <div class="hint">패턴완화: 체크·니트·잔패턴 축소 시 물결 왜곡을 줄입니다.</div>
       </div>
@@ -298,7 +304,7 @@ function seg(id, cb) {
     };
   });
 }
-let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', resizeMode='moire';
+let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', resizeMode='basic';
 seg('bgmode', d => bgMode=d.m);
 seg('sizebasis', d => {
   sizeBasis = d.s;
@@ -546,10 +552,30 @@ function renderResults() {
     else thumb.innerHTML='<span style="color:#C0392B;font-size:11px;">인식 실패</span>';
     const meta=document.createElement('div'); meta.className='res-meta';
     meta.innerHTML = `<div class="folder">${r.folder||'(루트)'}</div><div class="fn ${r.ok?'':'fail'}">${r.name}</div>`;
+    if (r.ok) {
+      const singleBtn=document.createElement('button');
+      singleBtn.type='button';
+      singleBtn.className='res-download';
+      singleBtn.textContent='PNG 다운로드';
+      singleBtn.onclick = () => downloadResult(r);
+      meta.appendChild(singleBtn);
+    }
     card.appendChild(thumb); card.appendChild(meta);
     grid.appendChild(card);
   });
   area.appendChild(grid);
+}
+
+function resultFileName(r) {
+  return r.name.replace(/\.[^.]+$/, '') + '.png';
+}
+
+function downloadResult(r) {
+  if (!r.ok || !r.canvas) return;
+  const a=document.createElement('a');
+  a.href=r.canvas.toDataURL('image/png');
+  a.download=resultFileName(r);
+  a.click();
 }
 
 // ZIP 다운로드 (폴더 구조·파일명 유지)
@@ -561,7 +587,7 @@ $('dl').onclick = async () => {
   const zip = new JSZip();
   for (const r of okResults) {
     const blob = await new Promise(res => r.canvas.toBlob(res, 'image/png'));
-    const path = (r.folder ? r.folder + '/' : '') + r.name.replace(/\.[^.]+$/, '') + '.png';
+    const path = (r.folder ? r.folder + '/' : '') + resultFileName(r);
     zip.file(path, blob);
   }
   const content = await zip.generateAsync({ type:'blob' });
