@@ -112,6 +112,17 @@
     font-weight: 600; color: var(--text);
   }
   .field-row .fu { color: var(--muted); font-size: 12px; width: 22px; }
+  .canvas-presets {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 2px;
+  }
+  .canvas-presets button {
+    padding: 8px 4px; background: var(--bg); color: var(--muted);
+    border: 1px solid var(--line-2); border-radius: 3px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; cursor: pointer; transition: all .12s; white-space: nowrap;
+  }
+  .canvas-presets button:hover {
+    border-color: var(--text); color: var(--text); background: var(--panel-2);
+  }
 
   .btn {
     width: 100%; padding: 14px; font-size: 14px; font-weight: 700; font-family: inherit;
@@ -240,6 +251,11 @@
             <input type="number" id="ch" value="1300">
             <span class="fu">px</span>
           </div>
+          <div class="canvas-presets" id="canvasPresets">
+            <button type="button" data-w="1000" data-h="1000">1000×1000</button>
+            <button type="button" data-w="1500" data-h="1800">1500×1800</button>
+            <button type="button" data-w="1000" data-h="1300">1000×1300</button>
+          </div>
         </div>
       </div>
 
@@ -309,6 +325,12 @@ let results = [];      // {folder, name, canvas, ok}
 
 $('tol').oninput = e => $('tolVal').textContent = e.target.value;
 $('ps').oninput = e => $('psVal').textContent = e.target.value + 'px';
+$('canvasPresets').onclick = e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  $('cw').value = btn.dataset.w;
+  $('ch').value = btn.dataset.h;
+};
 
 function seg(id, cb) {
   document.querySelectorAll('#'+id+' button').forEach(b => {
