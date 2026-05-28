@@ -186,7 +186,7 @@
       <div class="ctrl">
         <label>배경 인식 방식</label>
         <div class="seg" id="bgmode">
-          <button data-m="auto" class="on">모서리 자동</button>
+          <button data-m="auto" class="on">자동 인식</button>
           <button data-m="white">흰색 고정</button>
         </div>
         <div class="hint">각 이미지의 모서리에서 배경색을 자동 감지 (단색 배경 대응)</div>
@@ -210,6 +210,15 @@
       <div class="ctrl">
         <label>상품 <span id="basisLabel">가로</span> 크기 <span class="val" id="psVal">600px</span></label>
         <input type="range" id="ps" min="200" max="1300" value="600" step="10">
+      </div>
+
+      <div class="ctrl">
+        <label>축소 방식</label>
+        <div class="seg" id="resizemode">
+          <button data-r="basic">기본</button>
+          <button data-r="moire" class="on">패턴완화</button>
+        </div>
+        <div class="hint">패턴완화: 체크·니트·잔패턴 축소 시 물결 왜곡을 줄입니다.</div>
       </div>
 
       <div class="ctrl">
@@ -289,12 +298,13 @@ function seg(id, cb) {
     };
   });
 }
-let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width';
+let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', resizeMode='moire';
 seg('bgmode', d => bgMode=d.m);
 seg('sizebasis', d => {
   sizeBasis = d.s;
   $('basisLabel').textContent = (d.s === 'width') ? '가로' : '세로';
 });
+seg('resizemode', d => resizeMode=d.r);
 seg('fillmode', d => {
   fillMode=d.f;
   $('customColorWrap').style.display = (d.f==='custom') ? 'flex' : 'none';
@@ -423,6 +433,36 @@ function findBounds(data, w, h, bg, tol) {
   return { left, top, right, bottom };
 }
 
+function resizeCropMultiPass(src, sx, sy, sw, sh, dw, dh) {
+  let cur=document.createElement('canvas');
+  cur.width=sw; cur.height=sh;
+  let ctx=cur.getContext('2d');
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+
+  while (cur.width / dw > 2 || cur.height / dh > 2) {
+    const next=document.createElement('canvas');
+    next.width=Math.max(dw, Math.round(cur.width * 0.5));
+    next.height=Math.max(dh, Math.round(cur.height * 0.5));
+    const nctx=next.getContext('2d');
+    nctx.imageSmoothingEnabled=true;
+    nctx.imageSmoothingQuality='high';
+    nctx.drawImage(cur, 0, 0, cur.width, cur.height, 0, 0, next.width, next.height);
+    cur=next;
+  }
+
+  if (cur.width === dw && cur.height === dh) return cur;
+
+  const out=document.createElement('canvas');
+  out.width=dw; out.height=dh;
+  const octx=out.getContext('2d');
+  octx.imageSmoothingEnabled=true;
+  octx.imageSmoothingQuality='high';
+  octx.drawImage(cur, 0, 0, cur.width, cur.height, 0, 0, dw, dh);
+  return out;
+}
+
 function processOne(img) {
   const tol=+$('tol').value, targetSize=+$('ps').value;
   const cw=+$('cw').value, ch=+$('ch').value;
@@ -458,7 +498,12 @@ function processOne(img) {
   else y = Math.round((ch-drawH)/2);
 
   octx.imageSmoothingQuality='high';
-  octx.drawImage(src, b.left, b.top, cropW, cropH, x, y, drawW, drawH);
+  if (resizeMode === 'moire') {
+    const resized=resizeCropMultiPass(src, b.left, b.top, cropW, cropH, drawW, drawH);
+    octx.drawImage(resized, x, y);
+  } else {
+    octx.drawImage(src, b.left, b.top, cropW, cropH, x, y, drawW, drawH);
+  }
   return out;
 }
 
