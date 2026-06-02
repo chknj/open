@@ -365,7 +365,7 @@ function classifyFolders(files){
     for(const f of fs){
       o.byName[f.name]=f;
       const base = f.name.replace(IMG_RE,'');
-      if(/^intro/i.test(base)) o.intro.push(f);
+      if(/intro/i.test(base)) o.intro.push(f);
       else if(/^add/i.test(base)) o.add.push(f);
       else if(/^comm/i.test(base)) o.comm.push({n:numFromName(f.name),file:f});
       else if(/^\d+$/.test(base)) o.numbered.push({n:parseInt(base,10),file:f});
