@@ -108,7 +108,10 @@ table.sub-tbl td .k{font-family:var(--mono);font-size:11.5px;color:var(--accent)
 .prev-cap{font-size:11px;color:var(--muted);font-family:var(--mono);padding:3px 6px;background:#FAFAF8;border-top:1px dashed var(--line);}
 .prev-video{background:#111;color:#9fd;font-family:var(--mono);font-size:12px;padding:30px;text-align:center;}
 .order-editor{border:1px solid var(--line);border-radius:var(--radius);background:#FBFAF7;padding:14px;margin-bottom:14px;}
-.order-head{font-size:12px;font-weight:700;margin-bottom:10px;}
+.order-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;font-weight:700;margin-bottom:10px;}
+.order-bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-weight:400;}
+.order-bulk select{width:auto;min-width:150px;padding:6px 8px;font-size:12px;}
+.order-bulk .btn{padding:6px 10px;font-size:12px;}
 .order-group{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line);}
 .order-group:first-of-type{border-top:0;padding-top:0;}
 .order-code{font-family:var(--mono);font-size:12px;color:var(--accent);padding-top:6px;}
@@ -116,7 +119,7 @@ table.sub-tbl td .k{font-family:var(--mono);font-size:11.5px;color:var(--accent)
 .order-pill{border:1px solid var(--line2);background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;font-family:var(--mono);cursor:default;}
 .order-pill.video{background:var(--ink);border-color:var(--ink);color:#fff;cursor:grab;}
 .order-pill.drop-on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
-@media(max-width:760px){.order-group{grid-template-columns:1fr;}}
+@media(max-width:760px){.order-head{align-items:flex-start;flex-direction:column;}.order-group{grid-template-columns:1fr;}}
 
 .out-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 @media(max-width:760px){.out-grid{grid-template-columns:1fr;}}
@@ -240,6 +243,10 @@ footer{max-width:1180px;margin:30px auto 0;padding:0 28px;font-size:11.5px;color
         <div class="field"><label>배경색</label><input type="text" id="bgColor" value="#ffffff"></div>
         <div class="field"><label>서브이미지 간격(px)</label><input type="number" id="subImgGap" value="20"></div>
       </div>
+      <div class="btn-row">
+        <button class="btn ghost" id="resetOptions" type="button">옵션 초기화</button>
+        <span class="statusline" id="optionStatus" style="margin-top:0;align-self:center;"></span>
+      </div>
 
       <div style="margin-top:18px;">
         <label style="font-size:12px;font-weight:600;display:block;margin-bottom:8px;">서브타이틀 (엑셀에 없는 요소 · 텍스트 블록별 on/off)</label>
@@ -337,11 +344,54 @@ const $ = id => document.getElementById(id);
 /* ---------- helpers ---------- */
 const IMG_RE = /\.(jpe?g|png|gif|webp)$/i;
 const MAIN_TOP_GAP = 150;
+const OPTION_STORE_KEY = 'detail_builder_options_v1';
+const OPTION_IDS = ['fontFamily','titleSize','titleLh','titleWeight','bodySize','bodyLh','bodyWeight','subSize','subLh','subGap','subWeight','regionPad','blockGap','sidePad','canvasW','wrapMode','textColor','bgColor','subImgGap','ftpFixedBase','ftpBase'];
 const isBlank = v => v===null||v===undefined||String(v).trim()===''||String(v).trim().toLowerCase()==='n';
 const numFromName = (name)=>{ const m = name.replace(IMG_RE,'').match(/(\d+)/); return m?parseInt(m[1],10):0; };
 const textNum = (key)=>{ const m=String(key).match(/(\d+)/); return m?parseInt(m[1],10):0; };
 const escAttr = (s)=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const splitVideos = (v)=>isBlank(v) ? [] : String(v).split(/[\n;,]+/).map(s=>s.trim()).filter(Boolean);
+
+const DEFAULT_OPTIONS = {};
+OPTION_IDS.forEach(id=>{ DEFAULT_OPTIONS[id]=$(id)?$(id).value:''; });
+
+function saveOptions(){
+  const fields={};
+  OPTION_IDS.forEach(id=>{ if($(id)) fields[id]=$(id).value; });
+  try{ localStorage.setItem(OPTION_STORE_KEY,JSON.stringify({fields,subtitles:S.subtitles})); }catch(e){}
+}
+
+function restoreOptions(){
+  let saved=null;
+  try{ saved=JSON.parse(localStorage.getItem(OPTION_STORE_KEY)||'null'); }catch(e){}
+  if(!saved) return;
+  Object.keys(saved.fields||{}).forEach(id=>{ if($(id)) $(id).value=saved.fields[id]; });
+  if(saved.subtitles) S.subtitles=saved.subtitles;
+}
+
+function resetOptions(){
+  OPTION_IDS.forEach(id=>{ if($(id) && DEFAULT_OPTIONS[id]!==undefined) $(id).value=DEFAULT_OPTIONS[id]; });
+  S.subtitles={};
+  try{ localStorage.removeItem(OPTION_STORE_KEY); }catch(e){}
+  if(S.textCols.length) buildSubtitleTable();
+  if($('optionStatus')){
+    $('optionStatus').textContent='기본값으로 초기화됨';
+    setTimeout(()=>$('optionStatus').textContent='',1500);
+  }
+}
+
+function bindOptionPersistence(){
+  restoreOptions();
+  OPTION_IDS.forEach(id=>{
+    const el=$(id);
+    if(el) el.addEventListener('input',saveOptions);
+  });
+  OPTION_IDS.forEach(id=>{
+    const el=$(id);
+    if(el) el.addEventListener('change',saveOptions);
+  });
+  if($('resetOptions')) $('resetOptions').onclick=resetOptions;
+}
 
 function classifyFolders(files){
   // group files by the path segment matching a known code; if no codes yet, group by last folder
@@ -453,9 +503,11 @@ function buildSubtitleTable(){
       <td><input type="text" value="${escAttr(st.text)}" data-stxt="${key}" placeholder="예: Detail / Material …"></td>`;
     tb.appendChild(tr);
   });
-  tb.querySelectorAll('[data-sk]').forEach(el=>el.onchange=e=>{ S.subtitles[e.target.dataset.sk].on=e.target.checked; });
-  tb.querySelectorAll('[data-stxt]').forEach(el=>el.oninput=e=>{ S.subtitles[e.target.dataset.stxt].text=e.target.value; });
+  tb.querySelectorAll('[data-sk]').forEach(el=>el.onchange=e=>{ S.subtitles[e.target.dataset.sk].on=e.target.checked; saveOptions(); });
+  tb.querySelectorAll('[data-stxt]').forEach(el=>el.oninput=e=>{ S.subtitles[e.target.dataset.stxt].text=e.target.value; saveOptions(); });
 }
+
+bindOptionPersistence();
 
 /* ---------- STEP 1: images ---------- */
 $('dropImg').onclick=()=>$('imgInput').click();
@@ -592,6 +644,29 @@ function pillLabel(it){
   return it.name.replace(IMG_RE,'');
 }
 
+function videoSlotByMode(base, mode){
+  const first=(kind)=>base.findIndex(it=>it.kind===kind);
+  const afterLast=(kind)=>{
+    let idx=-1;
+    base.forEach((it,i)=>{ if(it.kind===kind) idx=i; });
+    return idx>=0 ? idx+1 : -1;
+  };
+  const fallback=defaultVideoSlot(base);
+  if(mode==='top') return 0;
+  if(mode==='afterIntro') return fallback;
+  if(mode==='beforeMain') return first('main')>=0 ? first('main') : fallback;
+  if(mode==='afterMain') return first('main')>=0 ? first('main')+1 : fallback;
+  if(mode==='afterAdd'){
+    const addSlot=afterLast('add');
+    if(addSlot>=0) return addSlot;
+    return first('main')>=0 ? first('main')+1 : fallback;
+  }
+  if(mode==='beforeText') return first('text')>=0 ? first('text') : fallback;
+  if(mode==='beforeComm') return first('comm')>=0 ? first('comm') : base.length;
+  if(mode==='end') return base.length;
+  return fallback;
+}
+
 function renderOrderEditor(matched){
   const box=$('orderEditor');
   if(!box) return;
@@ -601,7 +676,21 @@ function renderOrderEditor(matched){
   });
   if(!codes.length){ box.classList.add('hidden'); box.innerHTML=''; return; }
   box.classList.remove('hidden');
-  box.innerHTML='<div class="order-head">동영상 위치</div>';
+  box.innerHTML=`<div class="order-head"><span>동영상 위치</span>
+    <div class="order-bulk">
+      <select id="bulkVideoSlot">
+        <option value="afterIntro">intro 뒤</option>
+        <option value="top">맨 앞</option>
+        <option value="beforeMain">1번 이미지 앞</option>
+        <option value="afterMain">1번 이미지 뒤</option>
+        <option value="afterAdd">add 뒤</option>
+        <option value="beforeText">text 앞</option>
+        <option value="beforeComm">공통 이미지 앞</option>
+        <option value="end">맨 끝</option>
+      </select>
+      <button class="btn ghost" id="bulkVideoApply" type="button">일괄 적용</button>
+    </div></div>`;
+  $('bulkVideoApply').onclick=()=>applyBulkVideoSlot(codes,$('bulkVideoSlot').value);
   codes.forEach(code=>{
     const base=buildBaseSequence(code,null);
     const seq=assembleSequence(code,base);
@@ -653,6 +742,18 @@ function renderOrderEditor(matched){
 function parseDragVideo(data){
   const parts=String(data||'').split('|');
   return parts.length===2 ? {code:parts[0],id:parts[1]} : null;
+}
+
+async function applyBulkVideoSlot(codes, mode){
+  for(const code of codes){
+    const base=buildBaseSequence(code, S.rendered[code] || null);
+    const slot=videoSlotByMode(base,mode);
+    ensureVideoItems(code,base).forEach(v=>{ v.slot=Math.max(0,Math.min(base.length,slot)); });
+    if(S.assembly[code]) S.assembly[code]=await addSpacerImages(assembleSequence(code,base),cfg());
+  }
+  renderOrderEditor(S.rows.map(r=>r.code).filter(c=>S.folders[c]));
+  const active=$('prevTabs').querySelector('.prev-tab.active');
+  if(active) showPreview(active.textContent);
 }
 
 async function setVideoSlot(code, videoId, slot){
