@@ -127,6 +127,11 @@ section { padding: 80px 0; }
 /* note */
 .note { border-left: 3px solid var(--red); padding: 14px 18px; margin: 24px 0; font-size: 0.85rem; color: var(--text-mid); line-height:1.55; background: #FAFAFA; }
 .note b { color: var(--black); }
+.guide-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:20px; }
+.guide-card { border:1px solid var(--line); padding:18px 20px; }
+.guide-card .h { font-family:var(--font-en); font-size:0.68rem; font-weight:700; text-transform:uppercase; margin-bottom:8px; }
+.guide-card p { font-size:0.84rem; color:var(--text-mid); line-height:1.55; }
+.guide-card b { color:var(--black); }
 
 /* rule table */
 .rt { width:100%; border-collapse: collapse; margin-top: 20px; font-size: 0.88rem; }
@@ -171,6 +176,7 @@ footer .f-r { font-size:0.78rem; color:var(--text-mid); line-height:1.7; }
   .pc-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
   .cover .meta{grid-template-columns:1fr;}
   .dd{grid-template-columns:1fr;}
+  .guide-grid{grid-template-columns:1fr;}
   .ty .row{grid-template-columns:1fr;gap:10px;}
 }
 @media (max-width:560px){
@@ -254,6 +260,21 @@ footer .f-r { font-size:0.78rem; color:var(--text-mid); line-height:1.7; }
       <div class="sw"><div class="c" style="background:#BFB8AF;"></div><div class="b"><div class="nm">Warm Gray</div><div class="en-nm">Warm Gray 3c</div><div class="vals"><b>#BFB8AF</b><br>191 184 175</div><div class="use">배경 전용</div></div></div>
     </div>
 
+    <div class="guide-grid">
+      <div class="guide-card">
+        <div class="h en">Tint</div>
+        <p>Accent 컬러는 <b>10% 단위 틴트</b>로 확장 가능하다. 단, 한 화면 안에서는 원색과 틴트를 동시에 많이 섞지 않는다.</p>
+      </div>
+      <div class="guide-card">
+        <div class="h en">Color Block</div>
+        <p>이미지 위 가독성이 필요할 때 브랜드 컬러 블록을 사용한다. 기준 비율은 <b>1/3 · 1/2 · 2/3</b> 중 선택한다.</p>
+      </div>
+      <div class="guide-card">
+        <div class="h en">Hierarchy</div>
+        <p>Black / White가 기본, Accent는 메시지 강조용, Secondary는 <b>상품 표현 보조</b>로만 사용한다.</p>
+      </div>
+    </div>
+
     <!-- SECONDARY: Korea product -->
     <div class="tier">
       <span class="tier-rank secondary en">Secondary</span>
@@ -316,6 +337,15 @@ footer .f-r { font-size:0.78rem; color:var(--text-mid); line-height:1.7; }
       <tbody>
         <tr><td><b>Headline</b></td><td>Helvetica Bold / Light</td><td>10pt</td><td>1.1 × 크기</td></tr>
         <tr><td><b>Body</b></td><td>Helvetica Regular / Light</td><td>0pt</td><td>1.25 × 크기</td></tr>
+      </tbody>
+    </table>
+
+    <table class="rt">
+      <thead><tr><th>항목</th><th>기준</th><th>적용</th></tr></thead>
+      <tbody>
+        <tr><td><b>Headline</b></td><td>Uppercase 또는 Sentence case</td><td>짧고 강한 메시지. BUILT TO RESIST는 헤드라인에서 대문자 권장.</td></tr>
+        <tr><td><b>Body</b></td><td>Sentence case</td><td>본문의 Built to Resist는 B와 R만 대문자 처리.</td></tr>
+        <tr><td><b>Korean</b></td><td>Pretendard Regular / SemiBold / Bold</td><td>국문 운영 문구와 설명문에 사용. 영문 브랜드 문구는 Helvetica 우선.</td></tr>
       </tbody>
     </table>
 
