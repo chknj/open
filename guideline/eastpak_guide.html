@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#FFFFFF">
+<title>EASTPAK — 컬러 &amp; 폰트 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Helvetica:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* ===========================================================
+   DESIGN TOKENS — Eastpak HQ Brand Guideline 기반
+   Color: Black / White / HQ Accent (Red 강조)
+   Font:  Helvetica (영문) · Pretendard (국문)
+   =========================================================== */
+:root {
+  --black: #000000;
+  --white: #FFFFFF;
+  --red:   #C8102E;   /* HQ Eastpak Red — heritage/강조 */
+  --warm-gray: #BFB8AF;
+  --off-white: #D9D9D6;
+  --cool-gray: #B1B3B3;
+
+  --line:  #D9D9D6;
+  --line-strong: #000000;
+  --text-mid: #4A4D52;
+
+  --font-en: 'Helvetica', 'Helvetica Neue', Arial, sans-serif;
+  --font-kr: 'Pretendard', 'Helvetica Neue', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body {
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-kr);
+  font-weight: 400;
+  line-height: 1.5;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+.en { font-family: var(--font-en); }
+
+/* Helvetica typographic system from HQ guide */
+h1,h2,h3 { font-weight: 700; line-height: 1.1; }
+h1 { font-size: clamp(2.5rem,7vw,5rem); }
+h2 { font-size: clamp(1.75rem,3.5vw,2.75rem); }
+h3 { font-size: clamp(1.125rem,1.6vw,1.375rem); }
+
+.container { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+section { padding: 80px 0; }
+
+/* label — Helvetica bold caps, tracking 10pt feel */
+.label {
+  font-family: var(--font-en);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.label.red { color: var(--red); }
+.label.muted { color: var(--text-mid); }
+
+/* ===== Masthead ===== */
+.masthead {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--white);
+  border-bottom: 2px solid var(--black);
+  padding: 16px 32px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-en);
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase;
+}
+.masthead .right { color: var(--text-mid); font-weight: 400; }
+
+/* ===== Cover ===== */
+.cover { padding: 96px 0 72px; border-bottom: 2px solid var(--black); }
+.cover .eyebrow { margin-bottom: 40px; }
+.cover h1 { text-transform: uppercase; margin-bottom: 28px; }
+.cover .kr-title { font-family: var(--font-kr); font-weight: 700; font-size: clamp(1.5rem,3vw,2.25rem); margin-bottom: 32px; }
+.cover .meta { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 24px; margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--line); }
+.cover .meta .m-l { font-family: var(--font-en); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px; }
+.cover .meta .m-v { font-size: 0.9rem; font-weight: 500; }
+
+/* ===== Chapter head ===== */
+.ch-head { border-top: 2px solid var(--black); padding-top: 24px; margin-bottom: 48px; display: flex; align-items: baseline; gap: 24px; }
+.ch-head .ch-no { font-family: var(--font-en); font-weight: 700; font-size: 1rem; color: var(--red); }
+.ch-head h2 { text-transform: uppercase; }
+.ch-head .ch-kr { font-family: var(--font-kr); font-weight: 700; }
+
+/* ===== Tier label ===== */
+.tier { margin: 56px 0 20px; display:flex; align-items:center; gap:14px; }
+.tier .tier-rank { font-family: var(--font-en); font-size: 0.66rem; font-weight:700; text-transform:uppercase; padding: 5px 12px; border-radius: 100px; }
+.tier .tier-rank.primary { background: var(--black); color: var(--white); }
+.tier .tier-rank.secondary { background: var(--white); color: var(--black); border: 1.5px solid var(--black); }
+.tier h3 { font-family: var(--font-kr); }
+.tier-desc { font-size: 0.9rem; color: var(--text-mid); margin-bottom: 4px; max-width: 720px; }
+
+/* ===== Swatch grid ===== */
+.sw-grid { display: grid; gap: 14px; }
+.sw-grid.c2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.sw-grid.c3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.sw-grid.c4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.sw { border: 1px solid var(--line); overflow: hidden; display:flex; flex-direction:column; }
+.sw .c { height: 120px; }
+.sw .b { padding: 14px 16px; }
+.sw .b .nm { font-weight: 700; font-size: 0.95rem; }
+.sw .b .en-nm { font-family: var(--font-en); font-size: 0.64rem; font-weight:700; text-transform: uppercase; color: var(--text-mid); margin-top: 2px; }
+.sw .b .vals { font-family: var(--font-en); font-size: 0.72rem; color: var(--text-mid); line-height: 1.6; margin-top: 10px; }
+.sw .b .vals b { color: var(--black); }
+.sw .b .use { font-size: 0.76rem; color: var(--text-mid); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); line-height:1.45; }
+.sw .b .use b { color: var(--black); }
+
+/* compact product chips */
+.pc-grid { display:grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap:10px; }
+.pc { border:1px solid var(--line); overflow:hidden; }
+.pc .c { height: 70px; }
+.pc .b { padding: 9px 10px 11px; }
+.pc .nm { font-size:0.74rem; font-weight:700; line-height:1.2; }
+.pc .v { font-family:var(--font-en); font-size:0.58rem; color:var(--text-mid); line-height:1.45; margin-top:3px; }
+.pc .v b { color:var(--black); }
+
+/* note */
+.note { border-left: 3px solid var(--red); padding: 14px 18px; margin: 24px 0; font-size: 0.85rem; color: var(--text-mid); line-height:1.55; background: #FAFAFA; }
+.note b { color: var(--black); }
+
+/* rule table */
+.rt { width:100%; border-collapse: collapse; margin-top: 20px; font-size: 0.88rem; }
+.rt th, .rt td { text-align:left; padding: 13px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rt th { font-family: var(--font-en); font-size: 0.66rem; font-weight:700; text-transform:uppercase; color:var(--text-mid); border-bottom: 2px solid var(--black); }
+.rt td { color: var(--text-mid); }
+.rt td b { color: var(--black); }
+.rt .sw-dot { display:inline-block; width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:8px;border:1px solid rgba(0,0,0,0.12); }
+
+/* type specimen */
+.ty { border:1px solid var(--line); padding: 8px 28px; margin-top:20px; }
+.ty .row { padding: 22px 0; border-bottom:1px solid var(--line); display:grid; grid-template-columns: 150px minmax(0,1fr); gap: 24px; align-items:baseline; }
+.ty .row:last-child { border-bottom:none; }
+.ty .rl { font-family:var(--font-en); font-size:0.66rem; font-weight:700; text-transform:uppercase; color:var(--text-mid); }
+.ty .rl span { display:block; color:var(--black); margin-top:3px; }
+.ty .s-en { font-family: var(--font-en); color: var(--black); }
+.ty .hl-b { font-weight:700; font-size:2.25rem; text-transform:uppercase; }
+.ty .hl-l { font-weight:300; font-size:2rem; }
+.ty .bd { font-weight:400; font-size:1rem; line-height:1.45; }
+.ty .s-kr-b { font-family:var(--font-kr); font-weight:700; font-size:1.75rem; }
+.ty .s-kr-r { font-family:var(--font-kr); font-weight:400; font-size:1rem; line-height:1.55; }
+
+.dd { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px; }
+.dd .col { border:1px solid var(--line); padding: 22px 24px; }
+.dd .col.y { border-top:3px solid var(--black); }
+.dd .col.n { border-top:3px solid var(--red); }
+.dd .col .h { font-family:var(--font-en); font-size:0.7rem; font-weight:700; text-transform:uppercase; margin-bottom:14px; }
+.dd .col.n .h { color: var(--red); }
+.dd ul { list-style:none; }
+.dd li { font-size:0.86rem; color:var(--text-mid); padding:7px 0 7px 18px; position:relative; line-height:1.45; }
+.dd .col.y li::before { content:'—'; position:absolute; left:0; color:var(--black); }
+.dd .col.n li::before { content:'×'; position:absolute; left:0; color:var(--red); font-weight:700; }
+
+footer { border-top: 2px solid var(--black); padding: 40px 0 64px; }
+footer .container { display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px; }
+footer .f-l { font-family:var(--font-en); font-size:0.7rem; font-weight:700; text-transform:uppercase; }
+footer .f-r { font-size:0.78rem; color:var(--text-mid); line-height:1.7; }
+
+@media (max-width:900px){
+  .sw-grid.c4{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sw-grid.c3{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .pc-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .cover .meta{grid-template-columns:1fr;}
+  .dd{grid-template-columns:1fr;}
+  .ty .row{grid-template-columns:1fr;gap:10px;}
+}
+@media (max-width:560px){
+  .container{padding:0 20px;}
+  .sw-grid.c2,.sw-grid.c3,.sw-grid.c4{grid-template-columns:1fr;}
+  .pc-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .masthead{font-size:0.6rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="en">EASTPAK — COLOR &amp; FONT</div>
+  <div class="right en">TRADING BX DESIGN TEAM</div>
+</div>
+
+<!-- COVER -->
+<header class="cover">
+  <div class="container">
+    <div class="eyebrow label red en">Brand Guide</div>
+    <h1 class="en">Color &amp;<br>Typography</h1>
+    <div class="kr-title">이스트팩 컬러 · 폰트 가이드</div>
+    <div class="meta">
+      <div><div class="m-l">Color</div><div class="m-v en">Black / White / Accent</div></div>
+      <div><div class="m-l">Font</div><div class="m-v en">Helvetica · Pretendard</div></div>
+      <div><div class="m-l">Base</div><div class="m-v">Eastpak HQ Brand Guideline</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 01 COLOR ================= -->
+<section id="color">
+  <div class="container">
+    <div class="ch-head">
+      <span class="ch-no en">01</span>
+      <h2 class="en">Color</h2>
+      <span class="ch-kr">/ 컬러</span>
+    </div>
+
+    <!-- PRIMARY: HQ -->
+    <div class="tier">
+      <span class="tier-rank primary en">Primary</span>
+      <h3>본사 컬러 가이드 — 기준</h3>
+    </div>
+    <p class="tier-desc">본사 공식 컬러. 로고·슬로건·그래픽·배경의 기준.</p>
+
+    <div class="sw-grid c2" style="margin-top:20px;">
+      <div class="sw">
+        <div class="c" style="background:#000000;"></div>
+        <div class="b">
+          <div class="nm">블랙</div><div class="en-nm">Eastpak Black</div>
+          <div class="vals"><b>#000000</b><br>RGB 0 0 0<br>CMYK 0 0 0 100</div>
+          <div class="use"><b>용도</b> 밝은 배경 위 브랜딩 · 본문</div>
+        </div>
+      </div>
+      <div class="sw">
+        <div class="c" style="background:#FFFFFF;border-bottom:1px solid var(--line);"></div>
+        <div class="b">
+          <div class="nm">화이트</div><div class="en-nm">Eastpak White</div>
+          <div class="vals"><b>#FFFFFF</b><br>RGB 255 255 255<br>CMYK 0 0 0 0</div>
+          <div class="use"><b>용도</b> 어두운 배경·제품컷 위 브랜딩 · 여백</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier">
+      <span class="tier-rank primary en">Accent</span>
+      <h3>본사 강조색 7</h3>
+    </div>
+    <p class="tier-desc">강조 한 곳에만 사용. 10% 단위 틴트 허용. Red는 헤리티지 전용.</p>
+
+    <div class="sw-grid c4" style="margin-top:20px;">
+      <div class="sw"><div class="c" style="background:#C8102E;"></div><div class="b"><div class="nm">Red</div><div class="en-nm">Pantone 186c</div><div class="vals"><b>#C8102E</b><br>200 16 46</div><div class="use">헤리티지 전용</div></div></div>
+      <div class="sw"><div class="c" style="background:#E31C79;"></div><div class="b"><div class="nm">Magenta</div><div class="en-nm">Pantone 213c</div><div class="vals"><b>#E31C79</b><br>227 28 121</div><div class="use">균형 · +Teal/Green/Violet</div></div></div>
+      <div class="sw"><div class="c" style="background:#FF671F;"></div><div class="b"><div class="nm">Orange</div><div class="en-nm">Pantone 165c</div><div class="vals"><b>#FF671F</b><br>255 103 31</div><div class="use">창의성 · +Teal/Violet</div></div></div>
+      <div class="sw"><div class="c" style="background:#FFD100;"></div><div class="b"><div class="nm">Yellow</div><div class="en-nm">Pantone 109c</div><div class="vals"><b>#FFD100</b><br>255 209 0</div><div class="use">에너지 · +Teal/Violet/Green</div></div></div>
+      <div class="sw"><div class="c" style="background:#007041;"></div><div class="b"><div class="nm">Green</div><div class="en-nm">Pantone 7733c</div><div class="vals"><b>#007041</b><br>0 112 65</div><div class="use">생명 · +Yellow/Violet/Magenta</div></div></div>
+      <div class="sw"><div class="c" style="background:#00968F;"></div><div class="b"><div class="nm">Teal</div><div class="en-nm">Pantone 7716c</div><div class="vals"><b>#00968F</b><br>0 150 143</div><div class="use">명료 · +Violet/Magenta/Orange/Yellow</div></div></div>
+      <div class="sw"><div class="c" style="background:#2E008B;"></div><div class="b"><div class="nm">Violet</div><div class="en-nm">Pantone 2735c</div><div class="vals"><b>#2E008B</b><br>46 0 139</div><div class="use">미래 · +Teal/Green/Yellow/Orange/Magenta</div></div></div>
+      <div class="sw"><div class="c" style="background:#BFB8AF;"></div><div class="b"><div class="nm">Warm Gray</div><div class="en-nm">Warm Gray 3c</div><div class="vals"><b>#BFB8AF</b><br>191 184 175</div><div class="use">배경 전용</div></div></div>
+    </div>
+
+    <!-- SECONDARY: Korea product -->
+    <div class="tier">
+      <span class="tier-rank secondary en">Secondary</span>
+      <h3>국내 상품 컬러 — 보조</h3>
+    </div>
+    <p class="tier-desc">FW26 한국 시즌 상품(가방·어패럴) 컬러. 본사 컬러를 보조하는 역할. 기준은 Pantone, HEX는 화면용 근사값.</p>
+
+    <p class="label muted en" style="margin:24px 0 12px;">Main 12</p>
+    <div class="pc-grid">
+      <div class="pc"><div class="c" style="background:#F1F1F0;border-bottom:1px solid var(--line);"></div><div class="b"><div class="nm">Lucent White</div><div class="v"><b>#F1F1F0</b><br>11-0700 TPG</div></div></div>
+      <div class="pc"><div class="c" style="background:#DDDEDD;border-bottom:1px solid var(--line);"></div><div class="b"><div class="nm">Barely Blue</div><div class="v"><b>#DDDEDD</b><br>12-4306 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#9A9799;"></div><div class="b"><div class="nm">Chiseled Stone</div><div class="v"><b>#9A9799</b><br>16-3917 TPG</div></div></div>
+      <div class="pc"><div class="c" style="background:#5C5C5E;"></div><div class="b"><div class="nm">Lava Smoke</div><div class="v"><b>#5C5C5E</b><br>18-0202 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#393433;"></div><div class="b"><div class="nm">Bristol Black</div><div class="v"><b>#393433</b><br>19-1100 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#272425;"></div><div class="b"><div class="nm">Black Beauty</div><div class="v"><b>#272425</b><br>19-3911 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#EAE6DC;border-bottom:1px solid var(--line);"></div><div class="b"><div class="nm">Marshmallow</div><div class="v"><b>#EAE6DC</b><br>11-4300 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#D2CCB8;"></div><div class="b"><div class="nm">Bone White</div><div class="v"><b>#D2CCB8</b><br>12-0105 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#565144;"></div><div class="b"><div class="nm">Kalamata</div><div class="v"><b>#565144</b><br>19-0510 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#39431F;"></div><div class="b"><div class="nm">Chive</div><div class="v"><b>#39431F</b><br>19-0323 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#2B2E25;"></div><div class="b"><div class="nm">Rosin</div><div class="v"><b>#2B2E25</b><br>19-0509 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#3A2D26;"></div><div class="b"><div class="nm">Demitasse</div><div class="v"><b>#3A2D26</b><br>19-0712 TCX</div></div></div>
+    </div>
+
+    <p class="label muted en" style="margin:28px 0 12px;">Sub 7</p>
+    <div class="pc-grid">
+      <div class="pc"><div class="c" style="background:#C6D0DC;"></div><div class="b"><div class="nm">Illusion Blue</div><div class="v"><b>#C6D0DC</b><br>13-4103 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#BAD2DE;"></div><div class="b"><div class="nm">Baby Blue</div><div class="v"><b>#BAD2DE</b><br>13-4308 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#5E6B82;"></div><div class="b"><div class="nm">Wild Wind</div><div class="v"><b>#5E6B82</b><br>17-3912 TPG</div></div></div>
+      <div class="pc"><div class="c" style="background:#534B5E;"></div><div class="b"><div class="nm">Mulberry Purple</div><div class="v"><b>#534B5E</b><br>19-3722 TPG</div></div></div>
+      <div class="pc"><div class="c" style="background:#46282C;"></div><div class="b"><div class="nm">Winetasting</div><div class="v"><b>#46282C</b><br>19-2118 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#8A9445;"></div><div class="b"><div class="nm">Pickled Pepper</div><div class="v"><b>#8A9445</b><br>16-0436 TCX</div></div></div>
+      <div class="pc"><div class="c" style="background:#C3CC3F;"></div><div class="b"><div class="nm">Limeade</div><div class="v"><b>#C3CC3F</b><br>13-0645 TCX</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 FONT ================= -->
+<section id="font">
+  <div class="container">
+    <div class="ch-head">
+      <span class="ch-no en">02</span>
+      <h2 class="en">Font</h2>
+      <span class="ch-kr">/ 폰트</span>
+    </div>
+
+    <div class="tier">
+      <span class="tier-rank primary en">English</span>
+      <h3>Helvetica</h3>
+    </div>
+    <p class="tier-desc">본사 공식 영문 폰트. Light / Regular / Bold 원본만 사용.</p>
+
+    <div class="ty">
+      <div class="row"><div class="rl">Headline<span>Bold</span></div><div class="s-en hl-b">Built to Resist</div></div>
+      <div class="row"><div class="rl">Headline<span>Light</span></div><div class="s-en hl-l">Eastpak Since 1952</div></div>
+      <div class="row"><div class="rl">Body<span>Regular</span></div><div class="s-en bd">The iconic Padded Pak'r. ABCDEFG abcdefg 0123456789</div></div>
+    </div>
+
+    <table class="rt">
+      <thead><tr><th>구분</th><th>웨이트</th><th>자간</th><th>행간</th></tr></thead>
+      <tbody>
+        <tr><td><b>Headline</b></td><td>Helvetica Bold / Light</td><td>10pt</td><td>1.1 × 크기</td></tr>
+        <tr><td><b>Body</b></td><td>Helvetica Regular / Light</td><td>0pt</td><td>1.25 × 크기</td></tr>
+      </tbody>
+    </table>
+
+    <div class="dd">
+      <div class="col y">
+        <div class="h en">Do</div>
+        <ul>
+          <li>헤드라인 BUILT TO RESIST (대문자)</li>
+          <li>본문 Built to Resist (B·R만 대문자)</li>
+          <li>흑 또는 백으로만</li>
+        </ul>
+      </div>
+      <div class="col n">
+        <div class="h en">Don't</div>
+        <ul>
+          <li>슬로건에 색 입히기</li>
+          <li>Helvetica 외 폰트 대체</li>
+          <li>로고 락업 임의 편집</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tier">
+      <span class="tier-rank secondary en">Korean</span>
+      <h3>Pretendard</h3>
+    </div>
+    <p class="tier-desc">본사 국문 규정 없음. 한국 운영 표준으로 Pretendard 사용. Regular / SemiBold / Bold.</p>
+
+    <div class="ty">
+      <div class="row"><div class="rl">국문 헤드라인<span>Bold</span></div><div class="s-kr-b">이스트팩</div></div>
+      <div class="row"><div class="rl">국문 본문<span>Regular</span></div><div class="s-kr-r">1952년 미군 캔버스에서 출발한 이스트팩. 30년 한정 보증.</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="f-l en">EASTPAK — COLOR &amp; FONT</div>
+    <div class="f-r">
+      무신사 · 트레이딩 BX디자인팀<br>
+      Base: Eastpak HQ Brand Guideline / 국내 상품 컬러는 보조
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
