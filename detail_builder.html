@@ -655,12 +655,12 @@ function parseDragVideo(data){
   return parts.length===2 ? {code:parts[0],id:parts[1]} : null;
 }
 
-function setVideoSlot(code, videoId, slot){
+async function setVideoSlot(code, videoId, slot){
   const base=buildBaseSequence(code, S.rendered[code] || null);
   const item=ensureVideoItems(code,base).find(v=>v.id===videoId);
   if(!item) return;
   item.slot=Math.max(0,Math.min(base.length,slot));
-  if(S.assembly[code]) S.assembly[code]=assembleSequence(code,base);
+  if(S.assembly[code]) S.assembly[code]=await addSpacerImages(assembleSequence(code,base),cfg());
   renderOrderEditor(S.rows.map(r=>r.code).filter(c=>S.folders[c]));
   const active=$('prevTabs').querySelector('.prev-tab.active');
   if(active && active.textContent===code) showPreview(code);
@@ -802,7 +802,33 @@ async function renderProduct(code,c){
   }
   S.rendered[code]=rmap;
 
-  S.assembly[code]=assembleSequence(code,buildBaseSequence(code,rmap));
+  const seq=assembleSequence(code,buildBaseSequence(code,rmap));
+  S.assembly[code]=await addSpacerImages(seq,c);
+}
+
+async function createSpacer(c,height,name){
+  const h=Math.max(1,Math.round(height));
+  const cv=document.createElement('canvas');
+  cv.width=c.width; cv.height=h;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=c.bg; ctx.fillRect(0,0,cv.width,cv.height);
+  return {kind:'spacer',name,rendered:{blob:await canvasToBlob(cv),dataUrl:cv.toDataURL('image/jpeg',0.92),w:cv.width,h:cv.height}};
+}
+
+async function addSpacerImages(seq,c){
+  const out=[];
+  let subGapCount=0;
+  for(let i=0;i<seq.length;i++){
+    const it=seq[i];
+    const prev=seq[i-1];
+    if(it.kind==='main' && MAIN_TOP_GAP>0) out.push(await createSpacer(c,MAIN_TOP_GAP,`space_main_${MAIN_TOP_GAP}.jpg`));
+    if(it.kind==='sub' && prev && prev.kind==='sub' && c.subImgGap>0){
+      subGapCount++;
+      out.push(await createSpacer(c,c.subImgGap,`space_sub_${subGapCount}_${c.subImgGap}.jpg`));
+    }
+    out.push(it);
+  }
+  return out;
 }
 
 /* ---------- preview ---------- */
@@ -818,17 +844,13 @@ function buildPreview(codes){
 }
 function showPreview(code){
   const page=$('prevPage'); page.innerHTML='';
-  const subImgGap=+$('subImgGap').value;
   S.assembly[code].forEach((it,idx)=>{
     if(it.kind==='video'){
       const d=document.createElement('div'); d.className='prev-video'; d.textContent='▶ 동영상: '+it.url; page.appendChild(d);
     }else{
       const img=document.createElement('img');
-      if(it.kind==='text') img.src=it.rendered.dataUrl;
+      if(it.kind==='text' || it.kind==='spacer') img.src=it.rendered.dataUrl;
       else img.src=URL.createObjectURL(it.file);
-      const prev=S.assembly[code][idx-1];
-      if(it.kind==='main') img.style.marginTop=(MAIN_TOP_GAP/2)+'px';
-      if(it.kind==='sub' && prev && prev.kind==='sub') img.style.marginTop=subImgGap+'px';
       page.appendChild(img);
     }
     const cap=document.createElement('div'); cap.className='prev-cap'; cap.textContent=it.name; page.appendChild(cap);
@@ -866,13 +888,10 @@ function productHtml(code){
 }
 function htmlTag(code,it,idx,prevKind){
   const url=fullUrl(code,it);
-  const subImgGap=+$('subImgGap').value;
   if(it.kind==='video'){
     return `<video src="${url}" autoplay="" controls="" loop="" muted="" playsinline="" style="width:100%" width="100%"></video>`;
   }
-  const mt = it.kind==='main' ? ` margin-top:${MAIN_TOP_GAP}px;` :
-    (it.kind==='sub' && prevKind==='sub') ? ` margin-top:${subImgGap}px;` : '';
-  return `<img src="${url}" alt="" style="display:block;width:100%;${mt}">`;
+  return `<img src="${url}" alt="" style="display:block;width:100%;">`;
 }
 $('genHtml').onclick=()=>{
   const out=$('htmlOut'); out.innerHTML='';
@@ -896,7 +915,7 @@ $('dlZip').onclick=async()=>{
       const dir=zip.folder(code);
       for(const it of S.assembly[code]){
         if(it.kind==='video') continue;
-        if(it.kind==='text') dir.file(it.name, it.rendered.blob);
+        if(it.kind==='text' || it.kind==='spacer') dir.file(it.name, it.rendered.blob);
         else dir.file(it.name, it.file);
       }
     }
