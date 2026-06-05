@@ -972,7 +972,7 @@ function fullUrl(code,it){
 $('dlXlsx').onclick=()=>{
   const rows=[['이미지코드','완성 HTML 코드']];
   Object.keys(S.assembly).forEach(code=>{
-    rows.push([code, productHtml(code)]);
+    rows.push([code, productHtmlInline(code)]);
   });
   const ws=XLSX.utils.aoa_to_sheet(rows);
   ws['!cols']=[{wch:24},{wch:120}];
@@ -986,6 +986,9 @@ function productHtml(code){
   S.assembly[code].forEach((it,i)=>{ inner+='  '+htmlTag(code,it,i, i>0?S.assembly[code][i-1].kind:null)+'\n'; });
   inner+='</div>';
   return inner;
+}
+function productHtmlInline(code){
+  return productHtml(code).replace(/\n\s*/g,'');
 }
 function htmlTag(code,it,idx,prevKind){
   const url=fullUrl(code,it);
