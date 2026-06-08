@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>썸네일 배경 생성기</title>
+<style>
+:root{
+  --bg:#f5f5f5;
+  --panel:#ffffff;
+  --ink:#171717;
+  --muted:#777777;
+  --line:#dddddd;
+  --soft:#eeeeee;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:14px;}
+body{min-height:100vh;}
+button,input,select{font:inherit;}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 24px 80px;}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;}
+h1{margin:0;font-size:22px;font-weight:700;}
+.status{color:var(--muted);font-size:13px;}
+.layout{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start;}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;}
+.panel + .panel{margin-top:14px;}
+.group{display:grid;gap:10px;}
+.field{display:grid;gap:6px;margin-bottom:12px;}
+.field label{font-size:12px;font-weight:700;color:#333333;}
+.field.inline{grid-template-columns:1fr 1fr;gap:10px;}
+input[type="number"],input[type="text"],select{width:100%;height:38px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);padding:0 10px;}
+input[type="color"]{width:100%;height:38px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:3px;}
+.btn{height:40px;border:1px solid var(--ink);border-radius:6px;background:var(--ink);color:#fff;padding:0 14px;cursor:pointer;font-weight:700;}
+.btn.secondary{background:#fff;color:var(--ink);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.drop{border:1px dashed var(--line);border-radius:8px;background:#fafafa;padding:18px;display:grid;gap:10px;}
+.drop.is-drag{border-color:var(--ink);background:#f0f0f0;}
+.file-label{display:flex;align-items:center;justify-content:center;height:40px;border:1px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);font-weight:700;cursor:pointer;}
+.hidden{display:none;}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mode label{height:38px;border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;background:#fff;}
+.mode input{display:none;}
+.mode input:checked + span{color:#fff;background:var(--ink);border-color:var(--ink);}
+.mode span{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:5px;}
+.list{display:grid;gap:12px;}
+.item{display:grid;grid-template-columns:120px 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:8px;background:#fff;padding:12px;}
+.thumb{width:120px;aspect-ratio:5/6;background:var(--soft);border:1px solid var(--line);display:block;object-fit:cover;}
+.name{font-weight:700;word-break:break-all;}
+.path{font-size:12px;color:var(--muted);word-break:break-all;margin-top:2px;}
+.empty{border:1px dashed var(--line);border-radius:8px;background:#fafafa;color:var(--muted);padding:36px;text-align:center;}
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr;}
+  .item{grid-template-columns:86px 1fr;gap:10px;}
+  .thumb{width:86px;}
+  .item .btn{grid-column:1 / -1;width:100%;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>썸네일 배경 생성기</h1>
+    <div class="status" id="status">0개</div>
+  </div>
+
+  <div class="layout">
+    <aside>
+      <section class="panel">
+        <div class="drop" id="dropArea">
+          <label class="file-label" for="fileInput">이미지 업로드</label>
+          <input class="hidden" id="fileInput" type="file" accept="image/png,image/webp" multiple>
+          <label class="file-label" for="folderInput">폴더 업로드</label>
+          <input class="hidden" id="folderInput" type="file" accept="image/png,image/webp" webkitdirectory directory multiple>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="field">
+          <label>배경</label>
+          <div class="mode">
+            <label><input type="radio" name="bgMode" value="gradient"><span>그라데이션</span></label>
+            <label><input type="radio" name="bgMode" value="solid"><span>단색</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label>상단 컬러</label>
+          <input id="topColor" type="color">
+        </div>
+        <div class="field">
+          <label>하단 컬러</label>
+          <input id="bottomColor" type="color">
+        </div>
+        <div class="field inline">
+          <div>
+            <label>가로</label>
+            <input id="outW" type="number" min="1">
+          </div>
+          <div>
+            <label>세로</label>
+            <input id="outH" type="number" min="1">
+          </div>
+        </div>
+        <div class="field">
+          <label>확장자</label>
+          <select id="format">
+            <option value="jpg">jpg</option>
+            <option value="webp">webp</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn secondary" id="resetBtn" type="button">초기화</button>
+          <button class="btn" id="downloadAllBtn" type="button" disabled>일괄 다운로드</button>
+        </div>
+      </section>
+    </aside>
+
+    <main>
+      <div class="empty" id="empty">이미지를 업로드하세요</div>
+      <div class="list" id="list"></div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+
+const DEFAULTS = {
+  mode:"gradient",
+  topColor:"#AAACB7",
+  bottomColor:"#E6E5ED",
+  width:1000,
+  height:1200,
+  format:"jpg"
+};
+const STORE_KEY = "bg-gradation-options";
+const items = [];
+const $ = id => document.getElementById(id);
+
+function loadOptions(){
+  try{
+    return {...DEFAULTS, ...JSON.parse(localStorage.getItem(STORE_KEY) || "{}")};
+  }catch(e){
+    return {...DEFAULTS};
+  }
+}
+
+function saveOptions(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(getOptions()));
+}
+
+function getOptions(){
+  return {
+    mode:document.querySelector("input[name='bgMode']:checked").value,
+    topColor:$("topColor").value || DEFAULTS.topColor,
+    bottomColor:$("bottomColor").value || DEFAULTS.bottomColor,
+    width:Math.max(1, parseInt($("outW").value, 10) || DEFAULTS.width),
+    height:Math.max(1, parseInt($("outH").value, 10) || DEFAULTS.height),
+    format:$("format").value
+  };
+}
+
+function setOptions(opt){
+  document.querySelector(`input[name='bgMode'][value='${opt.mode}']`).checked = true;
+  $("topColor").value = opt.topColor;
+  $("bottomColor").value = opt.bottomColor;
+  $("outW").value = opt.width;
+  $("outH").value = opt.height;
+  $("format").value = opt.format;
+}
+
+function baseName(path){
+  const name = path.split("/").pop();
+  const dot = name.lastIndexOf(".");
+  return dot > -1 ? name.slice(0, dot) : name;
+}
+
+function ext(path){
+  const dot = path.lastIndexOf(".");
+  return dot > -1 ? path.slice(dot + 1).toLowerCase() : "";
+}
+
+function outputPath(item, format){
+  const parts = item.path.split("/");
+  const file = parts.pop();
+  const dot = file.lastIndexOf(".");
+  parts.push((dot > -1 ? file.slice(0, dot) : file) + "." + format);
+  return parts.join("/");
+}
+
+function canUse(file){
+  return /^image\/(png|webp)$/.test(file.type) || ["png","webp"].includes(ext(file.name));
+}
+
+function readImage(file){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>resolve({img, url});
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error(file.name)); };
+    img.src = url;
+  });
+}
+
+async function addFiles(files){
+  const accepted = Array.from(files).filter(canUse);
+  for(const file of accepted){
+    const rel = file._relativePath || file.webkitRelativePath || file.name;
+    const loaded = await readImage(file);
+    items.push({file, path:rel, img:loaded.img, url:loaded.url});
+  }
+  renderList();
+}
+
+async function getDroppedFiles(dataTransfer){
+  const entries = Array.from(dataTransfer.items || [])
+    .map(item=>item.webkitGetAsEntry && item.webkitGetAsEntry())
+    .filter(Boolean);
+  if(entries.length){
+    const files = [];
+    await Promise.all(entries.map(entry=>walkEntry(entry, "", files)));
+    if(files.length) return files;
+  }
+  return Array.from(dataTransfer.files || []);
+}
+
+function setRelativePath(file, path){
+  try{
+    Object.defineProperty(file, "_relativePath", {value:path});
+  }catch(e){
+    file._relativePath = path;
+  }
+}
+
+function walkEntry(entry, path, files){
+  return new Promise(resolve=>{
+    if(!entry){ resolve(); return; }
+    if(entry.isFile){
+      entry.file(file=>{
+        setRelativePath(file, path + file.name);
+        files.push(file);
+        resolve();
+      }, resolve);
+      return;
+    }
+    if(entry.isDirectory){
+      const reader = entry.createReader();
+      const dirPath = path + entry.name + "/";
+      const read = ()=>reader.readEntries(async entries=>{
+        if(!entries.length){ resolve(); return; }
+        await Promise.all(entries.map(child=>walkEntry(child, dirPath, files)));
+        read();
+      }, resolve);
+      read();
+      return;
+    }
+    resolve();
+  });
+}
+
+function drawBackground(ctx, opt){
+  if(opt.mode === "solid"){
+    ctx.fillStyle = opt.topColor;
+  }else{
+    const grad = ctx.createLinearGradient(0, 0, 0, opt.height);
+    grad.addColorStop(0, opt.topColor);
+    grad.addColorStop(1, opt.bottomColor);
+    ctx.fillStyle = grad;
+  }
+  ctx.fillRect(0, 0, opt.width, opt.height);
+}
+
+function renderCanvas(item){
+  const opt = getOptions();
+  const cv = document.createElement("canvas");
+  cv.width = opt.width;
+  cv.height = opt.height;
+  const ctx = cv.getContext("2d");
+  drawBackground(ctx, opt);
+  ctx.drawImage(item.img, 0, 0, opt.width, opt.height);
+  return {cv, opt};
+}
+
+function canvasBlob(cv, format){
+  const type = format === "webp" ? "image/webp" : "image/jpeg";
+  return new Promise(resolve=>cv.toBlob(resolve, type, 0.94));
+}
+
+async function downloadItem(item){
+  const {cv, opt} = renderCanvas(item);
+  const blob = await canvasBlob(cv, opt.format);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = baseName(item.path) + "." + opt.format;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 300);
+}
+
+async function downloadAll(){
+  if(!items.length) return;
+  const btn = $("downloadAllBtn");
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "압축 중";
+  try{
+    const zip = new JSZip();
+    const opt = getOptions();
+    for(const item of items){
+      const {cv} = renderCanvas(item);
+      const blob = await canvasBlob(cv, opt.format);
+      zip.file(outputPath(item, opt.format), blob);
+    }
+    const blob = await zip.generateAsync({type:"blob"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "thumbnail-background.zip";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 300);
+  }catch(e){
+    alert("다운로드 오류");
+  }
+  btn.textContent = original;
+  btn.disabled = items.length === 0;
+}
+
+function previewUrl(item){
+  const {cv, opt} = renderCanvas(item);
+  return cv.toDataURL(opt.format === "webp" ? "image/webp" : "image/jpeg", 0.86);
+}
+
+function renderList(){
+  const list = $("list");
+  list.innerHTML = "";
+  $("empty").classList.toggle("hidden", items.length > 0);
+  $("downloadAllBtn").disabled = items.length === 0;
+  $("status").textContent = items.length + "개";
+  items.forEach((item, idx)=>{
+    const row = document.createElement("div");
+    row.className = "item";
+    const thumb = document.createElement("img");
+    thumb.className = "thumb";
+    thumb.alt = "";
+    thumb.src = previewUrl(item);
+    const info = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = baseName(item.path);
+    const path = document.createElement("div");
+    path.className = "path";
+    path.textContent = item.path;
+    const btn = document.createElement("button");
+    btn.className = "btn secondary";
+    btn.type = "button";
+    btn.textContent = "다운로드";
+    btn.onclick = ()=>downloadItem(items[idx]);
+    info.appendChild(name);
+    info.appendChild(path);
+    row.appendChild(thumb);
+    row.appendChild(info);
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
+
+function bindOptions(){
+  ["topColor","bottomColor","outW","outH","format"].forEach(id=>{
+    $(id).addEventListener("input", ()=>{ saveOptions(); renderList(); });
+    $(id).addEventListener("change", ()=>{ saveOptions(); renderList(); });
+  });
+  document.querySelectorAll("input[name='bgMode']").forEach(input=>{
+    input.addEventListener("change", ()=>{ saveOptions(); renderList(); });
+  });
+}
+
+$("fileInput").addEventListener("change", e=>addFiles(e.target.files));
+$("folderInput").addEventListener("change", e=>addFiles(e.target.files));
+$("downloadAllBtn").addEventListener("click", downloadAll);
+$("resetBtn").addEventListener("click", ()=>{
+  localStorage.removeItem(STORE_KEY);
+  setOptions(DEFAULTS);
+  renderList();
+});
+
+$("dropArea").addEventListener("dragenter", e=>{
+  e.preventDefault();
+  $("dropArea").classList.add("is-drag");
+});
+$("dropArea").addEventListener("dragover", e=>e.preventDefault());
+$("dropArea").addEventListener("dragleave", e=>{
+  if(!$("dropArea").contains(e.relatedTarget)) $("dropArea").classList.remove("is-drag");
+});
+$("dropArea").addEventListener("drop", async e=>{
+  e.preventDefault();
+  $("dropArea").classList.remove("is-drag");
+  addFiles(await getDroppedFiles(e.dataTransfer));
+});
+
+setOptions(loadOptions());
+bindOptions();
+renderList();
+</script>
+</body>
+</html>
