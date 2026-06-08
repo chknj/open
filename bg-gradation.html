@@ -84,13 +84,20 @@ input[type="color"]{width:100%;height:38px;border:1px solid var(--line);border-r
             <label><input type="radio" name="bgMode" value="solid"><span>단색</span></label>
           </div>
         </div>
-        <div class="field">
-          <label>상단 컬러</label>
+        <div class="field" id="topColorField">
+          <label id="topColorLabel">상단 컬러</label>
           <input id="topColor" type="color">
         </div>
-        <div class="field">
+        <div class="field" id="bottomColorField">
           <label>하단 컬러</label>
           <input id="bottomColor" type="color">
+        </div>
+        <div class="field" id="gradientDirectionField">
+          <label>그라데이션 방향</label>
+          <select id="gradientDirection">
+            <option value="top-bottom">상단 → 하단</option>
+            <option value="bottom-top">하단 → 상단</option>
+          </select>
         </div>
         <div class="field inline">
           <div>
@@ -131,6 +138,7 @@ const DEFAULTS = {
   mode:"gradient",
   topColor:"#AAACB7",
   bottomColor:"#E6E5ED",
+  gradientDirection:"top-bottom",
   width:1000,
   height:1200,
   format:"jpg"
@@ -156,6 +164,7 @@ function getOptions(){
     mode:document.querySelector("input[name='bgMode']:checked").value,
     topColor:$("topColor").value || DEFAULTS.topColor,
     bottomColor:$("bottomColor").value || DEFAULTS.bottomColor,
+    gradientDirection:$("gradientDirection").value || DEFAULTS.gradientDirection,
     width:Math.max(1, parseInt($("outW").value, 10) || DEFAULTS.width),
     height:Math.max(1, parseInt($("outH").value, 10) || DEFAULTS.height),
     format:$("format").value
@@ -166,9 +175,18 @@ function setOptions(opt){
   document.querySelector(`input[name='bgMode'][value='${opt.mode}']`).checked = true;
   $("topColor").value = opt.topColor;
   $("bottomColor").value = opt.bottomColor;
+  $("gradientDirection").value = opt.gradientDirection || DEFAULTS.gradientDirection;
   $("outW").value = opt.width;
   $("outH").value = opt.height;
   $("format").value = opt.format;
+  updateBgControls();
+}
+
+function updateBgControls(){
+  const solid = document.querySelector("input[name='bgMode']:checked").value === "solid";
+  $("bottomColorField").classList.toggle("hidden", solid);
+  $("gradientDirectionField").classList.toggle("hidden", solid);
+  $("topColorLabel").textContent = solid ? "배경 컬러" : "상단 컬러";
 }
 
 function baseName(path){
@@ -264,7 +282,9 @@ function drawBackground(ctx, opt){
   if(opt.mode === "solid"){
     ctx.fillStyle = opt.topColor;
   }else{
-    const grad = ctx.createLinearGradient(0, 0, 0, opt.height);
+    const fromY = opt.gradientDirection === "bottom-top" ? opt.height : 0;
+    const toY = opt.gradientDirection === "bottom-top" ? 0 : opt.height;
+    const grad = ctx.createLinearGradient(0, fromY, 0, toY);
     grad.addColorStop(0, opt.topColor);
     grad.addColorStop(1, opt.bottomColor);
     ctx.fillStyle = grad;
@@ -365,12 +385,12 @@ function renderList(){
 }
 
 function bindOptions(){
-  ["topColor","bottomColor","outW","outH","format"].forEach(id=>{
+  ["topColor","bottomColor","gradientDirection","outW","outH","format"].forEach(id=>{
     $(id).addEventListener("input", ()=>{ saveOptions(); renderList(); });
     $(id).addEventListener("change", ()=>{ saveOptions(); renderList(); });
   });
   document.querySelectorAll("input[name='bgMode']").forEach(input=>{
-    input.addEventListener("change", ()=>{ saveOptions(); renderList(); });
+    input.addEventListener("change", ()=>{ updateBgControls(); saveOptions(); renderList(); });
   });
 }
 
