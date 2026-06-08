@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>썸네일 배경 생성기</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%9E%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#f5f5f5;
@@ -35,7 +36,7 @@ input[type="color"]{width:100%;height:38px;border:1px solid var(--line);border-r
 .btn:disabled{opacity:.35;cursor:not-allowed;}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
 .drop{border:1px dashed var(--line);border-radius:8px;background:#fafafa;padding:18px;display:grid;gap:10px;}
-.drop.is-drag{border-color:var(--ink);background:#f0f0f0;}
+.drop.is-drag,.empty.is-drag{border-color:var(--ink);background:#f0f0f0;color:var(--ink);}
 .file-label{display:flex;align-items:center;justify-content:center;height:40px;border:1px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);font-weight:700;cursor:pointer;}
 .hidden{display:none;}
 .mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -382,19 +383,24 @@ $("resetBtn").addEventListener("click", ()=>{
   renderList();
 });
 
-$("dropArea").addEventListener("dragenter", e=>{
-  e.preventDefault();
-  $("dropArea").classList.add("is-drag");
-});
-$("dropArea").addEventListener("dragover", e=>e.preventDefault());
-$("dropArea").addEventListener("dragleave", e=>{
-  if(!$("dropArea").contains(e.relatedTarget)) $("dropArea").classList.remove("is-drag");
-});
-$("dropArea").addEventListener("drop", async e=>{
-  e.preventDefault();
-  $("dropArea").classList.remove("is-drag");
-  addFiles(await getDroppedFiles(e.dataTransfer));
-});
+function bindDropZone(el){
+  el.addEventListener("dragenter", e=>{
+    e.preventDefault();
+    el.classList.add("is-drag");
+  });
+  el.addEventListener("dragover", e=>e.preventDefault());
+  el.addEventListener("dragleave", e=>{
+    if(!el.contains(e.relatedTarget)) el.classList.remove("is-drag");
+  });
+  el.addEventListener("drop", async e=>{
+    e.preventDefault();
+    el.classList.remove("is-drag");
+    addFiles(await getDroppedFiles(e.dataTransfer));
+  });
+}
+
+bindDropZone($("dropArea"));
+bindDropZone($("empty"));
 
 setOptions(loadOptions());
 bindOptions();
