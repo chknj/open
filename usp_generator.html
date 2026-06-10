@@ -135,7 +135,7 @@
   <div class="drop" id="drop">
     <strong>엑셀 파일을 끌어다 놓거나 클릭해서 선택</strong>
     <span>.xlsx / .xls / .csv</span>
-    <div class="code">컬럼 형식: 이미지코드 · 특징1 · 특징2 · … · 특징N (빈 칸은 자동 제외)</div>
+    <div class="code">컬럼 형식: 이미지코드 · 특징1 (특징1 한 셀에 줄바꿈 입력 가능, 빈 칸은 자동 제외)</div>
     <input id="file" type="file" accept=".xlsx,.xls,.csv" class="hidden">
   </div>
 
@@ -150,10 +150,11 @@
   <div class="previews" id="previews"></div>
 
   <footer>
-    · 각 행 1개 상품 = 이미지 1장. 특징이 3개면 버튼 3개, 10개면 10개가 생성됩니다.<br>
+    · 각 행 1개 상품 = 이미지 1장. 특징 셀 안에서 줄바꿈한 항목마다 버튼 1개가 생성됩니다.<br>
     · 버튼이 좌우 폭을 넘으면 자동 줄바꿈되어 세로 길이가 늘어납니다.<br>
     · 설정값을 바꾼 뒤 "설정 다시 적용"을 누르면 미리보기와 출력에 반영됩니다.<br>
-    · 본 HTML 도구는 오픈소스로 제공됩니다.
+    · 본 HTML 도구는 오픈소스로 제공됩니다.<br>
+    · 사용 라이브러리/폰트: SheetJS(xlsx, Apache-2.0), JSZip(MIT), Pretendard(SIL OFL 1.1).
   </footer>
 </div>
 
@@ -167,7 +168,7 @@ function cfg(){
     font:+$('cfgFont').value, btnPadX:+$('cfgBtnPadX').value, btnPadY:+$('cfgBtnPadY').value,
     radius:+$('cfgRadius').value, gap:+$('cfgGap').value, align:$('cfgAlign').value,
     btnBg:$('cfgBtnBg').value, btnColor:$('cfgBtnColor').value,
-    weight:$('cfgWeight').value, scale:2
+    weight:$('cfgWeight').value
   };
 }
 
@@ -213,13 +214,12 @@ function render(canvas,features,c){
   const lines = features.length ? layoutRows(ctx,features,c) : [];
   const btnH = Math.ceil(c.font) + c.btnPadY*2;
   const H = c.padT + c.padB + (lines.length ? lines.length*btnH + (lines.length-1)*c.gap : 0);
-  const scale = c.scale || 1;
   const outH = Math.max(H, c.padT+c.padB);
-  canvas.width = c.W * scale;
-  canvas.height = outH * scale;
+  canvas.width = c.W;
+  canvas.height = outH;
   canvas.style.width = `${c.W}px`;
   canvas.style.height = 'auto';
-  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.setTransform(1,0,0,1,0,0);
 
   // 흰 배경 (JPG는 투명 불가)
   ctx.fillStyle='#FFFFFF';
@@ -308,8 +308,10 @@ function parseSheet(data){
     const feats=[];
     row.forEach((v,idx)=>{
       if(idx===ci) return;
-      const t=String(v??'').trim();
-      if(t) feats.push(t);
+      String(v??'').split(/\r?\n/).forEach(part=>{
+        const t=part.trim();
+        if(t) feats.push(t);
+      });
     });
     out.push({code,features:feats});
   }
