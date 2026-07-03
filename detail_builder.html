@@ -338,12 +338,14 @@ const S = {
   rendered: {},          // code -> { 'text_1.jpg': {blob,dataUrl,w,h} }
   assembly: {},          // code -> [ {kind, name, file?, url?} ]
   videoItems: {},        // code -> [{id,name,url,slot}]
+  previewUrls: [],
 };
 const $ = id => document.getElementById(id);
 
 /* ---------- helpers ---------- */
 const IMG_RE = /\.(jpe?g|png|gif|webp)$/i;
 const MAIN_TOP_GAP = 150;
+const FONT_LOAD_LIMIT = 2500;
 const OPTION_STORE_KEY = 'detail_builder_options_v1';
 const OPTION_IDS = ['fontFamily','titleSize','titleLh','titleWeight','bodySize','bodyLh','bodyWeight','subSize','subLh','subGap','subWeight','regionPad','blockGap','sidePad','canvasW','wrapMode','textColor','bgColor','subImgGap','ftpFixedBase','ftpBase'];
 const isBlank = v => v===null||v===undefined||String(v).trim()===''||String(v).trim().toLowerCase()==='n';
@@ -616,6 +618,7 @@ function defaultVideoSlot(base){
 function ensureVideoItems(code, base){
   const row=S.rows.find(r=>r.code===code);
   const videos=row ? (row.videos || splitVideos(row.video)) : [];
+  if(!videos.length){ S.videoItems[code]=[]; return S.videoItems[code]; }
   const current=S.videoItems[code] || [];
   if(current.length!==videos.length || current.some((v,i)=>v.url!==videos[i])){
     const start=defaultVideoSlot(base);
@@ -855,10 +858,15 @@ function renderBlock(c, content, isTitle, subObj, posTop, posBot){
 function canvasToBlob(cv){ return new Promise(res=>cv.toBlob(b=>res(b),'image/jpeg',0.92)); }
 
 /* ---------- fonts ---------- */
+function wait(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
 async function ensureFont(family, weights){
   const probes=[...new Set(weights||['400','700'])].map(w=>`${w} 60px "${family}"`);
-  try{ await Promise.all(probes.map(p=>document.fonts.load(p,'가힣Ag1')));}catch(e){}
-  try{ await document.fonts.ready; }catch(e){}
+  try{
+    await Promise.race([
+      Promise.all(probes.map(p=>document.fonts.load(p,'가힣Ag1'))).then(()=>document.fonts.ready),
+      wait(FONT_LOAD_LIMIT)
+    ]);
+  }catch(e){}
 }
 
 /* ---------- STEP 3: render ---------- */
@@ -933,6 +941,10 @@ async function addSpacerImages(seq,c){
 }
 
 /* ---------- preview ---------- */
+function clearPreviewUrls(){
+  S.previewUrls.forEach(url=>URL.revokeObjectURL(url));
+  S.previewUrls=[];
+}
 function buildPreview(codes){
   $('previewArea').classList.remove('hidden');
   const tabs=$('prevTabs'); tabs.innerHTML='';
@@ -944,6 +956,7 @@ function buildPreview(codes){
   showPreview(codes[0]);
 }
 function showPreview(code){
+  clearPreviewUrls();
   const page=$('prevPage'); page.innerHTML='';
   S.assembly[code].forEach((it,idx)=>{
     if(it.kind==='video'){
@@ -951,7 +964,11 @@ function showPreview(code){
     }else{
       const img=document.createElement('img');
       if(it.kind==='text' || it.kind==='spacer') img.src=it.rendered.dataUrl;
-      else img.src=URL.createObjectURL(it.file);
+      else{
+        const url=URL.createObjectURL(it.file);
+        S.previewUrls.push(url);
+        img.src=url;
+      }
       page.appendChild(img);
     }
     const cap=document.createElement('div'); cap.className='prev-cap'; cap.textContent=it.name; page.appendChild(cap);
