@@ -219,6 +219,8 @@ footer{max-width:1180px;margin:30px auto 0;padding:0 28px;font-size:11.5px;color
             <option value="300">300 Light</option><option value="400" selected>400 Regular</option><option value="500">500 Medium</option>
             <option value="600">600 SemiBold</option><option value="700">700 Bold</option><option value="800">800 ExtraBold</option><option value="900">900 Black</option>
           </select></div>
+        <div class="field"><label>텍스트 정렬</label>
+          <select id="textAlign"><option value="left" selected>좌측 정렬</option><option value="center">가운데 정렬</option></select></div>
       </div>
       <div class="row-inline">
         <div class="field"><label>서브타이틀 폰트크기(px)</label><input type="number" id="subSize" value="30"></div>
@@ -347,7 +349,7 @@ const IMG_RE = /\.(jpe?g|png|gif|webp)$/i;
 const MAIN_TOP_GAP = 150;
 const FONT_LOAD_LIMIT = 2500;
 const OPTION_STORE_KEY = 'detail_builder_options_v1';
-const OPTION_IDS = ['fontFamily','titleSize','titleLh','titleWeight','bodySize','bodyLh','bodyWeight','subSize','subLh','subGap','subWeight','regionPad','blockGap','sidePad','canvasW','wrapMode','textColor','bgColor','subImgGap','ftpFixedBase','ftpBase'];
+const OPTION_IDS = ['fontFamily','titleSize','titleLh','titleWeight','bodySize','bodyLh','bodyWeight','textAlign','subSize','subLh','subGap','subWeight','regionPad','blockGap','sidePad','canvasW','wrapMode','textColor','bgColor','subImgGap','ftpFixedBase','ftpBase'];
 const isBlank = v => v===null||v===undefined||String(v).trim()===''||String(v).trim().toLowerCase()==='n';
 const numFromName = (name)=>{ const m = name.replace(IMG_RE,'').match(/(\d+)/); return m?parseInt(m[1],10):0; };
 const textNum = (key)=>{ const m=String(key).match(/(\d+)/); return m?parseInt(m[1],10):0; };
@@ -779,6 +781,7 @@ function cfg(){
     sub:{size:+$('subSize').value, lh:+$('subLh').value, weight:$('subWeight').value, gap:+$('subGap').value},
     regionPad:+$('regionPad').value, blockGap:+$('blockGap').value, sidePad:+$('sidePad').value,
     width:+$('canvasW').value, wrap:$('wrapMode').value,
+    align:$('textAlign').value,
     color:$('textColor').value||'#222', bg:$('bgColor').value||'#fff',
     subImgGap:+$('subImgGap').value
   };
@@ -841,17 +844,18 @@ function renderBlock(c, content, isTitle, subObj, posTop, posBot){
   cv.width=c.width; cv.height=height;
   const ctx=cv.getContext('2d');
   ctx.fillStyle=c.bg; ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.fillStyle=c.color; ctx.textBaseline='middle'; ctx.textAlign='left';
+  const textX = c.align==='center' ? c.width/2 : c.sidePad;
+  ctx.fillStyle=c.color; ctx.textBaseline='middle'; ctx.textAlign=c.align;
   let y=posTop;
   // subtitle
   if(subLines.length){
     ctx.font=`${c.sub.weight} ${c.sub.size}px "${c.family}"`;
-    subLines.forEach(ln=>{ ctx.fillText(ln, c.sidePad, y + c.sub.lh/2); y+=c.sub.lh; });
+    subLines.forEach(ln=>{ ctx.fillText(ln, textX, y + c.sub.lh/2); y+=c.sub.lh; });
     y+=c.sub.gap;
   }
   // body
   ctx.font=`${bs.weight} ${bs.size}px "${c.family}"`;
-  bodyLines.forEach(ln=>{ ctx.fillText(ln, c.sidePad, y + bs.lh/2); y+=bs.lh; });
+  bodyLines.forEach(ln=>{ ctx.fillText(ln, textX, y + bs.lh/2); y+=bs.lh; });
   return cv;
 }
 
