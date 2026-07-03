@@ -217,11 +217,12 @@
         <div class="seg" id="sizebasis">
           <button data-s="width" class="on">가로 기준</button>
           <button data-s="height">세로 기준</button>
+          <button data-s="margin">여백 기준</button>
         </div>
-        <div class="hint">선택한 한 변만 기준이 되고, 다른 변은 비율에 맞춰 자동 결정됩니다.</div>
+        <div class="hint" id="sizeBasisHint">선택한 한 변만 기준이 되고, 다른 변은 비율에 맞춰 자동 결정됩니다.</div>
       </div>
 
-      <div class="ctrl">
+      <div class="ctrl" id="productSizeWrap">
         <label>상품 <span id="basisLabel">가로</span> 크기 <span class="val" id="psVal">600px</span></label>
         <input type="range" id="ps" min="200" max="1300" value="600" step="10">
         <div class="field-row size-input-row">
@@ -229,6 +230,33 @@
           <input type="number" id="psInput" min="200" max="1300" value="600" step="10" inputmode="numeric">
           <span class="fu">px</span>
         </div>
+      </div>
+
+      <div class="ctrl" id="marginWrap" style="display:none;">
+        <label>상하좌우 여백</label>
+        <div class="field-col">
+          <div class="field-row">
+            <span class="fl">T</span>
+            <input type="number" id="marginTop" min="0" value="100" inputmode="numeric">
+            <span class="fu">px</span>
+          </div>
+          <div class="field-row">
+            <span class="fl">R</span>
+            <input type="number" id="marginRight" min="0" value="100" inputmode="numeric">
+            <span class="fu">px</span>
+          </div>
+          <div class="field-row">
+            <span class="fl">B</span>
+            <input type="number" id="marginBottom" min="0" value="100" inputmode="numeric">
+            <span class="fu">px</span>
+          </div>
+          <div class="field-row">
+            <span class="fl">L</span>
+            <input type="number" id="marginLeft" min="0" value="100" inputmode="numeric">
+            <span class="fu">px</span>
+          </div>
+        </div>
+        <div class="hint">크롭된 피사체가 이 여백 안쪽 영역을 넘지 않도록 비율 유지로 맞춥니다.</div>
       </div>
 
       <div class="ctrl">
@@ -301,6 +329,7 @@
       </div>
 
       <button class="btn btn-go" id="run" disabled>일괄 처리</button>
+      <button class="btn btn-dl" id="resetOptions">옵션 초기화</button>
       <button class="btn btn-dl" id="dlEach" style="display:none;">개별이미지 일괄 다운로드</button>
       <button class="btn btn-dl" id="dl" style="display:none;">ZIP 다운로드</button>
     </div>
@@ -323,8 +352,10 @@
 const $ = id => document.getElementById(id);
 let files = [];        // {relPath, folder, name, img}
 let results = [];      // {folder, name, canvas, ok}
+const SETTINGS_KEY = 'product_image_tool_settings_v1';
+let defaultSettings = null;
 
-$('tol').oninput = e => $('tolVal').textContent = e.target.value;
+$('tol').oninput = e => { $('tolVal').textContent = e.target.value; saveSettings(); };
 function clampProductSize(value) {
   const min=+$('ps').min, max=+$('ps').max;
   const num=Number(value);
@@ -338,24 +369,38 @@ function setProductSize(value, updateInput) {
   $('psVal').textContent = next + 'px';
   return next;
 }
-$('ps').oninput = e => setProductSize(e.target.value, true);
+$('ps').oninput = e => { setProductSize(e.target.value, true); saveSettings(); };
 $('psInput').oninput = e => {
   if (e.target.value === '') return;
   setProductSize(e.target.value, false);
+  saveSettings();
 };
-$('psInput').onchange = e => setProductSize(e.target.value, true);
+$('psInput').onchange = e => { setProductSize(e.target.value, true); saveSettings(); };
+function getMarginValue(id) {
+  const num=Number($(id).value);
+  return Number.isFinite(num) ? Math.max(0, Math.round(num)) : 0;
+}
+function getMargins() {
+  return {
+    top:getMarginValue('marginTop'),
+    right:getMarginValue('marginRight'),
+    bottom:getMarginValue('marginBottom'),
+    left:getMarginValue('marginLeft')
+  };
+}
 $('canvasPresets').onclick = e => {
   const btn = e.target.closest('button');
   if (!btn) return;
   $('cw').value = btn.dataset.w;
   $('ch').value = btn.dataset.h;
+  saveSettings();
 };
 
 function seg(id, cb) {
   document.querySelectorAll('#'+id+' button').forEach(b => {
     b.onclick = () => {
       document.querySelectorAll('#'+id+' button').forEach(x => x.classList.remove('on'));
-      b.classList.add('on'); cb(b.dataset);
+      b.classList.add('on'); cb(b.dataset); saveSettings();
     };
   });
 }
@@ -363,7 +408,13 @@ let bgMode='auto', fillMode='white', vMode='center', sizeBasis='width', resizeMo
 seg('bgmode', d => bgMode=d.m);
 seg('sizebasis', d => {
   sizeBasis = d.s;
-  $('basisLabel').textContent = (d.s === 'width') ? '가로' : '세로';
+  const marginMode = d.s === 'margin';
+  $('productSizeWrap').style.display = marginMode ? 'none' : 'block';
+  $('marginWrap').style.display = marginMode ? 'block' : 'none';
+  $('sizeBasisHint').textContent = marginMode
+    ? '상하좌우 여백 안쪽의 공통 영역에 맞춰 가로형·세로형 이미지를 함께 처리합니다.'
+    : '선택한 한 변만 기준이 되고, 다른 변은 비율에 맞춰 자동 결정됩니다.';
+  if (!marginMode) $('basisLabel').textContent = (d.s === 'width') ? '가로' : '세로';
 });
 seg('resizemode', d => resizeMode=d.r);
 seg('fillmode', d => {
@@ -378,8 +429,70 @@ seg('vmode', d => {
   vMode=d.v;
   $('bottomGapWrap').style.display = (d.v==='bottom') ? 'flex' : 'none';
 });
-$('fillColor').oninput = e => $('fillColorTxt').textContent = e.target.value.toUpperCase();
-$('layerColor').oninput = e => $('layerColorTxt').textContent = e.target.value.toUpperCase();
+$('fillColor').oninput = e => { $('fillColorTxt').textContent = e.target.value.toUpperCase(); saveSettings(); };
+$('layerColor').oninput = e => { $('layerColorTxt').textContent = e.target.value.toUpperCase(); saveSettings(); };
+
+function setSegValue(id, key, value) {
+  const btn = document.querySelector('#'+id+' button[data-'+key+'="'+value+'"]');
+  if (btn) btn.click();
+}
+function collectSettings() {
+  return {
+    bgMode, tol:$('tol').value, sizeBasis, productSize:$('ps').value,
+    marginTop:$('marginTop').value, marginRight:$('marginRight').value,
+    marginBottom:$('marginBottom').value, marginLeft:$('marginLeft').value,
+    resizeMode, cw:$('cw').value, ch:$('ch').value,
+    fillMode, fillColor:$('fillColor').value,
+    layerMode, layerColor:$('layerColor').value,
+    vMode, bottomGap:$('bottomGap').value
+  };
+}
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(collectSettings()));
+  } catch (e) {}
+}
+function applySettings(settings) {
+  if (!settings) return;
+  if (settings.tol !== undefined) {
+    $('tol').value = settings.tol;
+    $('tolVal').textContent = $('tol').value;
+  }
+  if (settings.productSize !== undefined) setProductSize(settings.productSize, true);
+  ['marginTop','marginRight','marginBottom','marginLeft','cw','ch','bottomGap'].forEach(id => {
+    if (settings[id] !== undefined) $(id).value = settings[id];
+  });
+  if (settings.fillColor !== undefined) {
+    $('fillColor').value = settings.fillColor;
+    $('fillColorTxt').textContent = $('fillColor').value.toUpperCase();
+  }
+  if (settings.layerColor !== undefined) {
+    $('layerColor').value = settings.layerColor;
+    $('layerColorTxt').textContent = $('layerColor').value.toUpperCase();
+  }
+  setSegValue('bgmode', 'm', settings.bgMode);
+  setSegValue('sizebasis', 's', settings.sizeBasis);
+  setSegValue('resizemode', 'r', settings.resizeMode);
+  setSegValue('fillmode', 'f', settings.fillMode);
+  setSegValue('layermode', 'l', settings.layerMode);
+  setSegValue('vmode', 'v', settings.vMode);
+}
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    applySettings(saved);
+  } catch (e) {}
+}
+document.querySelectorAll('input[type=number]').forEach(input => {
+  input.addEventListener('change', saveSettings);
+});
+$('resetOptions').onclick = () => {
+  localStorage.removeItem(SETTINGS_KEY);
+  applySettings(defaultSettings);
+  saveSettings();
+};
+defaultSettings = collectSettings();
+loadSettings();
 
 // 폴더 업로드
 const drop=$('drop'), fileInput=$('file');
@@ -539,6 +652,7 @@ function processOne(img) {
   const tol=+$('tol').value, targetSize=clampProductSize($('psInput').value || $('ps').value);
   const cw=+$('cw').value, ch=+$('ch').value;
   const bottomGap=+$('bottomGap').value;
+  const margins=getMargins();
 
   const src=document.createElement('canvas');
   src.width=img.naturalWidth; src.height=img.naturalHeight;
@@ -551,7 +665,11 @@ function processOne(img) {
 
   const cropW=b.right-b.left+1, cropH=b.bottom-b.top+1;
   let scale;
-  if (sizeBasis === 'height') scale = targetSize / cropH;
+  if (sizeBasis === 'margin') {
+    const safeW=Math.max(1, cw - margins.left - margins.right);
+    const safeH=Math.max(1, ch - margins.top - margins.bottom);
+    scale = Math.min(safeW / cropW, safeH / cropH);
+  } else if (sizeBasis === 'height') scale = targetSize / cropH;
   else scale = targetSize / cropW;
   const drawW=Math.round(cropW*scale), drawH=Math.round(cropH*scale);
 
@@ -564,10 +682,18 @@ function processOne(img) {
   else fill='#FFFFFF';
   octx.fillStyle=fill; octx.fillRect(0,0,cw,ch);
 
-  const x=Math.round((cw-drawW)/2);
+  let x;
   let y;
-  if (vMode==='bottom') y = ch - drawH - bottomGap;
-  else y = Math.round((ch-drawH)/2);
+  if (sizeBasis === 'margin') {
+    const safeW=Math.max(1, cw - margins.left - margins.right);
+    const safeH=Math.max(1, ch - margins.top - margins.bottom);
+    x = Math.round(margins.left + (safeW - drawW) / 2);
+    y = Math.round(margins.top + (safeH - drawH) / 2);
+  } else {
+    x = Math.round((cw-drawW)/2);
+    if (vMode==='bottom') y = ch - drawH - bottomGap;
+    else y = Math.round((ch-drawH)/2);
+  }
 
   octx.imageSmoothingQuality='high';
   if (resizeMode === 'moire') {
@@ -610,7 +736,10 @@ $('run').onclick = async () => {
   $('progTxt').textContent = `완료 · 성공 ${ok} / 실패 ${fail}`;
   renderResults();
   $('stat').style.display='block';
-  $('stat').innerHTML = `총 <b>${files.length}</b>장 · 성공 <b>${ok}</b> · 실패 <b>${fail}</b><br>캔버스 <b>${$('cw').value}×${$('ch').value}</b> · 상품 ${sizeBasis==='width'?'가로':'세로'} <b>${$('ps').value}px</b> 기준`;
+  const basisText = sizeBasis === 'margin'
+    ? `여백 상/우/하/좌 <b>${getMarginValue('marginTop')}/${getMarginValue('marginRight')}/${getMarginValue('marginBottom')}/${getMarginValue('marginLeft')}px</b> 기준`
+    : `상품 ${sizeBasis==='width'?'가로':'세로'} <b>${$('ps').value}px</b> 기준`;
+  $('stat').innerHTML = `총 <b>${files.length}</b>장 · 성공 <b>${ok}</b> · 실패 <b>${fail}</b><br>캔버스 <b>${$('cw').value}×${$('ch').value}</b> · ${basisText}`;
   if (ok>0) {
     $('dlEach').style.display='block';
     $('dl').style.display='block';
