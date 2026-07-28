@@ -510,9 +510,10 @@
           <div class="guide">
             <h3 class="guide-title">입력 기준</h3>
             <ol>
-              <li>첫 번째 시트는 A열 마스터코드, B열 상품명, C열 사이즈, D열부터 실측값을 입력합니다.</li>
+              <li>마스터코드는 어느 열에 있어도 되며, 열 제목은 반드시 ‘마스터코드’로 입력합니다.</li>
+              <li>첫 번째 시트에는 마스터코드, 사이즈, 실측값이 필요하며 상품명은 선택 항목입니다.</li>
               <li>각 상품 블록 아래의 항목명 순서대로 표가 생성됩니다.</li>
-              <li>두 번째 시트는 A열 마스터코드, B열 상품명, C열 정보고시 내용을 입력합니다.</li>
+              <li>두 번째 시트에는 마스터코드와 정보고시 내용이 필요하며 상품명은 선택 항목입니다.</li>
               <li>두 시트의 상품정보고시는 마스터코드가 동일할 때 자동으로 매칭됩니다.</li>
               <li>사이즈가 비어 있는 행과 값이 전부 비어 있는 항목은 출력하지 않습니다.</li>
             </ol>
@@ -669,7 +670,7 @@
 
           const sizeSheet = findSizeSheet(sheets);
           if (!sizeSheet || scoreSizeSheet(sizeSheet.rows) === 0) {
-            throw new Error("마스터코드, 상품명, 사이즈, 실측값으로 구성된 사이즈 데이터를 찾지 못했습니다.");
+            throw new Error("마스터코드, 사이즈, 실측값으로 구성된 사이즈 데이터를 찾지 못했습니다.");
           }
 
           const parsed = parseSizeSheet(sizeSheet.rows);
@@ -707,32 +708,40 @@
       }
 
       function scoreSizeSheet(rows) {
+        const layout = detectSizeLayout(rows);
+        if (!layout) return 0;
+
         return rows.reduce((score, row) => {
-          if (isSizeDataRow(row)) return score + 2;
-          if (isMeasurementHeaderRow(row)) return score + 4;
+          if (isSizeDataRow(row, layout)) return score + 2;
+          if (isMeasurementHeaderRow(row, layout)) return score + 4;
           return score;
         }, 0);
       }
 
       function parseSizeSheet(rows) {
+        const layout = detectSizeLayout(rows);
         const productsByCode = new Map();
         const productOrder = [];
         const warnings = [];
         let pendingRows = [];
         let previousHeader = null;
 
+        if (!layout) {
+          return { products: [], warnings: ["‘마스터코드’ 열을 찾지 못했습니다."] };
+        }
+
         rows.forEach((sourceRow, index) => {
           const row = Array.isArray(sourceRow) ? sourceRow : [];
 
-          if (isSizeDataRow(row)) {
+          if (isSizeDataRow(row, layout)) {
             pendingRows.push({ row, sourceRow: index + 1 });
             return;
           }
 
-          if (!isMeasurementHeaderRow(row)) return;
+          if (!isMeasurementHeaderRow(row, layout)) return;
 
           if (pendingRows.length) {
-            addProductSection(pendingRows, row, productsByCode, productOrder, warnings);
+            addProductSection(pendingRows, row, layout, productsByCode, productOrder, warnings);
             pendingRows = [];
           }
           previousHeader = row;
@@ -740,7 +749,7 @@
 
         if (pendingRows.length) {
           if (previousHeader) {
-            addProductSection(pendingRows, previousHeader, productsByCode, productOrder, warnings);
+            addProductSection(pendingRows, previousHeader, layout, productsByCode, productOrder, warnings);
           } else {
             warnings.push("마지막 상품 블록의 실측 항목명을 찾지 못해 제외했습니다.");
           }
@@ -752,8 +761,53 @@
         };
       }
 
-      function addProductSection(entries, headerRow, productsByCode, productOrder, warnings) {
-        const measurementColumns = getMeasurementColumns(headerRow, entries);
+      function detectSizeLayout(rows) {
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+          const row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
+          const headers = row.map(normalizeHeader);
+          const masterColumn = headers.findIndex((value) => value === "마스터코드");
+          if (masterColumn < 0) continue;
+
+          const nameColumn = headers.findIndex((value) => /상품명/.test(value));
+          const labeledSizeColumn = headers.findIndex((value) => /^(사이즈|size)$/i.test(value));
+          const sizeColumn = labeledSizeColumn >= 0
+            ? labeledSizeColumn
+            : inferSizeColumn(rows, rowIndex, masterColumn, nameColumn);
+
+          if (sizeColumn >= 0) return { headerRowIndex: rowIndex, masterColumn, nameColumn, sizeColumn };
+        }
+        return null;
+      }
+
+      function inferSizeColumn(rows, headerRowIndex, masterColumn, nameColumn) {
+        const maxColumns = Math.max(0, ...rows.map((row) => Array.isArray(row) ? row.length : 0));
+        const candidates = [];
+
+        for (let columnIndex = 0; columnIndex < maxColumns; columnIndex += 1) {
+          if (columnIndex === masterColumn || columnIndex === nameColumn) continue;
+
+          const values = rows
+            .slice(headerRowIndex + 1)
+            .filter((row) => Array.isArray(row) && cleanCell(row[masterColumn]))
+            .map((row) => cleanCell(row[columnIndex]))
+            .filter(Boolean);
+          if (!values.length) continue;
+
+          const likelySizes = values.filter(isLikelySizeValue).length;
+          candidates.push({ columnIndex, score: likelySizes / values.length });
+        }
+
+        candidates.sort((left, right) => right.score - left.score || left.columnIndex - right.columnIndex);
+        return candidates.length ? candidates[0].columnIndex : -1;
+      }
+
+      function isLikelySizeValue(value) {
+        const text = cleanCell(value);
+        return /^(?:\d+(?:\.\d+)?(?:[-~/]\d+(?:\.\d+)?)?|[A-Z]{1,5}(?:\/[A-Z]{1,5})?|ONE\s*SIZE|FREE|OS|원사이즈)$/i.test(text);
+      }
+
+      function addProductSection(entries, headerRow, layout, productsByCode, productOrder, warnings) {
+        const measurementColumns = getMeasurementColumns(headerRow, entries, layout);
         const grouped = new Map();
 
         if (!measurementColumns.length) {
@@ -762,17 +816,19 @@
         }
 
         entries.forEach(({ row, sourceRow }) => {
-          const masterCode = cleanCell(row[0]);
-          const name = cleanCell(row[1]);
-          const size = cleanCell(row[2]);
-          if (!masterCode || !name || !size) return;
+          const masterCode = cleanCell(row[layout.masterColumn]);
+          const name = layout.nameColumn >= 0 ? cleanCell(row[layout.nameColumn]) : "";
+          const size = cleanCell(row[layout.sizeColumn]);
+          if (!masterCode || !size) return;
 
           const values = measurementColumns.map(({ columnIndex }) => cleanCell(row[columnIndex]));
           if (!values.some(Boolean)) return;
 
           const key = normalizeMasterCode(masterCode);
           if (!grouped.has(key)) grouped.set(key, { masterCode, name, sizes: [] });
-          grouped.get(key).sizes.push({ size, values, sourceRow });
+          const group = grouped.get(key);
+          if (!group.name && name) group.name = name;
+          group.sizes.push({ size, values, sourceRow });
         });
 
         grouped.forEach(({ masterCode, name, sizes }, key) => {
@@ -787,7 +843,8 @@
             return;
           }
 
-          if (normalizeName(existing.name) !== normalizeName(name)) {
+          if (!existing.name && name) existing.name = name;
+          else if (existing.name && name && normalizeName(existing.name) !== normalizeName(name)) {
             warnings.push(`${masterCode}: 같은 마스터코드에 서로 다른 상품명이 있어 첫 번째 상품명을 사용했습니다.`);
           }
 
@@ -805,14 +862,15 @@
         });
       }
 
-      function getMeasurementColumns(headerRow, entries) {
+      function getMeasurementColumns(headerRow, entries, layout) {
         const maxColumns = Math.max(
           headerRow.length,
           ...entries.map(({ row }) => row.length)
         );
         const columns = [];
 
-        for (let columnIndex = 3; columnIndex < maxColumns; columnIndex += 1) {
+        for (let columnIndex = 0; columnIndex < maxColumns; columnIndex += 1) {
+          if ([layout.masterColumn, layout.nameColumn, layout.sizeColumn].includes(columnIndex)) continue;
           const label = cleanCell(headerRow[columnIndex]);
           if (!label) continue;
 
@@ -825,16 +883,15 @@
 
       function parseProductInfo(sheet) {
         const infoMap = new Map();
+        const layout = detectInfoLayout(sheet.rows);
+        if (!layout) return infoMap;
 
-        sheet.rows.forEach((sourceRow) => {
+        sheet.rows.forEach((sourceRow, rowIndex) => {
+          if (rowIndex === layout.headerRowIndex) return;
           const row = Array.isArray(sourceRow) ? sourceRow : [];
-          const masterCode = cleanCell(row[0]);
-          const name = cleanCell(row[1]);
-          const info = cleanCell(row[2]);
-          const hasOtherValues = row.slice(3).some((value) => Boolean(cleanCell(value)));
-
-          if (!masterCode || !name || !info || hasOtherValues) return;
-          if (isInfoHeader(masterCode, name, info)) return;
+          const masterCode = cleanCell(row[layout.masterColumn]);
+          const info = cleanCell(row[layout.infoColumn]);
+          if (!masterCode || !info) return;
 
           infoMap.set(normalizeMasterCode(masterCode), normalizeInfo(info));
         });
@@ -842,23 +899,45 @@
         return infoMap;
       }
 
-      function isSizeDataRow(row) {
-        const hasMasterCode = Boolean(cleanCell(row[0]));
-        const hasName = Boolean(cleanCell(row[1]));
-        const hasSize = Boolean(cleanCell(row[2]));
-        const hasMeasurement = row.slice(3).some((value) => Boolean(cleanCell(value)));
-        return hasMasterCode && hasName && hasSize && hasMeasurement;
+      function detectInfoLayout(rows) {
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+          const row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
+          const headers = row.map(normalizeHeader);
+          const masterColumn = headers.findIndex((value) => value === "마스터코드");
+          if (masterColumn < 0) continue;
+
+          const nameColumn = headers.findIndex((value) => /상품명/.test(value));
+          const infoColumn = headers.findIndex((value, columnIndex) => (
+            columnIndex !== masterColumn
+            && columnIndex !== nameColumn
+            && /(정보|고시|내용)/.test(value)
+          ));
+          if (infoColumn >= 0) return { headerRowIndex: rowIndex, masterColumn, nameColumn, infoColumn };
+        }
+        return null;
       }
 
-      function isMeasurementHeaderRow(row) {
-        const nameCell = cleanCell(row[1]);
-        const sizeCell = cleanCell(row[2]);
-        const hasHeaders = row.slice(3).some((value) => Boolean(cleanCell(value)));
-        return hasHeaders && !nameCell && !sizeCell;
+      function isSizeDataRow(row, layout) {
+        const masterCode = cleanCell(row[layout.masterColumn]);
+        const size = cleanCell(row[layout.sizeColumn]);
+        if (!masterCode || normalizeHeader(masterCode) === "마스터코드" || !size) return false;
+
+        return row.some((value, columnIndex) => (
+          ![layout.masterColumn, layout.nameColumn, layout.sizeColumn].includes(columnIndex)
+          && Boolean(cleanCell(value))
+        ));
       }
 
-      function isInfoHeader(masterCode, name, info) {
-        return /마스터\s*코드/.test(masterCode) && /상품/.test(name) && /(정보|고시|내용)/.test(info);
+      function isMeasurementHeaderRow(row, layout) {
+        const masterCode = cleanCell(row[layout.masterColumn]);
+        const name = layout.nameColumn >= 0 ? cleanCell(row[layout.nameColumn]) : "";
+        const size = cleanCell(row[layout.sizeColumn]);
+        if (!masterCode || normalizeHeader(masterCode) === "마스터코드" || name || size) return false;
+
+        return row.some((value, columnIndex) => (
+          ![layout.masterColumn, layout.nameColumn, layout.sizeColumn].includes(columnIndex)
+          && Boolean(cleanCell(value))
+        ));
       }
 
       function buildFullCode(product) {
@@ -920,21 +999,22 @@
 
         resultList.innerHTML = state.products.map((product, index) => {
           const code = buildFullCode(product);
+          const displayName = product.name || `마스터코드 ${product.masterCode}`;
           const specLabel = product.info ? "정보고시 있음" : "정보고시 없음";
-          const meta = `사이즈 ${product.sizes.length}개 · ${product.headers.join(", ")} · ${specLabel}`;
+          const meta = `마스터코드 ${product.masterCode} · 사이즈 ${product.sizes.length}개 · ${product.headers.join(", ")} · ${specLabel}`;
 
           return [
             '<article class="result-item">',
             '<div class="result-item-head">',
             '<div class="result-name">',
-            `<strong title="${escapeAttribute(product.name)}">${escapeHtml(product.name)}</strong>`,
+            `<strong title="${escapeAttribute(displayName)}">${escapeHtml(displayName)}</strong>`,
             `<div class="result-meta">${escapeHtml(meta)}</div>`,
             '</div>',
             '<div class="result-item-actions">',
             `<button type="button" class="btn btn-small" data-copy-index="${index}">코드 복사</button>`,
             '</div>',
             '</div>',
-            `<textarea class="code-preview" readonly aria-label="${escapeAttribute(product.name)} HTML 코드">${escapeHtml(code)}</textarea>`,
+            `<textarea class="code-preview" readonly aria-label="${escapeAttribute(displayName)} HTML 코드">${escapeHtml(code)}</textarea>`,
             '</article>'
           ].join("");
         }).join("");
@@ -1029,6 +1109,10 @@
       function cleanCell(value) {
         if (value === null || value === undefined) return "";
         return String(value).replace(/^\uFEFF/, "").trim();
+      }
+
+      function normalizeHeader(value) {
+        return cleanCell(value).replace(/\s+/g, "").toLowerCase();
       }
 
       function normalizeName(value) {
