@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JanSport 상세페이지 자동화 빌더</title>
+<meta name="theme-color" content="#13294C">
+<link rel="icon" type="image/png" sizes="32x32" href="https://cafe24.poxo.com/ec01/jansport1/65uN764GExGfUPmYExKJktVrhUtu+QCZzr4QMPw5Ed9w41urU24hDLhoWQ+bylbdwk8VQxH3B2J+ovDwAV9pNQ==/_/web/icon/ms_favicon_32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://cafe24.poxo.com/ec01/jansport1/65uN764GExGfUPmYExKJktVrhUtu+QCZzr4QMPw5Ed9w41urU24hDLhoWQ+bylbdwk8VQxH3B2J+ovDwAV9pNQ==/_/web/icon/ms_favicon_180.png">
+
+<!-- Font: Pretendard -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root{
+  --paper:#F3F5F7; --surface:#FFFFFF; --ink:#111820; --muted:#69717A;
+  --line:#DDE2E7; --line2:#C8D0D8; --accent:#13294C; --accent-soft:#EAF0F6;
+  --brand-blue:#335A91; --brand-red:#CA4638;
+  --ok:#2E7D52; --warn:#A65B22; --err:#B33A3A;
+  --radius:5px; --mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+  font-family:'Pretendard','Pretendard Variable',-apple-system,sans-serif;
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+a{color:var(--accent);}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px 120px;}
+
+header.top{border-top:6px solid var(--accent);border-bottom:1px solid var(--line);background:var(--surface);}
+.top-in{max-width:1180px;margin:0 auto;padding:15px 28px;display:flex;align-items:center;gap:18px;}
+.logo{width:78px;height:48px;display:flex;align-items:center;justify-content:center;flex:none;}
+.logo img{display:block;width:100%;height:100%;object-fit:contain;}
+.brand{padding-left:18px;border-left:1px solid var(--line);}
+.brand h1{font-size:17px;margin:0;font-weight:800;letter-spacing:-.02em;color:var(--accent);}
+.brand p{font-size:12px;margin:3px 0 0;color:var(--muted);}
+.brand-meta{margin-left:auto;text-align:right;}
+.brand-meta .v{display:inline-flex;align-items:center;gap:7px;padding:5px 9px;border:1px solid var(--line);
+  border-radius:2px;color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.08em;font-family:var(--mono);}
+.brand-meta .v::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand-red);}
+@media(max-width:640px){.top-in{align-items:flex-start;gap:12px;padding:14px 18px;}.logo{width:65px;height:40px;}.brand{padding-left:12px;}.brand p{display:none;}.brand-meta{display:none;}.wrap{padding-left:18px;padding-right:18px;}}
+
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  margin-top:22px;overflow:hidden;box-shadow:0 5px 18px rgba(19,41,76,.045);}
+.step-h{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);background:#F8FAFC;cursor:default;}
+.step-n{width:24px;height:24px;border-radius:2px;background:var(--accent);color:#fff;font-size:12px;
+  display:grid;place-items:center;font-weight:700;flex:none;}
+.step-h h2{font-size:15px;margin:0;font-weight:800;color:var(--accent);}
+.step-h .sub{font-size:12px;color:var(--muted);margin-left:auto;}
+.step-b{padding:20px;}
+
+.drop{border:1.5px dashed var(--line2);border-radius:var(--radius);padding:26px;text-align:center;
+  background:#F8FAFC;transition:.15s;cursor:pointer;}
+.drop:hover,.drop.is-drag{border-color:var(--accent);background:var(--accent-soft);}
+.drop .ic{font-size:26px;}
+.drop .t{font-weight:700;margin-top:6px;color:var(--accent);}
+.drop .d{font-size:12px;color:var(--muted);margin-top:3px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:20px;
+  background:var(--accent-soft);color:var(--accent);font-family:var(--mono);}
+.statusline{font-size:12.5px;margin-top:12px;color:var(--muted);}
+.statusline b{color:var(--ink);}
+
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:#3a3a3e;}
+.field .hint{font-size:11px;color:var(--muted);font-weight:400;}
+.section-label{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.02em;margin:4px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line);}
+.toggle-row{display:flex;align-items:center;gap:10px;min-height:34px;}
+.toggle-row .hint{margin-left:2px;}
+input[type=text],input[type=number],select,textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--line2);border-radius:3px;
+  font-family:inherit;font-size:13px;background:#fff;color:var(--ink);}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+textarea{font-family:var(--mono);font-size:12px;line-height:1.5;resize:vertical;}
+
+.row-inline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.row-inline.three{grid-template-columns:repeat(3,1fr);}
+.row-inline.five{grid-template-columns:repeat(5,1fr);}
+@media(max-width:760px){.row-inline,.row-inline.three,.row-inline.five{grid-template-columns:repeat(2,1fr);}}
+
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:3px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.12s;}
+.btn:hover{background:var(--brand-blue);border-color:var(--brand-blue);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.ghost{background:#fff;color:var(--accent);}
+.btn.ghost:hover{background:var(--accent-soft);}
+.btn.accent{background:var(--accent);border-color:var(--accent);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+
+table.sub-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.sub-tbl th,table.sub-tbl td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+table.sub-tbl th{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+table.sub-tbl td .k{font-family:var(--mono);font-size:11.5px;color:var(--accent);}
+.field .toggle-row > label.switch{display:inline-flex;align-items:center;cursor:pointer;margin:0;line-height:1;}
+.switch input{display:none;}
+.switch .track{width:36px;height:20px;border-radius:20px;background:var(--line2);position:relative;transition:.15s;}
+.switch .track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;}
+.switch input:checked + .track{background:var(--accent);}
+.switch input:checked + .track::after{transform:translateX(16px);}
+
+.alerts{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+.alert{font-size:12.5px;padding:8px 12px;border-radius:7px;display:flex;gap:8px;}
+.alert.ok{background:#EAF5EE;color:var(--ok);}
+.alert.warn{background:#FBF1E6;color:var(--warn);}
+.alert.err{background:#FBEAEA;color:var(--err);}
+
+.prev-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.prev-tab{padding:6px 12px;border:1px solid var(--line2);border-radius:3px;background:#fff;cursor:pointer;font-size:12px;font-family:var(--mono);}
+.prev-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.prev-stage{background:#E8EDF2;border-radius:var(--radius);padding:24px;display:flex;justify-content:center;}
+.prev-page{width:500px;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.prev-page img{display:block;width:100%;}
+.prev-cap{font-size:11px;color:var(--muted);font-family:var(--mono);padding:3px 6px;background:#FAFAF8;border-top:1px dashed var(--line);}
+.prev-video{background:#111;color:#9fd;font-family:var(--mono);font-size:12px;padding:30px;text-align:center;}
+
+.out-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:760px){.out-grid{grid-template-columns:1fr;}}
+.out-card{border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:var(--radius);padding:16px;background:#F8FAFC;}
+.out-card .ic{font-size:22px;}
+.out-card h3{font-size:13.5px;margin:8px 0 4px;}
+.out-card p{font-size:12px;color:var(--muted);margin:0 0 12px;min-height:32px;}
+
+.code-block{margin-top:16px;}
+.code-block .hd{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.code-block .hd .k{font-family:var(--mono);font-size:12px;color:var(--accent);}
+.muted-note{font-size:12px;color:var(--muted);background:#F8FAFC;border:1px solid var(--line);border-radius:3px;padding:12px 14px;margin-top:8px;}
+.kbd{font-family:var(--mono);background:#E8EDF2;padding:1px 5px;border-radius:2px;font-size:11.5px;}
+.hidden{display:none !important;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+footer{max-width:1180px;margin:30px auto 0;padding:0 28px;font-size:11.5px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo"><img src="https://cafe24.poxo.com/ec01/jansport1/65uN764GExGfUPmYExKJktVrhUtu+QCZzr4QMPw5Ed9w41urU24hDLhoWQ+bylbdwk8VQxH3B2J+ovDwAV9pNQ==/_/web/2022/logo.png" alt="JanSport"></div>
+    <div class="brand">
+      <h1>JanSport 상세페이지 자동화 빌더</h1>
+      <p>엑셀 + 이미지 폴더 → 텍스트 JPG 렌더링 · 정렬 코드 · FTP URL 일괄 생성</p>
+    </div>
+    <div class="brand-meta">
+      <span class="v">JANSPORT · CLIENT-SIDE</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- STEP 1 : UPLOAD -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">1</span><h2>업로드</h2>
+      <span class="sub">엑셀 1개 + 이미지 폴더(이미지코드명)</span></div>
+    <div class="step-b">
+      <div class="grid2">
+        <div>
+          <div class="drop" id="dropXlsx">
+            <div class="ic">📄</div>
+            <div class="t">엑셀 업로드 (.xlsx / .xls / .csv)</div>
+            <div class="d">이미지코드 / 상품명 / 제품설명 / FEATURES / size / 리사이클 여부</div>
+          </div>
+          <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" class="hidden">
+          <div class="statusline" id="xlsxStatus">아직 업로드 안 됨</div>
+        </div>
+        <div>
+          <div class="drop" id="dropImg">
+            <div class="ic">🗂️</div>
+            <div class="t">이미지 폴더 업로드</div>
+            <div class="d">상위 폴더 선택(하위에 이미지코드 폴더들) 또는 코드 폴더 1개</div>
+          </div>
+          <input type="file" id="imgInput" webkitdirectory directory multiple class="hidden">
+          <div class="statusline" id="imgStatus">아직 업로드 안 됨</div>
+        </div>
+      </div>
+      <div class="alerts" id="matchAlerts"></div>
+    </div>
+  </section>
+
+  <!-- STEP 2 : COMMON + TEXT SETTINGS -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">2</span><h2>공통 콘텐츠 & 텍스트 설정</h2>
+      <span class="sub">Pretendard · 1000px 렌더링 기준</span></div>
+    <div class="step-b">
+      <div class="section-label">공통 콘텐츠</div>
+      <div class="row-inline">
+        <div class="field"><label>시즌 경로</label><input type="text" id="seasonPath" value="2026fw"></div>
+        <div class="field"><label>인트로 유형</label><select id="introType"><option value="image" selected>intro.jpg 이미지</option><option value="video">동영상</option></select></div>
+        <div class="field" style="grid-column:span 2;"><label>인트로 동영상 URL <span class="hint">동영상 선택 시 사용</span></label><input type="text" id="introVideoUrl" placeholder="https://...mp4"></div>
+      </div>
+      <div class="row-inline">
+        <div class="field"><label>하단 공통 캠페인 동영상</label><div class="toggle-row"><label class="switch"><input type="checkbox" id="campaignEnabled" checked><span class="track"></span></label><span class="hint">기본값: 포함</span></div></div>
+        <div class="field" style="grid-column:span 3;"><label>캠페인 동영상 URL</label><input type="text" id="campaignVideoUrl" value="https://cdn.shopify.com/videos/c/o/v/a5457a11999f4e419e87ef8e6a254f23.mp4"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:8px;">텍스트 · USP 이미지</div>
+      <div class="field" style="max-width:340px;"><label>폰트</label><select id="fontFamily"><option value="Pretendard">Pretendard (고정)</option></select></div>
+      <div class="row-inline five">
+        <div class="field"><label>상품명 폰트크기(px)</label><input type="number" id="titleSize" value="70"></div>
+        <div class="field"><label>상품명 행간(px)</label><input type="number" id="titleLh" value="90"></div>
+        <div class="field"><label>상품명 굵기</label><select id="titleWeight"><option value="500">500 Medium</option><option value="600">600 SemiBold</option><option value="700" selected>700 Bold</option><option value="800">800 ExtraBold</option><option value="900">900 Black</option></select></div>
+        <div class="field"><label>상품명 상단여백(px)</label><input type="number" id="titlePadTop" value="40"></div>
+        <div class="field"><label>상품명 하단여백(px)</label><input type="number" id="titlePadBottom" value="40"></div>
+      </div>
+      <div class="row-inline five">
+        <div class="field"><label>제품설명 폰트크기(px)</label><input type="number" id="bodySize" value="30"></div>
+        <div class="field"><label>제품설명 행간(px)</label><input type="number" id="bodyLh" value="45"></div>
+        <div class="field"><label>제품설명 굵기</label><select id="bodyWeight"><option value="400">400 Regular</option><option value="500" selected>500 Medium</option><option value="600">600 SemiBold</option><option value="700">700 Bold</option></select></div>
+        <div class="field"><label>제품설명 상단여백(px)</label><input type="number" id="bodyPadTop" value="0"></div>
+        <div class="field"><label>제품설명 하단여백(px)</label><input type="number" id="bodyPadBottom" value="50"></div>
+      </div>
+      <div class="row-inline five">
+        <div class="field"><label>USP 폰트크기(px)</label><input type="number" id="uspSize" value="26"></div>
+        <div class="field"><label>USP 행간(px)</label><input type="number" id="uspLh" value="26"></div>
+        <div class="field"><label>USP 굵기</label><select id="uspWeight"><option value="400">400 Regular</option><option value="500">500 Medium</option><option value="600" selected>600 SemiBold</option><option value="700">700 Bold</option></select></div>
+        <div class="field"><label>USP 상단여백(px)</label><input type="number" id="uspPadTop" value="0"></div>
+        <div class="field"><label>USP 하단여백(px)</label><input type="number" id="uspPadBottom" value="0"></div>
+      </div>
+      <div class="row-inline">
+        <div class="field"><label>좌우여백(px)</label><input type="number" id="sidePad" value="100"></div>
+        <div class="field"><label>이미지 가로(px)</label><input type="number" id="canvasW" value="1000"></div>
+        <div class="field"><label>글자색</label><input type="text" id="textColor" value="#111111"></div>
+        <div class="field"><label>배경색</label><input type="text" id="bgColor" value="#ffffff"></div>
+      </div>
+      <div class="row-inline">
+        <div class="field"><label>USP 버튼 좌우여백(px)</label><input type="number" id="uspBtnPadX" value="30"></div>
+        <div class="field"><label>USP 버튼 상하여백(px)</label><input type="number" id="uspBtnPadY" value="4"></div>
+        <div class="field"><label>USP 버튼 간격(px)</label><input type="number" id="uspGap" value="20"></div>
+        <div class="field"><label>USP 버튼 모서리(px)</label><input type="number" id="uspRadius" value="8"></div>
+      </div>
+      <div class="row-inline three">
+        <div class="field"><label>USP 버튼 배경색</label><input type="text" id="uspBg" value="#EBF2F4"></div>
+        <div class="field"><label>USP 버튼 글자색</label><input type="text" id="uspColor" value="#235768"></div>
+        <div class="field"><label>USP 정렬</label><select id="uspAlign"><option value="left" selected>좌측</option><option value="center">가운데</option></select></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" id="resetOptions" type="button">옵션 초기화</button>
+        <span class="statusline" id="optionStatus" style="margin-top:0;align-self:center;"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 : PREVIEW -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">3</span><h2>렌더링 & 미리보기</h2>
+      <span class="sub">고정 순서 조립 · 렌더링 후 미리보기</span></div>
+    <div class="step-b">
+      <div class="btn-row">
+        <button class="btn accent" id="renderBtn" disabled><span id="renderLabel">렌더링 실행</span></button>
+        <span class="statusline" id="renderStatus" style="margin-top:0;align-self:center;"></span>
+      </div>
+      <div id="previewArea" class="hidden" style="margin-top:18px;">
+        <div class="prev-tabs" id="prevTabs"></div>
+        <div class="prev-stage"><div class="prev-page" id="prevPage"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4 : OUTPUT -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">4</span><h2>출력</h2>
+      <span class="sub">FTP URL · 정렬 스프레드시트 · 이미지 ZIP · HTML</span></div>
+    <div class="step-b">
+      <div class="field" style="max-width:640px;">
+        <label>FTP 기본 주소 <span class="hint">필요 시 수정 가능 · 끝에 / 없이</span></label>
+        <input type="text" id="ftpFixedBase" value="https://inoo11.openhost.cafe24.com/web/open_product/open_detail">
+        <div class="hint" style="margin-top:4px;">생성 경로: <span class="kbd">기본주소/gu_jansports/시즌/상품코드/파일명</span></div>
+      </div>
+
+      <div class="out-grid" style="margin-top:6px;">
+        <div class="out-card">
+          <div class="ic">📊</div>
+          <h3>정렬 코드 스프레드시트</h3>
+          <p>순번대로 파일명·상대경로·전체URL·HTML 정리. 타부서 상품등록 전달용.</p>
+          <button class="btn ghost" id="dlXlsx" disabled>스프레드시트 다운로드</button>
+        </div>
+        <div class="out-card">
+          <div class="ic">🗜️</div>
+          <h3>작업 이미지 ZIP</h3>
+          <p>코드별 폴더에 원본 이미지 + 렌더된 usp.jpg. 그대로 FTP 업로드.</p>
+          <button class="btn ghost" id="dlZip" disabled>이미지 ZIP 다운로드</button>
+        </div>
+        <div class="out-card">
+          <div class="ic">⟨⟩</div>
+          <h3>HTML 코드</h3>
+          <p>상품별 한 줄 &lt;div&gt;·&lt;img&gt; 스택 코드. 아래에서 복사하세요.</p>
+          <button class="btn ghost" id="genHtml" disabled>HTML 생성</button>
+        </div>
+      </div>
+
+      <div id="htmlOut"></div>
+      <div class="muted-note">
+        모든 상품 이미지 URL에는 <span class="kbd">/gu_jansports/시즌/상품코드</span>가 자동으로 포함되며, 공통 이미지는 시즌 폴더에서 불러옵니다.
+        이미지는 스타일 없는 &lt;div&gt;·&lt;img&gt;로 조립하며 전체 HTML은 줄바꿈 없는 한 줄로 출력됩니다.
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  로컬 브라우저에서 동작하며 파일은 서버로 전송되지 않습니다. · 폰트: Pretendard · 텍스트 렌더링은 Canvas 기반(1배율, 지정 px 그대로 출력).
+</footer>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+
+/* ---------- state ---------- */
+const S = {
+  cols: {},
+  rows: [],              // [{code,name,description,features,size,recycle}]
+  folders: {},           // code -> {model:[],product:[],detail:[],unknown:[]}
+  rendered: {},          // code -> { 'usp.jpg': {blob,dataUrl,w,h} }
+  assembly: {},          // code -> [ {kind, name, file?, url?} ]
+  previewUrls: [],
+};
+const $ = id => document.getElementById(id);
+
+/* ---------- helpers ---------- */
+const FONT_LOAD_LIMIT = 2500;
+const BRAND_FTP_ROOT = 'gu_jansports';
+const OPTION_STORE_KEY = 'detail_builder_jansport_options_v2';
+const OPTION_IDS = ['seasonPath','introType','introVideoUrl','campaignEnabled','campaignVideoUrl','fontFamily','titleSize','titleLh','titleWeight','titlePadTop','titlePadBottom','bodySize','bodyLh','bodyWeight','bodyPadTop','bodyPadBottom','uspSize','uspLh','uspWeight','uspPadTop','uspPadBottom','sidePad','canvasW','textColor','bgColor','uspBtnPadX','uspBtnPadY','uspGap','uspRadius','uspBg','uspColor','uspAlign','ftpFixedBase'];
+const SIZE_GUIDES = [
+  ['하이랜드 미니','sizeguide_1.jpg'],['하프파인트','sizeguide_2.jpg'],['비욘드팩','sizeguide_3.jpg'],
+  ['슈퍼브레이크','sizeguide_4.jpg'],['라이트팩','sizeguide_5.jpg'],['아가베','sizeguide_6.jpg'],
+  ['엔보이','sizeguide_7.jpg'],['빅스튜던트','sizeguide_8.jpg'],['오딧세이','sizeguide_9.jpg']
+];
+const isBlank = v => v===null||v===undefined||String(v).trim()===''||String(v).trim().toLowerCase()==='n';
+const escAttr = (s)=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const stripBullet = (v)=>String(v).replace(/^\s*[•·●○▪▫◦‣⁃∙‧ㆍ]\s*/u,'').trim();
+const splitLines = (v)=>isBlank(v) ? [] : String(v).split(/\r?\n/).map(stripBullet).filter(Boolean);
+const getOptionValue = el=>el && el.type==='checkbox' ? el.checked : (el ? el.value : '');
+const setOptionValue = (el,value)=>{ if(!el) return; if(el.type==='checkbox') el.checked=value===true||value==='true'; else el.value=value; };
+
+const DEFAULT_OPTIONS = {};
+OPTION_IDS.forEach(id=>{ DEFAULT_OPTIONS[id]=getOptionValue($(id)); });
+
+function saveOptions(){
+  const fields={};
+  OPTION_IDS.forEach(id=>{ if($(id)) fields[id]=getOptionValue($(id)); });
+  try{ localStorage.setItem(OPTION_STORE_KEY,JSON.stringify({fields})); }catch(e){}
+}
+
+function restoreOptions(){
+  let saved=null;
+  try{ saved=JSON.parse(localStorage.getItem(OPTION_STORE_KEY)||'null'); }catch(e){}
+  if(!saved) return;
+  const fields=saved.fields||{};
+  if(['70','105'].includes(String(fields.titleLh??''))) fields.titleLh='90';
+  const padIds=['titlePadTop','titlePadBottom','bodyPadTop','bodyPadBottom','uspPadTop','uspPadBottom'];
+  if(padIds.every(id=>fields[id]===undefined||String(fields[id])==='0')){
+    Object.assign(fields,{titlePadTop:'40',titlePadBottom:'40',bodyPadTop:'0',bodyPadBottom:'50',uspPadTop:'0',uspPadBottom:'0'});
+  }
+  Object.keys(fields).forEach(id=>setOptionValue($(id),fields[id]));
+}
+
+function resetOptions(){
+  OPTION_IDS.forEach(id=>{ if($(id) && DEFAULT_OPTIONS[id]!==undefined) setOptionValue($(id),DEFAULT_OPTIONS[id]); });
+  try{ localStorage.removeItem(OPTION_STORE_KEY); }catch(e){}
+  syncCommonControls();
+  refreshAssemblies();
+  if($('optionStatus')){
+    $('optionStatus').textContent='기본값으로 초기화됨';
+    setTimeout(()=>$('optionStatus').textContent='',1500);
+  }
+}
+
+function bindOptionPersistence(){
+  restoreOptions();
+  OPTION_IDS.forEach(id=>{
+    const el=$(id);
+    if(el) el.addEventListener('input',()=>{ saveOptions(); syncCommonControls(); refreshAssemblies(); markRenderStale(); });
+  });
+  OPTION_IDS.forEach(id=>{
+    const el=$(id);
+    if(el) el.addEventListener('change',()=>{ saveOptions(); syncCommonControls(); refreshAssemblies(); markRenderStale(); });
+  });
+  if($('resetOptions')) $('resetOptions').onclick=resetOptions;
+  syncCommonControls();
+}
+
+function syncCommonControls(){
+  if($('introVideoUrl')) $('introVideoUrl').disabled=$('introType').value!=='video';
+  if($('campaignVideoUrl')) $('campaignVideoUrl').disabled=!$('campaignEnabled').checked;
+}
+
+function refreshAssemblies(){
+  Object.keys(S.rendered).forEach(code=>{ S.assembly[code]=buildBaseSequence(code,S.rendered[code]); });
+  const active=$('prevTabs') && $('prevTabs').querySelector('.prev-tab.active');
+  if(active && S.assembly[active.textContent]) showPreview(active.textContent);
+}
+
+function markRenderStale(){
+  if(!Object.keys(S.rendered).length) return;
+  ['dlXlsx','dlZip','genHtml'].forEach(id=>{ if($(id)) $(id).disabled=true; });
+  if($('renderStatus')) $('renderStatus').textContent='설정이 변경되었습니다. 다시 렌더링해주세요.';
+}
+
+function classifyFolders(files){
+  const codes = new Set(S.rows.map(r=>r.code));
+  const groups = {};
+  for(const f of files){
+    if(!/\.jpe?g$/i.test(f.name)) continue;
+    const rel = (f.webkitRelativePath || f.name).split('/');
+    let code = null;
+    for(const seg of rel){ if(codes.has(seg)){ code = seg; break; } }
+    if(!code) code = rel.length>=2 ? rel[rel.length-2] : 'UNGROUPED';
+    (groups[code] = groups[code]||[]).push(f);
+  }
+  const out = {};
+  for(const code in groups){
+    const fs = groups[code];
+    const o = {model:[],product:[],detail:[],unknown:[],byName:{}};
+    for(const f of fs){
+      o.byName[f.name]=f;
+      let m=f.name.match(/^m_(\d+)\.jpe?g$/i);
+      if(m && +m[1]>=1 && +m[1]<=10){ o.model.push({n:+m[1],file:f}); continue; }
+      m=f.name.match(/^d_(\d+)\.jpe?g$/i);
+      if(m && +m[1]>=1 && +m[1]<=10){ o.detail.push({n:+m[1],file:f}); continue; }
+      m=f.name.match(/^(\d+)\.jpe?g$/i);
+      if(m && +m[1]>=1 && +m[1]<=10){ o.product.push({n:+m[1],file:f}); continue; }
+      o.unknown.push(f);
+    }
+    o.model.sort((a,b)=>a.n-b.n);
+    o.product.sort((a,b)=>a.n-b.n);
+    o.detail.sort((a,b)=>a.n-b.n);
+    out[code]=o;
+  }
+  return out;
+}
+
+/* ---------- STEP 1: excel ---------- */
+$('dropXlsx').onclick=()=>$('xlsxInput').click();
+$('xlsxInput').onchange=e=>{ if(e.target.files[0]) readExcel(e.target.files[0]); };
+['dragover','dragleave','drop'].forEach(ev=>{
+  $('dropXlsx').addEventListener(ev,e=>{
+    e.preventDefault();
+    if(ev==='dragover') $('dropXlsx').classList.add('is-drag');
+    if(ev==='dragleave') $('dropXlsx').classList.remove('is-drag');
+    if(ev==='drop'){
+      $('dropXlsx').classList.remove('is-drag');
+      if(e.dataTransfer.files[0]) readExcel(e.dataTransfer.files[0]);
+    }
+  });
+});
+
+function readExcel(file){
+  const fr = new FileReader();
+  fr.onload = ev=>{
+    try{
+      const wb = XLSX.read(ev.target.result,{type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const aoa = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(!aoa.length){ alert('빈 시트입니다.'); return; }
+      const header = aoa[0].map(h=>String(h||'').trim());
+      const findCol=(patterns)=>header.findIndex(h=>patterns.some(re=>re.test(h)));
+      S.cols = {
+        code:findCol([/이미지\s*코드/i,/^code$/i]),
+        name:findCol([/상품\s*명/i,/product\s*name/i]),
+        description:findCol([/제품\s*설명/i,/상품\s*설명/i,/description/i]),
+        features:findCol([/^features?$/i,/features?/i,/특징/i]),
+        size:findCol([/\bsize\b/i,/사이즈/i]),
+        recycle:findCol([/리사이클/i,/재활용/i])
+      };
+      if(S.cols.code<0){ alert("'이미지코드' 컬럼을 찾지 못했습니다."); return; }
+      if(S.cols.name<0){ alert("'상품명' 컬럼을 찾지 못했습니다."); return; }
+      S.rows = [];
+      S.rendered = {};
+      S.assembly = {};
+      for(let r=1;r<aoa.length;r++){
+        const src = aoa[r];
+        const val=idx=>idx>=0 ? String(src[idx]??'').trim() : '';
+        const code = val(S.cols.code);
+        if(!code) continue;
+        S.rows.push({
+          code,
+          name:val(S.cols.name),
+          description:val(S.cols.description),
+          features:splitLines(val(S.cols.features)),
+          size:splitLines(val(S.cols.size)),
+          recycle:/^o$/i.test(val(S.cols.recycle))
+        });
+      }
+      const optional=[
+        ['제품설명',S.cols.description],['FEATURES',S.cols.features],['size',S.cols.size],['리사이클 여부',S.cols.recycle]
+      ].filter(x=>x[1]<0).map(x=>x[0]);
+      $('xlsxStatus').innerHTML = `<b>${file.name}</b> · 상품 <b>${S.rows.length}건</b>${optional.length?` · 미확인 컬럼: ${optional.join(', ')}`:''}`;
+      if(S._rawImgFiles) S.folders = classifyFolders(S._rawImgFiles);
+      refreshMatch();
+    }catch(err){ console.error(err); alert('엑셀 읽기 오류: '+err.message); }
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+bindOptionPersistence();
+
+/* ---------- STEP 1: images ---------- */
+$('dropImg').onclick=()=>$('imgInput').click();
+$('imgInput').onchange=e=>handleImageFiles([...e.target.files]);
+['dragover','dragleave','drop'].forEach(ev=>{
+  $('dropImg').addEventListener(ev,async e=>{
+    e.preventDefault();
+    if(ev==='dragover') $('dropImg').classList.add('is-drag');
+    if(ev==='dragleave') $('dropImg').classList.remove('is-drag');
+    if(ev==='drop'){
+      $('dropImg').classList.remove('is-drag');
+      const files = await getDroppedFiles(e.dataTransfer);
+      handleImageFiles(files);
+    }
+  });
+});
+
+function handleImageFiles(files){
+  if(!files.length) return;
+  S._rawImgFiles = files;
+  S.folders = classifyFolders(S._rawImgFiles);
+  const codes = Object.keys(S.folders);
+  let total=0; codes.forEach(c=>{const o=S.folders[c]; total+=o.model.length+o.product.length+o.detail.length;});
+  $('imgStatus').innerHTML = `폴더 <b>${codes.length}개</b> · 이미지 <b>${total}장</b> 인식`;
+  refreshMatch();
+}
+
+async function getDroppedFiles(dt){
+  const items = Array.from(dt.items || []);
+  if(items.some(item=>item.webkitGetAsEntry)){
+    const files = [];
+    await Promise.all(items.map(item=>walkEntry(item.webkitGetAsEntry && item.webkitGetAsEntry(), '', files)));
+    if(files.length) return files;
+  }
+  return Array.from(dt.files || []);
+}
+
+function walkEntry(entry, path, files){
+  return new Promise(resolve=>{
+    if(!entry){ resolve(); return; }
+    if(entry.isFile){
+      entry.file(file=>{
+        try{ Object.defineProperty(file,'webkitRelativePath',{value:path+file.name}); }catch(e){}
+        files.push(file);
+        resolve();
+      }, resolve);
+      return;
+    }
+    if(entry.isDirectory){
+      const reader = entry.createReader();
+      const dirPath = path + entry.name + '/';
+      const read = ()=>reader.readEntries(async entries=>{
+        if(!entries.length){ resolve(); return; }
+        await Promise.all(entries.map(child=>walkEntry(child, dirPath, files)));
+        read();
+      }, resolve);
+      read();
+      return;
+    }
+    resolve();
+  });
+}
+
+function refreshMatch(){
+  const box=$('matchAlerts'); box.innerHTML='';
+  if(!S.rows.length || !Object.keys(S.folders).length) return;
+  const codeSet=new Set(S.rows.map(r=>r.code));
+  const folderSet=new Set(Object.keys(S.folders));
+  const matched=[...codeSet].filter(c=>folderSet.has(c));
+  const noFolder=[...codeSet].filter(c=>!folderSet.has(c));
+  const noRow=[...folderSet].filter(c=>!codeSet.has(c)&&c!=='UNGROUPED');
+  const add=(cls,txt)=>{const d=document.createElement('div');d.className='alert '+cls;d.textContent=txt;box.appendChild(d);};
+  if(matched.length) add('ok',`✓ 매칭 완료: ${matched.length}건 (${matched.join(', ')})`);
+  const guideMatches=matched.map(code=>[code,sizeGuideForCode(code)]).filter(([,guide])=>guide);
+  if(guideMatches.length) add('ok',`✓ 사이즈 도식화: ${guideMatches.map(([code,guide])=>`${code} → ${guide}`).join(', ')}`);
+  if(noFolder.length) add('warn',`⚠ 폴더 없음(엑셀에만 존재): ${noFolder.join(', ')}`);
+  if(noRow.length) add('warn',`⚠ 엑셀행 없음(폴더만 존재): ${noRow.join(', ')}`);
+  const unknown=matched.flatMap(code=>(S.folders[code].unknown||[]).map(f=>`${code}/${f.name}`));
+  if(unknown.length) add('warn',`⚠ 규칙 외 파일 제외: ${unknown.join(', ')}`);
+  $('renderBtn').disabled = matched.length===0;
+}
+
+function normalizedSeason(){
+  return ($('seasonPath').value.trim()||'2026fw').replace(/^\/+|\/+$/g,'').replace(/^gu_jansports\/?/i,'')||'2026fw';
+}
+
+function sizeGuideForName(name){
+  const compact=String(name||'').normalize('NFKC').replace(/[\s\u200B-\u200D\uFEFF]/g,'');
+  const match=SIZE_GUIDES.find(([key])=>compact.includes(key.normalize('NFKC').replace(/\s+/g,'')));
+  return match ? match[1] : '';
+}
+
+function sizeGuideForCode(code){
+  for(const row of S.rows){
+    if(row.code!==code) continue;
+    const guide=sizeGuideForName(row.name);
+    if(guide) return guide;
+  }
+  return '';
+}
+
+function uspItems(row){
+  const items=(row.features||[]).slice();
+  if(!sizeGuideForCode(row.code)) items.push(...(row.size||[]));
+  return items;
+}
+
+function buildBaseSequence(code, rmap){
+  const row=S.rows.find(r=>r.code===code);
+  const fold=S.folders[code];
+  if(!row || !fold) return [];
+  const seq=[];
+  seq.push({kind:'common',name:'top.jpg'});
+  if($('introType').value==='video') seq.push({kind:'introVideo',name:'인트로 동영상',url:$('introVideoUrl').value.trim()});
+  else seq.push({kind:'common',name:'intro.jpg'});
+  const model1=fold.model.find(x=>x.n===1);
+  const product1=fold.product.find(x=>x.n===1);
+  const leadImage=model1||product1;
+  if(leadImage) seq.push({kind:'local',name:leadImage.file.name,file:leadImage.file});
+  seq.push({kind:'common',name:'logo.jpg'});
+  if(rmap && rmap['usp.jpg']) seq.push({kind:'text',name:'usp.jpg',rendered:rmap['usp.jpg']});
+  else seq.push({kind:'text',name:'usp.jpg'});
+  if(row.recycle) seq.push({kind:'common',name:'recycle.jpg'});
+  seq.push({kind:'common',name:'gap_150.jpg'});
+  fold.model.filter(x=>x!==model1).forEach(x=>seq.push({kind:'local',name:x.file.name,file:x.file}));
+  const remainingProducts=model1 ? fold.product : fold.product.filter(x=>x!==product1);
+  remainingProducts.forEach(x=>seq.push({kind:'local',name:x.file.name,file:x.file}));
+  fold.detail.forEach(x=>seq.push({kind:'local',name:x.file.name,file:x.file}));
+  seq.push({kind:'common',name:'notice.jpg'});
+  const guide=sizeGuideForCode(code);
+  if(guide) seq.push({kind:'common',name:guide});
+  seq.push({kind:'common',name:'sizecomparison.jpg'});
+  if($('campaignEnabled').checked) seq.push({kind:'campaignVideo',name:'캠페인 동영상',url:$('campaignVideoUrl').value.trim()});
+  seq.push({kind:'common',name:'lookbook.jpg'});
+  return seq;
+}
+
+/* ---------- STEP 2: read config ---------- */
+function cfg(){
+  return {
+    family:'Pretendard',
+    title:{size:+$('titleSize').value,lh:+$('titleLh').value,weight:$('titleWeight').value,padTop:+$('titlePadTop').value,padBottom:+$('titlePadBottom').value},
+    body:{size:+$('bodySize').value,lh:+$('bodyLh').value,weight:$('bodyWeight').value,padTop:+$('bodyPadTop').value,padBottom:+$('bodyPadBottom').value},
+    usp:{size:+$('uspSize').value,lh:+$('uspLh').value,weight:$('uspWeight').value,padTop:+$('uspPadTop').value,padBottom:+$('uspPadBottom').value,
+      btnPadX:+$('uspBtnPadX').value,btnPadY:+$('uspBtnPadY').value,gap:+$('uspGap').value,radius:+$('uspRadius').value,
+      bg:$('uspBg').value||'#EBF2F4',color:$('uspColor').value||'#235768',align:$('uspAlign').value},
+    sidePad:+$('sidePad').value,
+    width:+$('canvasW').value,
+    color:$('textColor').value||'#222', bg:$('bgColor').value||'#fff',
+  };
+}
+
+/* ---------- word-based text wrapping (word-break: keep-all) ---------- */
+function titleWithLanguageBreak(value){
+  const text=String(value??'').trim();
+  if(text.includes('\n')) return text;
+  const boundary=/[ \t]+(?=[A-Za-z])/.exec(text);
+  if(!boundary || !/[가-힣]/.test(text.slice(0,boundary.index))) return text;
+  return `${text.slice(0,boundary.index)}\n${text.slice(boundary.index+boundary[0].length)}`;
+}
+
+function descriptionWithoutLineBreaks(value){
+  return String(value??'').replace(/[\r\n]+/g,' ').replace(/[ \t]+/g,' ').trim();
+}
+
+function wrapLine(ctx,text,maxW){
+  const out=[];
+  String(text??'').split(/\r?\n/).forEach(raw=>{
+    const words=raw.trim().split(/\s+/).filter(Boolean);
+    if(!words.length){ out.push(''); return; }
+    let cur='';
+    for(const word of words){
+      const test=cur ? `${cur} ${word}` : word;
+      if(cur && ctx.measureText(test).width>maxW){ out.push(cur); cur=word; }
+      else cur=test;
+    }
+    if(cur) out.push(cur);
+  });
+  return out;
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  const radius=Math.max(0,Math.min(r,h/2,w/2));
+  ctx.beginPath(); ctx.moveTo(x+radius,y); ctx.arcTo(x+w,y,x+w,y+h,radius);
+  ctx.arcTo(x+w,y+h,x,y+h,radius); ctx.arcTo(x,y+h,x,y,radius); ctx.arcTo(x,y,x+w,y,radius); ctx.closePath();
+}
+
+function layoutUspRows(ctx,items,c,contentW){
+  ctx.font=`${c.usp.weight} ${c.usp.size}px "${c.family}"`;
+  const buttons=items.map(text=>({text,w:Math.min(contentW,Math.ceil(ctx.measureText(text).width)+c.usp.btnPadX*2)}));
+  const rows=[]; let row=[]; let width=0;
+  buttons.forEach(button=>{
+    const add=row.length ? c.usp.gap+button.w : button.w;
+    if(row.length && width+add>contentW){ rows.push(row); row=[button]; width=button.w; }
+    else{ row.push(button); width+=add; }
+  });
+  if(row.length) rows.push(row);
+  return rows;
+}
+
+function renderProductInfo(row,c){
+  const contentW=c.width-c.sidePad*2;
+  const tmp=document.createElement('canvas').getContext('2d');
+  tmp.font=`${c.title.weight} ${c.title.size}px "${c.family}"`;
+  const titleLines=isBlank(row.name)?[]:wrapLine(tmp,titleWithLanguageBreak(row.name),contentW);
+  tmp.font=`${c.body.weight} ${c.body.size}px "${c.family}"`;
+  const bodyLines=isBlank(row.description)?[]:wrapLine(tmp,descriptionWithoutLineBreaks(row.description),contentW);
+  const features=uspItems(row);
+  const uspRows=features.length?layoutUspRows(tmp,features,c,contentW):[];
+  const uspBtnH=c.usp.lh+c.usp.btnPadY*2;
+  const titleH=titleLines.length ? c.title.padTop+c.title.padBottom+titleLines.length*c.title.lh : 0;
+  const bodyH=bodyLines.length ? c.body.padTop+c.body.padBottom+bodyLines.length*c.body.lh : 0;
+  const uspH=uspRows.length ? c.usp.padTop+c.usp.padBottom+uspRows.length*uspBtnH+(uspRows.length-1)*c.usp.gap : 0;
+  const cv=document.createElement('canvas');
+  cv.width=c.width; cv.height=Math.max(1,Math.round(titleH+bodyH+uspH));
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=c.bg; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.textBaseline='middle'; ctx.textAlign='left';
+  let y=0;
+  if(titleLines.length){
+    y+=c.title.padTop; ctx.fillStyle=c.color; ctx.font=`${c.title.weight} ${c.title.size}px "${c.family}"`;
+    titleLines.forEach(line=>{ ctx.fillText(line,c.sidePad,y+c.title.lh/2); y+=c.title.lh; });
+    y+=c.title.padBottom;
+  }
+  if(bodyLines.length){
+    y+=c.body.padTop; ctx.fillStyle=c.color; ctx.font=`${c.body.weight} ${c.body.size}px "${c.family}"`;
+    bodyLines.forEach(line=>{ ctx.fillText(line,c.sidePad,y+c.body.lh/2); y+=c.body.lh; });
+    y+=c.body.padBottom;
+  }
+  if(uspRows.length){
+    y+=c.usp.padTop; ctx.font=`${c.usp.weight} ${c.usp.size}px "${c.family}"`;
+    uspRows.forEach(buttons=>{
+      const rowW=buttons.reduce((sum,b)=>sum+b.w,0)+(buttons.length-1)*c.usp.gap;
+      let x=c.usp.align==='center' ? c.sidePad+(contentW-rowW)/2 : c.sidePad;
+      buttons.forEach(button=>{
+        ctx.fillStyle=c.usp.bg; roundRect(ctx,x,y,button.w,uspBtnH,c.usp.radius); ctx.fill();
+        ctx.fillStyle=c.usp.color; ctx.textAlign='center'; ctx.fillText(button.text,x+button.w/2,y+uspBtnH/2);
+        x+=button.w+c.usp.gap;
+      });
+      y+=uspBtnH+c.usp.gap;
+    });
+  }
+  return cv;
+}
+
+function canvasToBlob(cv){ return new Promise(res=>cv.toBlob(b=>res(b),'image/jpeg',0.92)); }
+
+/* ---------- fonts ---------- */
+function wait(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
+async function ensureFont(family, weights){
+  const probes=[...new Set(weights||['400','700'])].map(w=>`${w} 60px "${family}"`);
+  try{
+    await Promise.race([
+      Promise.all(probes.map(p=>document.fonts.load(p,'가힣Ag1'))).then(()=>document.fonts.ready),
+      wait(FONT_LOAD_LIMIT)
+    ]);
+  }catch(e){}
+}
+
+/* ---------- STEP 3: render ---------- */
+$('renderBtn').onclick=async()=>{
+  const c=cfg();
+  const btn=$('renderBtn'); btn.disabled=true;
+  if($('introType').value==='video' && isBlank($('introVideoUrl').value)){
+    alert('인트로 동영상 URL을 입력해주세요.'); btn.disabled=false; return;
+  }
+  if($('campaignEnabled').checked && isBlank($('campaignVideoUrl').value)){
+    alert('캠페인 동영상 URL을 입력하거나 동영상 포함을 해제해주세요.'); btn.disabled=false; return;
+  }
+  $('renderLabel').innerHTML='<span class="spin"></span> 폰트 로딩…';
+  await ensureFont(c.family,[c.title.weight,c.body.weight,c.usp.weight]);
+  const codes=S.rows.map(r=>r.code).filter(code=>S.folders[code]);
+  S.rendered={}; S.assembly={};
+  for(let ci=0;ci<codes.length;ci++){
+    const code=codes[ci];
+    $('renderLabel').innerHTML=`<span class="spin"></span> 렌더링 ${ci+1}/${codes.length}`;
+    await renderProduct(code,c);
+    await new Promise(r=>setTimeout(r,0));
+  }
+  btn.disabled=false; $('renderLabel').textContent='다시 렌더링';
+  $('renderStatus').innerHTML=`<b>${codes.length}건</b> 렌더링 완료`;
+  $('dlXlsx').disabled=false; $('dlZip').disabled=false; $('genHtml').disabled=false;
+  buildPreview(codes);
+};
+
+async function renderProduct(code,c){
+  const row=S.rows.find(r=>r.code===code);
+  const cv=renderProductInfo(row,c);
+  const blob=await canvasToBlob(cv);
+  const rmap={};
+  rmap['usp.jpg']={blob,dataUrl:cv.toDataURL('image/jpeg',0.92),w:cv.width,h:cv.height};
+  S.rendered[code]=rmap;
+  S.assembly[code]=buildBaseSequence(code,rmap);
+}
+
+/* ---------- preview ---------- */
+function clearPreviewUrls(){
+  S.previewUrls.forEach(url=>URL.revokeObjectURL(url));
+  S.previewUrls=[];
+}
+function buildPreview(codes){
+  $('previewArea').classList.remove('hidden');
+  const tabs=$('prevTabs'); tabs.innerHTML='';
+  codes.forEach((code,i)=>{
+    const t=document.createElement('div'); t.className='prev-tab'+(i===0?' active':''); t.textContent=code;
+    t.onclick=()=>{ tabs.querySelectorAll('.prev-tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); showPreview(code); };
+    tabs.appendChild(t);
+  });
+  showPreview(codes[0]);
+}
+function showPreview(code){
+  clearPreviewUrls();
+  const page=$('prevPage'); page.innerHTML='';
+  S.assembly[code].forEach((it,idx)=>{
+    if(it.kind==='introVideo' || it.kind==='campaignVideo'){
+      const d=document.createElement('div'); d.className='prev-video'; d.textContent='▶ 동영상: '+it.url; page.appendChild(d);
+    }else{
+      const img=document.createElement('img');
+      if(it.kind==='text') img.src=it.rendered.dataUrl;
+      else if(it.kind==='common') img.src=commonUrl(it.name);
+      else if(it.kind==='local'){
+        const url=URL.createObjectURL(it.file);
+        S.previewUrls.push(url);
+        img.src=url;
+      }
+      page.appendChild(img);
+    }
+    const cap=document.createElement('div'); cap.className='prev-cap'; cap.textContent=it.name; page.appendChild(cap);
+  });
+}
+
+/* ---------- relative path / url ---------- */
+function fixedBase(){
+  const raw=($('ftpFixedBase').value.trim()||'https://inoo11.openhost.cafe24.com/web/open_product/open_detail').replace(/\/+$/,'');
+  return raw.replace(/\/gu_jansports(?:\/[^/]+)?$/i,'');
+}
+function commonUrl(name){ return `${fixedBase()}/${BRAND_FTP_ROOT}/${normalizedSeason()}/${name}`; }
+function relPath(code,it){ return `${BRAND_FTP_ROOT}/${normalizedSeason()}/${code}/${it.name}`; }
+function fullUrl(code,it){
+  if(it.kind==='introVideo' || it.kind==='campaignVideo') return it.url;
+  if(it.kind==='common') return commonUrl(it.name);
+  return `${fixedBase()}/${relPath(code,it)}`;
+}
+
+/* ---------- output: spreadsheet ---------- */
+$('dlXlsx').onclick=()=>{
+  const rows=[['이미지코드','완성 HTML 코드']];
+  Object.keys(S.assembly).forEach(code=>{
+    rows.push([code, productHtmlInline(code)]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:24},{wch:120}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'정렬코드');
+  XLSX.writeFile(wb,'상세페이지_정렬코드.xlsx');
+};
+
+/* ---------- output: html ---------- */
+function productHtml(code){
+  let inner='<div style="margin: 0 auto; max-width: 100%; font-size: 0; line-height: 0">';
+  S.assembly[code].forEach((it,i)=>{ inner+=htmlTag(code,it,i, i>0?S.assembly[code][i-1].kind:null); });
+  inner+='</div>';
+  return inner;
+}
+function productHtmlInline(code){
+  return productHtml(code);
+}
+function htmlTag(code,it,idx,prevKind){
+  const url=fullUrl(code,it);
+  const safeUrl=escAttr(url);
+  if(it.kind==='introVideo'){
+    return `<div><video autoplay="" loop="" preload="auto" src="${safeUrl}" style="max-width: 100%;" muted="" controls="" playsinline="" referrerpolicy="no-referrer"><source type="video/mp4" src="${safeUrl}"></video></div>`;
+  }
+  if(it.kind==='campaignVideo'){
+    return `<video autoplay="" loop="" preload="auto" src="${safeUrl}" style="max-width: 100%;" muted="" controls="" playsinline="" referrerpolicy="no-referrer"><source type="video/mp4" src="${safeUrl}"></video>`;
+  }
+  return `<div><img src="${safeUrl}" /></div>`;
+}
+$('genHtml').onclick=()=>{
+  const out=$('htmlOut'); out.innerHTML='';
+  Object.keys(S.assembly).forEach(code=>{
+    const inner=productHtml(code);
+    const wrap=document.createElement('div'); wrap.className='code-block';
+    wrap.innerHTML=`<div class="hd"><span class="k">${code}</span>
+      <button class="btn ghost" style="padding:5px 12px;font-size:12px;">복사</button></div>`;
+    const ta=document.createElement('textarea'); ta.rows=8; ta.value=inner; ta.readOnly=true;
+    wrap.querySelector('button').onclick=(e)=>{ navigator.clipboard.writeText(inner); e.target.textContent='복사됨'; setTimeout(()=>e.target.textContent='복사',1200); };
+    wrap.appendChild(ta); out.appendChild(wrap);
+  });
+};
+
+/* ---------- output: zip ---------- */
+$('dlZip').onclick=async()=>{
+  const btn=$('dlZip'); btn.disabled=true; const orig=btn.textContent; btn.innerHTML='<span class="spin"></span> 압축 중…';
+  try{
+    const zip=new JSZip();
+    for(const code in S.assembly){
+      const dir=zip.folder(code);
+      for(const it of S.assembly[code]){
+        if(it.kind==='text') dir.file(it.name,it.rendered.blob);
+        else if(it.kind==='local') dir.file(it.name,it.file);
+      }
+    }
+    const blob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='상세페이지_이미지.zip'; a.click();
+  }catch(e){ alert('ZIP 오류: '+e.message); }
+  btn.disabled=false; btn.textContent=orig;
+};
+</script>
+</body>
+</html>
