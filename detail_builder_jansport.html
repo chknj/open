@@ -184,7 +184,7 @@ footer{max-width:1180px;margin:30px auto 0;padding:0 28px;font-size:11.5px;color
     <div class="step-b">
       <div class="section-label">공통 콘텐츠</div>
       <div class="row-inline">
-        <div class="field"><label>시즌 경로</label><input type="text" id="seasonPath" value="2026fw"></div>
+        <div class="field"><label>시즌 경로 <span class="hint">공란 시 생략</span></label><input type="text" id="seasonPath" value="2026fw"></div>
         <div class="field"><label>인트로 유형</label><select id="introType"><option value="image" selected>intro.jpg 이미지</option><option value="video">동영상</option></select></div>
         <div class="field" style="grid-column:span 2;"><label>인트로 동영상 URL <span class="hint">동영상 선택 시 사용</span></label><input type="text" id="introVideoUrl" placeholder="https://...mp4"></div>
       </div>
@@ -263,8 +263,8 @@ footer{max-width:1180px;margin:30px auto 0;padding:0 28px;font-size:11.5px;color
     <div class="step-b">
       <div class="field" style="max-width:640px;">
         <label>FTP 기본 주소 <span class="hint">필요 시 수정 가능 · 끝에 / 없이</span></label>
-        <input type="text" id="ftpFixedBase" value="https://inoo11.openhost.cafe24.com/web/open_product/open_detail">
-        <div class="hint" style="margin-top:4px;">생성 경로: <span class="kbd">기본주소/gu_jansports/시즌/상품코드/파일명</span></div>
+        <input type="text" id="ftpFixedBase" value="https://inoo11.openhost.cafe24.com/web/open_product/open_detail/gu_jansports">
+        <div class="hint" style="margin-top:4px;">생성 경로: <span class="kbd">기본주소/[시즌]/상품코드/파일명</span></div>
       </div>
 
       <div class="out-grid" style="margin-top:6px;">
@@ -290,7 +290,7 @@ footer{max-width:1180px;margin:30px auto 0;padding:0 28px;font-size:11.5px;color
 
       <div id="htmlOut"></div>
       <div class="muted-note">
-        모든 상품 이미지 URL에는 <span class="kbd">/gu_jansports/시즌/상품코드</span>가 자동으로 포함되며, 공통 이미지는 시즌 폴더에서 불러옵니다.
+        시즌 경로가 있으면 <span class="kbd">기본주소/시즌/상품코드</span>, 공란이면 <span class="kbd">기본주소/상품코드</span>로 생성됩니다.
         이미지는 스타일 없는 &lt;div&gt;·&lt;img&gt;로 조립하며 전체 HTML은 줄바꿈 없는 한 줄로 출력됩니다.
       </div>
     </div>
@@ -320,7 +320,6 @@ const $ = id => document.getElementById(id);
 
 /* ---------- helpers ---------- */
 const FONT_LOAD_LIMIT = 2500;
-const BRAND_FTP_ROOT = 'gu_jansports';
 const OPTION_STORE_KEY = 'detail_builder_jansport_options_v2';
 const OPTION_IDS = ['seasonPath','introType','introVideoUrl','campaignEnabled','campaignVideoUrl','fontFamily','titleSize','titleLh','titleWeight','titlePadTop','titlePadBottom','bodySize','bodyLh','bodyWeight','bodyPadTop','bodyPadBottom','uspSize','uspLh','uspWeight','uspPadTop','uspPadBottom','sidePad','canvasW','textColor','bgColor','uspBtnPadX','uspBtnPadY','uspGap','uspRadius','uspBg','uspColor','uspAlign','ftpFixedBase'];
 const SIZE_GUIDES = [
@@ -349,6 +348,9 @@ function restoreOptions(){
   try{ saved=JSON.parse(localStorage.getItem(OPTION_STORE_KEY)||'null'); }catch(e){}
   if(!saved) return;
   const fields=saved.fields||{};
+  if(String(fields.ftpFixedBase||'').replace(/\/+$/,'')==='https://inoo11.openhost.cafe24.com/web/open_product/open_detail'){
+    fields.ftpFixedBase='https://inoo11.openhost.cafe24.com/web/open_product/open_detail/gu_jansports';
+  }
   if(['70','105'].includes(String(fields.titleLh??''))) fields.titleLh='90';
   const padIds=['titlePadTop','titlePadBottom','bodyPadTop','bodyPadBottom','uspPadTop','uspPadBottom'];
   if(padIds.every(id=>fields[id]===undefined||String(fields[id])==='0')){
@@ -579,7 +581,7 @@ function refreshMatch(){
 }
 
 function normalizedSeason(){
-  return ($('seasonPath').value.trim()||'2026fw').replace(/^\/+|\/+$/g,'').replace(/^gu_jansports\/?/i,'')||'2026fw';
+  return $('seasonPath').value.trim().replace(/^\/+|\/+$/g,'');
 }
 
 function sizeGuideForName(name){
@@ -829,11 +831,10 @@ function showPreview(code){
 
 /* ---------- relative path / url ---------- */
 function fixedBase(){
-  const raw=($('ftpFixedBase').value.trim()||'https://inoo11.openhost.cafe24.com/web/open_product/open_detail').replace(/\/+$/,'');
-  return raw.replace(/\/gu_jansports(?:\/[^/]+)?$/i,'');
+  return ($('ftpFixedBase').value.trim()||'https://inoo11.openhost.cafe24.com/web/open_product/open_detail/gu_jansports').replace(/\/+$/,'');
 }
-function commonUrl(name){ return `${fixedBase()}/${BRAND_FTP_ROOT}/${normalizedSeason()}/${name}`; }
-function relPath(code,it){ return `${BRAND_FTP_ROOT}/${normalizedSeason()}/${code}/${it.name}`; }
+function commonUrl(name){ return [fixedBase(),normalizedSeason(),name].filter(Boolean).join('/'); }
+function relPath(code,it){ return [normalizedSeason(),code,it.name].filter(Boolean).join('/'); }
 function fullUrl(code,it){
   if(it.kind==='introVideo' || it.kind==='campaignVideo') return it.url;
   if(it.kind==='common') return commonUrl(it.name);
