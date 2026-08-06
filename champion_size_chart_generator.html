@@ -1,0 +1,1248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Champion Size Chart Generator</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8F%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --champion-blue: #1c468c;
+      --champion-red: #e2383f;
+      --gray-900: #1a1a1a;
+      --gray-700: #404040;
+      --gray-500: #767676;
+      --gray-300: #d9d9d9;
+      --gray-100: #f5f5f5;
+      --mono: "SF Mono", Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      color: var(--gray-900);
+      background: var(--white);
+      font-family: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      border-color: var(--gray-300);
+      background: var(--gray-300);
+      color: var(--white);
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    button:focus-visible, .drop-zone:focus-visible {
+      outline: 2px solid var(--champion-red);
+      outline-offset: 3px;
+    }
+
+    .app-header {
+      border-top: 8px solid var(--champion-red);
+      border-bottom: 1px solid var(--gray-300);
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .header-inner {
+      width: min(1120px, calc(100% - 64px));
+      margin: 0 auto;
+      padding: 52px 0 46px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--champion-blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+    }
+
+    h1 {
+      max-width: 780px;
+      margin: 0;
+      font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(34px, 4vw, 44px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .header-copy {
+      max-width: 760px;
+      margin: 12px 0 0;
+      color: #626262;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 64px));
+      margin: 48px auto 80px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid #e5e5e5;
+      background: var(--white);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--black);
+    }
+
+    .panel-head > div:first-child {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .step {
+      display: inline-flex;
+      color: var(--champion-red);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .panel-body {
+      padding: 24px;
+    }
+
+    .drop-zone {
+      display: grid;
+      min-height: 230px;
+      place-items: center;
+      padding: 32px 24px;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      text-align: center;
+      transition: background 0.18s ease;
+    }
+
+    .drop-zone.is-dragging {
+      border-color: var(--champion-blue);
+      background: #f4f7fb;
+    }
+
+    .drop-icon {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 18px;
+      place-items: center;
+      background: var(--champion-blue);
+      color: var(--white);
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .drop-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .drop-copy {
+      margin: 8px 0 20px;
+      color: var(--gray-500);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .btn {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      border: 1px solid var(--champion-blue);
+      background: var(--white);
+      color: var(--champion-blue);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--champion-red);
+      background: var(--champion-red);
+      color: var(--white);
+    }
+
+    .btn-primary, .btn-dark {
+      border-color: var(--champion-blue);
+      background: var(--champion-blue);
+      color: var(--white);
+    }
+
+    .btn-small {
+      min-height: 36px;
+      padding: 0 16px;
+      font-size: 11px;
+    }
+
+    .file-status {
+      min-height: 48px;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 3px solid var(--champion-red);
+      background: var(--gray-100);
+      color: var(--gray-500);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .file-status.is-success, .file-status.is-error {
+      color: var(--black);
+    }
+
+    .guide {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-left: 3px solid var(--champion-blue);
+      background: var(--gray-100);
+    }
+
+    .guide-title {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .guide ol {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--gray-700);
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .result-panel {
+      min-width: 0;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+    }
+
+    .summary-label {
+      display: block;
+      color: var(--champion-blue);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-value {
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      font-size: 24px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .empty {
+      min-height: 390px;
+      display: grid;
+      place-items: center;
+      padding: 40px 24px;
+      border: 1px solid var(--gray-300);
+      background: var(--gray-100);
+      color: var(--gray-500);
+      text-align: center;
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--black);
+      font-size: 17px;
+    }
+
+    .empty p {
+      max-width: 340px;
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .result-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .result-item {
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+    }
+
+    .result-item-head {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 16px;
+    }
+
+    .result-name {
+      min-width: 0;
+    }
+
+    .result-name strong {
+      display: block;
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .result-meta {
+      margin-top: 6px;
+      color: var(--gray-500);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .result-item-actions {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 6px;
+    }
+
+    .code-preview {
+      width: 100%;
+      min-height: 110px;
+      margin: 0;
+      padding: 14px 16px;
+      border: 0;
+      border-top: 1px solid var(--gray-300);
+      outline: 0;
+      resize: vertical;
+      background: var(--gray-900);
+      color: var(--white);
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.55;
+      white-space: pre;
+    }
+
+    .notice {
+      margin: 18px 0 0;
+      color: var(--gray-500);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 20;
+      max-width: min(360px, calc(100% - 48px));
+      padding: 13px 16px;
+      border: 1px solid var(--champion-blue);
+      background: var(--champion-blue);
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .toast.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 860px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .header-inner, main {
+        width: min(100% - 24px, 1120px);
+      }
+
+      .header-inner {
+        padding: 32px 0 28px;
+      }
+
+      main {
+        margin-top: 28px;
+      }
+
+      .panel-head {
+        display: block;
+      }
+
+      .result-actions {
+        margin-top: 14px;
+        justify-content: stretch;
+      }
+
+      .result-actions .btn {
+        flex: 1;
+      }
+
+      .panel-body {
+        padding: 16px;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .result-item-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <p class="eyebrow">CHAMPION OFFICIAL MALL</p>
+      <h1>SIZE CHART GENERATOR</h1>
+      <p class="header-copy">기존 상세페이지 코드와 실측 데이터를 식별코드로 연결해 ‘상세페이지 → 사이즈표 → 안내문구’ 순서의 최종 HTML을 만듭니다.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="workspace">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="step">01</span>
+            <h2 class="panel-title">엑셀 업로드</h2>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="엑셀 파일 업로드">
+            <div>
+              <div class="drop-icon">↑</div>
+              <p class="drop-title">파일을 끌어 놓으세요</p>
+              <p class="drop-copy">.xlsx 또는 .xls 파일을 지원합니다.<br>상세페이지 시트와 사이즈 시트를 자동으로 찾습니다.</p>
+              <button type="button" class="btn btn-dark" id="selectFileButton">파일 선택</button>
+            </div>
+          </div>
+          <input class="hidden" id="fileInput" type="file" accept=".xlsx,.xls">
+          <div class="file-status" id="fileStatus" role="status">아직 업로드된 파일이 없습니다.</div>
+
+          <div class="guide">
+            <h3 class="guide-title">입력 기준</h3>
+            <ol>
+              <li>식별코드는 Style Number, 스타일넘버, 스타일번호, 마스터코드, 상품코드, 품번을 인식합니다.</li>
+              <li>상세페이지 시트에는 식별코드, 기존 상세페이지 코드, 안내문구를 입력합니다.</li>
+              <li>사이즈 시트에는 식별코드, 옵션명 또는 사이즈, 실측값을 입력합니다.</li>
+              <li>실측 항목명 행은 사이즈 행의 위나 아래에 둘 수 있습니다.</li>
+              <li>빈 실측 항목과 값이 전부 비어 있는 사이즈 행은 출력하지 않습니다.</li>
+              <li>최종 코드는 기존 상세페이지 코드, 사이즈표 코드, 안내문구 순서로 결합됩니다.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="panel-head">
+          <div>
+            <span class="step">02</span>
+            <h2 class="panel-title">변환 결과</h2>
+          </div>
+          <div class="result-actions">
+            <button type="button" class="btn" id="resetButton" disabled>초기화</button>
+            <button type="button" class="btn btn-primary" id="downloadButton" disabled>결과 엑셀 다운로드</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="summary hidden" id="summary">
+            <div class="summary-card">
+              <span class="summary-label">상품</span>
+              <span class="summary-value" id="productCount">0</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">사이즈 행</span>
+              <span class="summary-value" id="sizeCount">0</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">상세코드 매칭</span>
+              <span class="summary-value" id="detailCount">0</span>
+            </div>
+          </div>
+
+          <div class="empty" id="emptyState">
+            <div>
+              <strong>변환 결과가 여기에 표시됩니다.</strong>
+              <p>엑셀을 업로드하면 식별코드별 최종 HTML을 확인하고 복사할 수 있습니다.</p>
+            </div>
+          </div>
+
+          <div class="result-list hidden" id="resultList"></div>
+          <p class="notice hidden" id="resultNotice"></p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = (id) => document.getElementById(id);
+      const dropZone = $("dropZone");
+      const fileInput = $("fileInput");
+      const fileStatus = $("fileStatus");
+      const downloadButton = $("downloadButton");
+      const resetButton = $("resetButton");
+      const resultList = $("resultList");
+      const resultNotice = $("resultNotice");
+      const emptyState = $("emptyState");
+      const summary = $("summary");
+      const toast = $("toast");
+
+      const state = {
+        fileName: "",
+        sizeSheetName: "",
+        detailSheetName: "",
+        identifierLabel: "식별코드",
+        products: [],
+        detailMap: new Map(),
+        warnings: []
+      };
+
+      let toastTimer = null;
+
+      $("selectFileButton").addEventListener("click", (event) => {
+        event.stopPropagation();
+        fileInput.click();
+      });
+
+      dropZone.addEventListener("click", () => fileInput.click());
+      dropZone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropZone.classList.add("is-dragging");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropZone.classList.remove("is-dragging");
+        });
+      });
+
+      dropZone.addEventListener("drop", (event) => {
+        const file = event.dataTransfer.files[0];
+        if (file) loadFile(file);
+      });
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (file) loadFile(file);
+      });
+
+      downloadButton.addEventListener("click", downloadWorkbook);
+      resetButton.addEventListener("click", resetAll);
+
+      resultList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-copy-index]");
+        if (!button) return;
+        const product = state.products[Number(button.dataset.copyIndex)];
+        if (product) copyText(buildFullCode(product));
+      });
+
+      async function loadFile(file) {
+        const extension = file.name.split(".").pop().toLowerCase();
+        if (!["xlsx", "xls"].includes(extension)) {
+          showFileError(".xlsx 또는 .xls 파일만 업로드할 수 있습니다.");
+          return;
+        }
+
+        if (typeof XLSX === "undefined") {
+          showFileError("엑셀 처리 라이브러리를 불러오지 못했습니다. 인터넷 연결 후 다시 시도해 주세요.");
+          return;
+        }
+
+        setFileStatus("파일을 분석하고 있습니다.", "");
+
+        try {
+          const buffer = await file.arrayBuffer();
+          const workbook = XLSX.read(buffer, { type: "array", cellDates: false });
+          const sheets = workbook.SheetNames.map((name) => ({
+            name,
+            rows: XLSX.utils.sheet_to_json(workbook.Sheets[name], {
+              header: 1,
+              defval: "",
+              blankrows: true,
+              raw: false
+            })
+          }));
+
+          if (!sheets.length) throw new Error("읽을 수 있는 시트가 없습니다.");
+
+          const sizeSheet = findSizeSheet(sheets);
+          if (!sizeSheet || scoreSizeSheet(sizeSheet.rows) === 0) {
+            throw new Error("식별코드, 옵션명 또는 사이즈, 실측값으로 구성된 사이즈 시트를 찾지 못했습니다.");
+          }
+
+          const detailSheet = findDetailSheet(sheets, sizeSheet.name);
+          if (!detailSheet || scoreDetailSheet(detailSheet.rows) === 0) {
+            throw new Error("식별코드와 기존 상세페이지 코드가 있는 상세페이지 시트를 찾지 못했습니다.");
+          }
+
+          const parsedSizes = parseSizeSheet(sizeSheet.rows);
+          const parsedDetails = parseDetailSheet(detailSheet.rows);
+          if (!parsedSizes.products.length) {
+            throw new Error("출력할 수 있는 상품별 사이즈 데이터를 찾지 못했습니다.");
+          }
+
+          state.fileName = file.name;
+          state.sizeSheetName = sizeSheet.name;
+          state.detailSheetName = detailSheet.name;
+          state.identifierLabel = parsedDetails.identifierLabel || parsedSizes.identifierLabel || "식별코드";
+          state.detailMap = parsedDetails.detailMap;
+          state.products = parsedSizes.products.map((product) => {
+            const detail = state.detailMap.get(normalizeIdentifier(product.identifier)) || { detailCode: "", notice: "" };
+            return { ...product, detailCode: detail.detailCode, notice: detail.notice };
+          });
+          state.warnings = parsedSizes.warnings.concat(parsedDetails.warnings);
+
+          const matched = state.products.filter((product) => product.detailCode).length;
+          setFileStatus(
+            "<b>" + escapeHtml(file.name) + "</b><br>" +
+            escapeHtml(detailSheet.name) + " + " + escapeHtml(sizeSheet.name) + "에서 상품 " + state.products.length + "개를 확인했습니다.<br>" +
+            "기존 상세페이지 코드 " + matched + "건을 식별코드로 연결했습니다.",
+            "is-success"
+          );
+          resetButton.disabled = false;
+          downloadButton.disabled = false;
+          renderResults();
+        } catch (error) {
+          resetData();
+          showFileError(error.message || "파일을 처리하지 못했습니다.");
+        }
+      }
+
+      function findSizeSheet(sheets) {
+        return sheets
+          .map((sheet) => ({ ...sheet, score: scoreSizeSheet(sheet.rows) }))
+          .sort((left, right) => right.score - left.score)[0];
+      }
+
+      function findDetailSheet(sheets, sizeSheetName) {
+        return sheets
+          .filter((sheet) => sheet.name !== sizeSheetName)
+          .map((sheet) => ({ ...sheet, score: scoreDetailSheet(sheet.rows) }))
+          .sort((left, right) => right.score - left.score)[0];
+      }
+
+      function scoreSizeSheet(rows) {
+        const layout = detectSizeLayout(rows);
+        if (!layout) return 0;
+
+        return rows.reduce((score, row) => {
+          if (isSizeDataRow(row, layout)) return score + 2;
+          if (isMeasurementHeaderRow(row, layout)) return score + 4;
+          return score;
+        }, 0);
+      }
+
+      function scoreDetailSheet(rows) {
+        const layout = detectDetailLayout(rows);
+        if (!layout) return 0;
+
+        return rows.slice(layout.headerRowIndex + 1).reduce((score, row) => {
+          if (!Array.isArray(row) || !cleanCell(row[layout.identifierColumn])) return score;
+          if (cleanCell(row[layout.detailColumn])) score += 4;
+          if (layout.noticeColumn >= 0 && cleanCell(row[layout.noticeColumn])) score += 2;
+          return score;
+        }, 1);
+      }
+
+      function parseSizeSheet(rows) {
+        const layout = detectSizeLayout(rows);
+        const productsByCode = new Map();
+        const productOrder = [];
+        const warnings = [];
+        let pendingRows = [];
+        let previousHeader = null;
+
+        if (!layout) {
+          return { products: [], warnings: ["식별코드 열을 찾지 못했습니다."], identifierLabel: "" };
+        }
+
+        rows.forEach((sourceRow, index) => {
+          const row = Array.isArray(sourceRow) ? sourceRow : [];
+
+          if (isSizeDataRow(row, layout)) {
+            pendingRows.push({ row, sourceRow: index + 1 });
+            return;
+          }
+
+          if (!isMeasurementHeaderRow(row, layout)) return;
+
+          if (pendingRows.length) {
+            addProductSection(pendingRows, row, layout, productsByCode, productOrder, warnings);
+            pendingRows = [];
+          }
+          previousHeader = row;
+        });
+
+        if (pendingRows.length) {
+          if (previousHeader) {
+            addProductSection(pendingRows, previousHeader, layout, productsByCode, productOrder, warnings);
+          } else {
+            warnings.push("마지막 상품 블록의 실측 항목명을 찾지 못해 제외했습니다.");
+          }
+        }
+
+        return {
+          products: productOrder.map((identifier) => productsByCode.get(identifier)),
+          warnings,
+          identifierLabel: layout.identifierLabel
+        };
+      }
+
+      function parseDetailSheet(rows) {
+        const detailMap = new Map();
+        const warnings = [];
+        const layout = detectDetailLayout(rows);
+        if (!layout) return { detailMap, warnings: ["상세페이지 시트 구조를 찾지 못했습니다."], identifierLabel: "" };
+
+        rows.forEach((sourceRow, rowIndex) => {
+          if (rowIndex <= layout.headerRowIndex) return;
+          const row = Array.isArray(sourceRow) ? sourceRow : [];
+          const identifier = cleanCell(row[layout.identifierColumn]);
+          if (!identifier || isIdentifierHeader(identifier)) return;
+
+          const detailCode = cleanRawCode(row[layout.detailColumn]);
+          const notice = layout.noticeColumn >= 0 ? cleanCell(row[layout.noticeColumn]) : "";
+          const key = normalizeIdentifier(identifier);
+          if (!detailCode && !notice) return;
+
+          if (detailMap.has(key)) {
+            warnings.push(identifier + ": 상세페이지 시트에 같은 식별코드가 있어 첫 번째 행을 사용했습니다.");
+            return;
+          }
+          detailMap.set(key, { identifier, detailCode, notice });
+        });
+
+        return { detailMap, warnings, identifierLabel: layout.identifierLabel };
+      }
+
+      function detectSizeLayout(rows) {
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+          const row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
+          const identifierColumn = row.findIndex(isIdentifierHeader);
+          if (identifierColumn < 0) continue;
+
+          const headers = row.map(normalizeHeader);
+          const labeledSizeColumn = headers.findIndex((value) => /^(옵션명|옵션|사이즈|size|option|optionname)$/.test(value));
+          const sizeColumn = labeledSizeColumn >= 0
+            ? labeledSizeColumn
+            : inferSizeColumn(rows, rowIndex, identifierColumn);
+
+          if (sizeColumn >= 0) {
+            return {
+              headerRowIndex: rowIndex,
+              identifierColumn,
+              identifierLabel: cleanCell(row[identifierColumn]) || "식별코드",
+              sizeColumn
+            };
+          }
+        }
+        return null;
+      }
+
+      function detectDetailLayout(rows) {
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+          const row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
+          const identifierColumn = row.findIndex(isIdentifierHeader);
+          if (identifierColumn < 0) continue;
+
+          const maxColumns = Math.max(row.length, ...rows.slice(rowIndex + 1).map((item) => Array.isArray(item) ? item.length : 0));
+          const candidates = [];
+
+          for (let columnIndex = 0; columnIndex < maxColumns; columnIndex += 1) {
+            if (columnIndex === identifierColumn) continue;
+            const header = normalizeHeader(row[columnIndex]);
+            const values = rows
+              .slice(rowIndex + 1)
+              .map((item) => Array.isArray(item) ? cleanCell(item[columnIndex]) : "")
+              .filter(Boolean);
+            const htmlCount = values.filter(looksLikeHtml).length;
+            const detailHeader = /(상세|html|코드|공홈|스트리즘|description|detail)/.test(header);
+            const noticeHeader = /(안내|유의|주의|문구|notice)/.test(header);
+            candidates.push({ columnIndex, values, htmlCount, detailHeader, noticeHeader });
+          }
+
+          const detailCandidate = candidates
+            .slice()
+            .sort((left, right) => {
+              const leftScore = left.htmlCount * 10 + (left.detailHeader ? 5 : 0);
+              const rightScore = right.htmlCount * 10 + (right.detailHeader ? 5 : 0);
+              return rightScore - leftScore || left.columnIndex - right.columnIndex;
+            })[0];
+
+          if (!detailCandidate || (!detailCandidate.htmlCount && !detailCandidate.detailHeader)) continue;
+
+          const noticeCandidate = candidates
+            .filter((candidate) => candidate.columnIndex !== detailCandidate.columnIndex)
+            .sort((left, right) => {
+              const leftTextCount = left.values.length - left.htmlCount;
+              const rightTextCount = right.values.length - right.htmlCount;
+              const leftScore = leftTextCount * 3 + (left.noticeHeader ? 5 : 0);
+              const rightScore = rightTextCount * 3 + (right.noticeHeader ? 5 : 0);
+              return rightScore - leftScore || left.columnIndex - right.columnIndex;
+            })[0];
+
+          return {
+            headerRowIndex: rowIndex,
+            identifierColumn,
+            identifierLabel: cleanCell(row[identifierColumn]) || "식별코드",
+            detailColumn: detailCandidate.columnIndex,
+            noticeColumn: noticeCandidate && noticeCandidate.values.length ? noticeCandidate.columnIndex : -1
+          };
+        }
+        return null;
+      }
+
+      function inferSizeColumn(rows, headerRowIndex, identifierColumn) {
+        const maxColumns = Math.max(0, ...rows.map((row) => Array.isArray(row) ? row.length : 0));
+        const candidates = [];
+
+        for (let columnIndex = 0; columnIndex < maxColumns; columnIndex += 1) {
+          if (columnIndex === identifierColumn) continue;
+
+          const values = rows
+            .slice(headerRowIndex + 1)
+            .filter((row) => Array.isArray(row) && cleanCell(row[identifierColumn]))
+            .map((row) => cleanCell(row[columnIndex]))
+            .filter(Boolean);
+          if (!values.length) continue;
+
+          const likelySizes = values.filter(isLikelySizeValue).length;
+          candidates.push({ columnIndex, score: likelySizes / values.length });
+        }
+
+        candidates.sort((left, right) => right.score - left.score || left.columnIndex - right.columnIndex);
+        return candidates.length ? candidates[0].columnIndex : -1;
+      }
+
+      function isLikelySizeValue(value) {
+        const text = cleanCell(value);
+        return /^(?:\d+(?:\.\d+)?(?:[-~/]\d+(?:\.\d+)?)?|[A-Z]{1,5}(?:\/[A-Z]{1,5})?|ONE\s*SIZE|FREE|OS|원사이즈)$/i.test(text);
+      }
+
+      function addProductSection(entries, headerRow, layout, productsByCode, productOrder, warnings) {
+        const measurementColumns = getMeasurementColumns(headerRow, entries, layout);
+        const grouped = new Map();
+
+        if (!measurementColumns.length) {
+          warnings.push("값이 있는 실측 항목을 찾지 못한 상품 블록이 제외되었습니다.");
+          return;
+        }
+
+        entries.forEach(({ row, sourceRow }) => {
+          const identifier = cleanCell(row[layout.identifierColumn]);
+          const size = cleanCell(row[layout.sizeColumn]);
+          if (!identifier || !size) return;
+
+          const values = measurementColumns.map(({ columnIndex }) => cleanCell(row[columnIndex]));
+          if (!values.some(Boolean)) return;
+
+          const key = normalizeIdentifier(identifier);
+          if (!grouped.has(key)) grouped.set(key, { identifier, sizes: [] });
+          grouped.get(key).sizes.push({ size, values, sourceRow });
+        });
+
+        grouped.forEach(({ identifier, sizes }, key) => {
+          if (!sizes.length) return;
+
+          const headers = measurementColumns.map(({ label }) => label);
+          const existing = productsByCode.get(key);
+
+          if (!existing) {
+            productsByCode.set(key, { identifier, headers, sizes });
+            productOrder.push(key);
+            return;
+          }
+
+          if (sameArray(existing.headers, headers)) {
+            const existingSizes = new Set(existing.sizes.map((item) => item.size));
+            sizes.forEach((item) => {
+              if (!existingSizes.has(item.size)) {
+                existing.sizes.push(item);
+                existingSizes.add(item.size);
+              }
+            });
+          } else {
+            warnings.push(identifier + ": 같은 식별코드에 서로 다른 실측 항목이 있어 첫 번째 구성을 사용했습니다.");
+          }
+        });
+      }
+
+      function getMeasurementColumns(headerRow, entries, layout) {
+        const maxColumns = Math.max(headerRow.length, ...entries.map(({ row }) => row.length));
+        const columns = [];
+
+        for (let columnIndex = 0; columnIndex < maxColumns; columnIndex += 1) {
+          if ([layout.identifierColumn, layout.sizeColumn].includes(columnIndex)) continue;
+          const label = cleanCell(headerRow[columnIndex]);
+          if (!label) continue;
+
+          const hasValue = entries.some(({ row }) => Boolean(cleanCell(row[columnIndex])));
+          if (hasValue) columns.push({ columnIndex, label });
+        }
+
+        return columns;
+      }
+
+      function isSizeDataRow(row, layout) {
+        const identifier = cleanCell(row[layout.identifierColumn]);
+        const size = cleanCell(row[layout.sizeColumn]);
+        if (!identifier || isIdentifierHeader(identifier) || !size) return false;
+
+        return row.some((value, columnIndex) => (
+          ![layout.identifierColumn, layout.sizeColumn].includes(columnIndex)
+          && Boolean(cleanCell(value))
+        ));
+      }
+
+      function isMeasurementHeaderRow(row, layout) {
+        const identifier = cleanCell(row[layout.identifierColumn]);
+        const size = cleanCell(row[layout.sizeColumn]);
+        if (!identifier || isIdentifierHeader(identifier) || size) return false;
+
+        return row.some((value, columnIndex) => (
+          ![layout.identifierColumn, layout.sizeColumn].includes(columnIndex)
+          && Boolean(cleanCell(value))
+        ));
+      }
+
+      function buildFullCode(product) {
+        const parts = [
+          cleanRawCode(product.detailCode),
+          buildSizeChartCode(product),
+          buildNoticeCode(product.notice)
+        ];
+        return parts.filter(Boolean).join("").replace(/[\r\n]+/g, "");
+      }
+
+      function buildSizeChartCode(product) {
+        const headerCells = product.headers.map((header) => (
+          '<th scope="col" style="padding:clamp(10px,1.8vw,24px) clamp(2px,0.8vw,12px);border-bottom:1px solid #bdbdbd;font-size:clamp(10px,1.6vw,22px);font-weight:700;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;">' +
+          escapeHtml(header) +
+          "</th>"
+        )).join("");
+        const bodyRows = product.sizes
+          .filter((item) => item.size && item.values.some(Boolean))
+          .map((item) => {
+            const valueCells = item.values.map((value) => (
+              '<td style="padding:clamp(10px,1.8vw,24px) clamp(2px,0.8vw,12px);border-bottom:1px solid #eeeeee;font-size:clamp(10px,1.6vw,22px);font-weight:400;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;">' +
+              escapeHtml(value) +
+              "</td>"
+            )).join("");
+            return '<tr><th scope="row" style="padding:clamp(10px,1.8vw,24px) clamp(2px,0.8vw,12px);border-bottom:1px solid #eeeeee;font-size:clamp(10px,1.6vw,22px);font-weight:600;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;">' +
+              escapeHtml(item.size) +
+              "</th>" +
+              valueCells +
+              "</tr>";
+          })
+          .join("");
+
+        return [
+          '<div class="champion-size-chart" style="width:100%;max-width:1400px;margin:0 auto;padding:clamp(32px,5vw,80px) clamp(8px,3vw,40px) 0;box-sizing:border-box;overflow:hidden;color:#111111;font-family:Arial,&quot;Noto Sans KR&quot;,&quot;Malgun Gothic&quot;,sans-serif;">',
+          '<h2 style="margin:0 0 54px;font-size:clamp(32px,3.4vw,50px);font-weight:500;line-height:1.25;">실측 사이즈</h2>',
+          '<div style="width:100%;max-width:100%;overflow:hidden;">',
+          '<table style="width:100%;max-width:100%;border-collapse:collapse;table-layout:fixed;text-align:center;line-height:1.4;">',
+          '<thead><tr><th scope="col" style="padding:clamp(10px,1.8vw,24px) clamp(2px,0.8vw,12px);border-top:1px solid #bdbdbd;border-bottom:1px solid #bdbdbd;font-size:clamp(10px,1.6vw,22px);font-weight:700;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;">사이즈</th>',
+          headerCells.replace(/border-bottom:1px solid #bdbdbd;/g, "border-top:1px solid #bdbdbd;border-bottom:1px solid #bdbdbd;"),
+          "</tr></thead><tbody>",
+          bodyRows,
+          "</tbody></table>",
+          "</div>",
+          "</div>"
+        ].join("");
+      }
+
+      function buildNoticeCode(notice) {
+        const lines = splitNoticeLines(notice);
+        if (!lines.length) return "";
+
+        const paragraphs = lines.map((line) => (
+          '<p style="margin:0;color:#777777;font-size:clamp(13px,1.25vw,18px);font-weight:400;line-height:1.85;">' +
+          escapeHtml(line) +
+          "</p>"
+        )).join("");
+
+        return '<div class="champion-size-notice" style="max-width:1400px;margin:0 auto;padding:46px 40px 80px;font-family:Arial,&quot;Noto Sans KR&quot;,&quot;Malgun Gothic&quot;,sans-serif;">' +
+          paragraphs +
+          "</div>";
+      }
+
+      function splitNoticeLines(value) {
+        const text = cleanCell(value).replace(/([.!?])\s+/g, "$1\n");
+        return text.split(/[\r\n]+/).map((line) => line.trim()).filter(Boolean);
+      }
+
+      function renderResults() {
+        const hasProducts = state.products.length > 0;
+        emptyState.classList.toggle("hidden", hasProducts);
+        resultList.classList.toggle("hidden", !hasProducts);
+        summary.classList.toggle("hidden", !hasProducts);
+        resultNotice.classList.toggle("hidden", !hasProducts);
+
+        if (!hasProducts) {
+          resultList.innerHTML = "";
+          resultNotice.textContent = "";
+          return;
+        }
+
+        const sizeCount = state.products.reduce((sum, product) => sum + product.sizes.length, 0);
+        const detailCount = state.products.filter((product) => product.detailCode).length;
+        $("productCount").textContent = state.products.length;
+        $("sizeCount").textContent = sizeCount;
+        $("detailCount").textContent = detailCount;
+
+        resultList.innerHTML = state.products.map((product, index) => {
+          const code = buildFullCode(product);
+          const detailLabel = product.detailCode ? "상세코드 있음" : "상세코드 없음";
+          const noticeLabel = product.notice ? "안내문구 있음" : "안내문구 없음";
+          const meta = "사이즈 " + product.sizes.length + "개 · " + product.headers.join(", ") + " · " + detailLabel + " · " + noticeLabel;
+
+          return [
+            '<article class="result-item">',
+            '<div class="result-item-head">',
+            '<div class="result-name">',
+            '<strong title="' + escapeAttribute(product.identifier) + '">' + escapeHtml(product.identifier) + "</strong>",
+            '<div class="result-meta">' + escapeHtml(meta) + "</div>",
+            "</div>",
+            '<div class="result-item-actions">',
+            '<button type="button" class="btn btn-small" data-copy-index="' + index + '">코드 복사</button>',
+            "</div>",
+            "</div>",
+            '<textarea class="code-preview" readonly aria-label="' + escapeAttribute(product.identifier) + ' 최종 HTML 코드">' + escapeHtml(code) + "</textarea>",
+            "</article>"
+          ].join("");
+        }).join("");
+
+        const notices = [...state.warnings];
+        const missingDetails = state.products.filter((product) => !product.detailCode).length;
+        const missingNotices = state.products.filter((product) => !product.notice).length;
+        if (missingDetails) notices.push("기존 상세페이지 코드가 매칭되지 않은 상품 " + missingDetails + "개가 있습니다.");
+        if (missingNotices) notices.push("안내문구가 매칭되지 않은 상품 " + missingNotices + "개가 있습니다.");
+
+        const oversized = state.products.filter((product) => buildFullCode(product).length > 32767).length;
+        if (oversized) notices.push("엑셀 셀 길이 제한을 넘는 코드가 " + oversized + "개 있습니다.");
+
+        resultNotice.textContent = notices.length
+          ? notices.join(" · ")
+          : "모든 코드는 ‘기존 상세페이지 → 사이즈표 → 안내문구’ 순서의 한 줄 HTML로 생성됩니다.";
+      }
+
+      function downloadWorkbook() {
+        if (!state.products.length || typeof XLSX === "undefined") return;
+
+        const rows = [
+          [state.identifierLabel, "최종 상세페이지 HTML 코드"],
+          ...state.products.map((product) => [product.identifier, buildFullCode(product)])
+        ];
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+        worksheet["!cols"] = [{ wch: 24 }, { wch: 160 }];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "최종 HTML 코드");
+        XLSX.writeFile(workbook, "champion_size_chart_result.xlsx", { compression: true });
+        showToast("결과 엑셀 다운로드를 시작했습니다.");
+      }
+
+      async function copyText(text) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+          }
+          showToast("최종 HTML 코드를 복사했습니다.");
+        } catch (error) {
+          showToast("코드를 복사하지 못했습니다.");
+        }
+      }
+
+      function resetAll() {
+        resetData();
+        fileInput.value = "";
+        setFileStatus("아직 업로드된 파일이 없습니다.", "");
+        resetButton.disabled = true;
+        downloadButton.disabled = true;
+        renderResults();
+      }
+
+      function resetData() {
+        state.fileName = "";
+        state.sizeSheetName = "";
+        state.detailSheetName = "";
+        state.identifierLabel = "식별코드";
+        state.products = [];
+        state.detailMap = new Map();
+        state.warnings = [];
+      }
+
+      function setFileStatus(message, className) {
+        fileStatus.className = "file-status" + (className ? " " + className : "");
+        fileStatus.innerHTML = message;
+      }
+
+      function showFileError(message) {
+        setFileStatus(escapeHtml(message), "is-error");
+        downloadButton.disabled = true;
+        resetButton.disabled = false;
+        renderResults();
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
+      }
+
+      function isIdentifierHeader(value) {
+        return /^(마스터코드|스타일넘버|스타일번호|stylenumber|stylecode|productcode|상품코드|품번|sku)$/.test(normalizeHeader(value));
+      }
+
+      function looksLikeHtml(value) {
+        return /<\/?[a-z][^>]*>/i.test(cleanCell(value));
+      }
+
+      function cleanCell(value) {
+        if (value === null || value === undefined) return "";
+        return String(value).replace(/^\uFEFF/, "").trim();
+      }
+
+      function cleanRawCode(value) {
+        if (value === null || value === undefined) return "";
+        return String(value).replace(/^\uFEFF/, "").trim();
+      }
+
+      function normalizeHeader(value) {
+        return cleanCell(value).replace(/[\s_-]+/g, "").toLowerCase();
+      }
+
+      function normalizeIdentifier(value) {
+        return cleanCell(value).replace(/\s+/g, "").toUpperCase();
+      }
+
+      function sameArray(left, right) {
+        return left.length === right.length && left.every((value, index) => value === right[index]);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function escapeAttribute(value) {
+        return escapeHtml(value).replace(/`/g, "&#096;");
+      }
+    })();
+  </script>
+</body>
+</html>
