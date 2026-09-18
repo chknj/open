@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="로컬 동영상 컷 편집, 화면 크기 변경 및 출력 설정 도구. 파일을 서버로 전송하지 않습니다.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob: data:; media-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+<title>동영상 편집기 · CLIP</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23111'/%3E%3Cpath d='M24 17L46 32 24 47Z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{color-scheme:light;--ink:#171717;--muted:#666;--line:#dedede;--paper:#fff;--soft:#f5f5f5;--danger:#b42318;--accent:#d6fa6d;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px}
+*{box-sizing:border-box}body{margin:0;background:#f7f7f7;color:var(--ink);line-height:1.5}button,input,select{font:inherit;color:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #66880e;outline-offset:3px}button{border:1px solid #ccc;background:white;border-radius:5px;padding:9px 13px;font-size:.875rem;font-weight:600;transition:background .15s}button:hover:not(:disabled){background:#ededed}.primary{background:var(--ink);color:white;border-color:var(--ink)}.primary:hover:not(:disabled){background:#333}.quiet{background:transparent;border-color:transparent}.small{font-size:.8125rem;padding:6px 9px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}h1,h2,h3,p{margin:0}h1{font-size:1.65rem;letter-spacing:-.05em;font-weight:750}h2{font-size:1rem}h3{font-size:.875rem}small,.hint{font-size:.8125rem;line-height:1.65;color:var(--muted)}[hidden]{display:none!important}
+.app{max-width:1460px;padding:28px 32px 44px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:22px;border-bottom:2px solid var(--ink)}.brand{display:flex;align-items:center;gap:16px}.wordmark{font-weight:850;font-size:1.8rem;letter-spacing:-.07em;border-right:1px solid #ccc;padding-right:18px}.eyebrow{font-size:.6875rem;letter-spacing:.17em;color:var(--muted);margin-bottom:2px}.top-actions{display:flex;align-items:center;gap:16px}.private{font-size:.8125rem;color:#555}.layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:24px;margin-top:24px}.workspace{min-width:0}.panel{border:1px solid var(--line);background:white;border-radius:7px;overflow:hidden}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;border-bottom:1px solid var(--line)}.section-head .index{color:#888;margin-right:9px;font-size:.75rem}.badge{font-size:.6875rem;letter-spacing:.06em;background:#eee;border-radius:3px;padding:4px 7px}.source-meta{min-width:0}.source-meta strong{display:block;font-size:.875rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:480px}.source-meta small{display:block;margin-top:2px}.stage{height:360px;background:#202123;display:flex;align-items:center;justify-content:center;position:relative;padding:18px;overflow:hidden}.stage.over{outline:3px solid #b9df52;outline-offset:-5px}.stage canvas{display:block;max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 5px 25px #0005}.empty{background:transparent!important;color:white;border:1px dashed #626467;padding:42px 20px;width:min(86%,540px);display:flex;flex-direction:column;align-items:center;gap:11px;font-weight:400}.empty svg{width:40px;height:40px;stroke:#ddd;margin-bottom:5px}.empty strong{font-size:1rem}.empty span{font-size:.8125rem;color:#aaa}.preview-label{position:absolute;left:16px;top:12px;font-size:.6875rem;color:#ccc;letter-spacing:.1em;pointer-events:none}.transport{padding:15px 20px}.seek-row{display:flex;align-items:center;gap:12px;margin-bottom:13px}.seek-row input{flex:1;min-width:0}.seek-row output{font-size:.75rem;white-space:nowrap}.transport-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.spacer{flex:1}.selection-hint{font-size:.75rem;color:#777}.cuts{margin-top:20px}.cut-controls{padding:18px 20px;display:flex;align-items:end;gap:10px;flex-wrap:wrap}.cut-controls label{flex:1;min-width:120px}.cut-controls input{width:100%}.label{display:block;font-size:.875rem;font-weight:550;margin-bottom:7px}.inline-help{padding:0 20px 15px}.cut-list{padding:0 20px 8px;list-style:none;margin:0}.cut-item{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:9px;border-top:1px solid #e9e9e9;padding:11px 0}.cut-number{font-size:.75rem;background:#f0f0f0;padding:3px 6px;text-align:center}.cut-info{font-size:.875rem}.cut-info small{display:block}.cut-actions{display:flex;gap:2px;flex-wrap:wrap;justify-content:end}.cut-actions button{font-size:.75rem;padding:5px 7px}.cut-total{padding:12px 20px;background:#f6f6f6;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:.875rem}.settings{align-self:start}.settings fieldset{margin:0;border:0;padding:0;min-width:0}.form-section{padding:18px 20px;border-bottom:1px solid var(--line)}.form-section h3{margin-bottom:14px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:13px;min-width:0}.field:last-child{margin-bottom:0}input[type=number],input[type=text],select{width:100%;border:1px solid #ccc;border-radius:4px;background:white;padding:9px 10px;font-size:.875rem;min-width:0}input[type=range]{accent-color:#333;width:100%;cursor:pointer}input[type=checkbox]{accent-color:#111;width:16px;height:16px}.unit-field{position:relative}.unit-field input{padding-right:48px}.unit-field span{position:absolute;right:11px;top:10px;font-size:.8125rem;color:#777}.check{display:flex;align-items:center;gap:8px;font-size:.875rem}.subtle{background:#f5f5f5;border-radius:4px;padding:9px 10px;margin-top:10px}.export-summary{padding:18px 20px;background:#f9f9f9}.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;margin:0 0 17px}.summary-grid dt{font-size:.75rem;color:var(--muted)}.summary-grid dd{font-size:.875rem;font-weight:650;margin:3px 0 0;overflow-wrap:anywhere}.export-button{width:100%;padding:13px}.progress-wrap{margin-top:12px}.progress-wrap progress{width:100%;height:8px;accent-color:#333}.progress-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:.8125rem}.result{margin-top:14px;padding:14px;background:#edf5dc;border:1px solid #d2dfb9;border-radius:5px}.result strong{font-size:.875rem;display:block}.result a{display:block;text-align:center;background:#171717;color:white;padding:10px;border-radius:4px;margin-top:11px;text-decoration:none;font-size:.875rem}.notice{margin-top:18px;border:1px solid #ddd;background:#fff;border-radius:5px;padding:13px 16px;font-size:.875rem}.notice.error{border-color:#e2a9a5;color:#902418;background:#fff8f7}.notice.success{border-color:#c4dca2;background:#f7fbee}.footnote{margin-top:19px;font-size:.8125rem;color:#666}.footnote summary{cursor:pointer;font-weight:600}.footnote ul{padding-left:20px;line-height:1.8;margin:10px 0 0}.bottom{margin-top:24px;display:flex;justify-content:space-between;gap:12px;font-size:.6875rem;color:#777;letter-spacing:.04em}.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}fieldset:disabled{opacity:.6}
+@media(min-width:1450px){.stage{height:430px}}@media(max-width:1050px){.app{padding:22px 20px}.layout{grid-template-columns:minmax(0,1fr) 310px;gap:16px}.stage{height:300px}.section-head,.transport,.form-section,.export-summary{padding-left:16px;padding-right:16px}.private{display:none}.source-meta strong{max-width:300px}.cut-controls{padding-left:16px;padding-right:16px}}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.settings{width:100%}.stage{height:340px}.top{align-items:start}.wordmark{font-size:1.5rem;padding-right:12px}.brand{gap:12px}h1{font-size:1.35rem}.eyebrow{font-size:.625rem}.top-actions button{padding:9px;font-size:.8125rem}.source-meta strong{max-width:65vw}.settings .form-section{padding:20px}.cut-controls button{flex:1}.empty{padding:35px 16px}.bottom{flex-direction:column;gap:4px}}
+@media(max-width:420px){.app{padding:16px 12px}.stage{height:260px}.top{gap:8px}.brand{gap:9px}.wordmark{font-size:1.25rem;padding-right:9px}h1{font-size:1.15rem}.section-head{padding:13px}.transport{padding:13px}.cut-actions{max-width:90px}.cut-info{font-size:.8125rem}.selection-hint{width:100%}.empty span{font-size:.75rem}.empty strong{font-size:.875rem}}
+.eyebrow,.badge,.preview-label,.bottom{font-size:.75rem}
+.timeline-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:16px 20px 10px}.timeline-tools .primary{background:#202123}.timeline-tools .zoom{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:.8125rem}.zoom select{width:68px;padding:6px}.timeline-caption{display:flex;justify-content:space-between;gap:12px;padding:0 20px 9px;font-size:.8125rem;color:#666}.timeline-scroll{overflow-x:auto;padding:0 12px;overscroll-behavior-x:contain}.timeline-inner{width:100%;min-width:280px;padding:0 10px}.timeline-track{position:relative;height:124px;touch-action:none;user-select:none;cursor:crosshair}.time-ruler{height:25px;position:absolute;inset:0 0 auto;color:#666;font:12px ui-monospace,monospace;pointer-events:none}.time-ruler span{position:absolute;transform:translateX(-50%);white-space:nowrap}.time-ruler span:first-child{transform:none}.time-ruler span:last-child{transform:translateX(-100%)}.filmstrip{position:absolute;top:29px;left:0;width:100%;height:72px;background:#28292b;border-radius:3px;pointer-events:none}.trim-window{position:absolute;top:27px;height:76px;border-top:3px solid var(--accent);border-bottom:3px solid var(--accent);pointer-events:none}.timeline-shade{position:absolute;top:29px;height:72px;background:#111a;pointer-events:none}.trim-handle{position:absolute;top:-3px;height:76px;width:20px;border:0;border-radius:3px;background:var(--accent);color:#223000;padding:0;touch-action:none;pointer-events:auto;cursor:ew-resize;font-size:1rem;z-index:3}.trim-handle:hover:not(:disabled){background:#c8ee5b}.trim-handle.start{left:0;transform:translateX(-50%)}.trim-handle.end{right:0;transform:translateX(50%)}.timeline-playhead{position:absolute;top:19px;bottom:4px;width:18px;transform:translateX(-50%);padding:0;background:transparent;border:0;border-radius:0;z-index:4;touch-action:none;cursor:ew-resize;pointer-events:none}.timeline-playhead:before{content:"";position:absolute;left:8px;top:0;bottom:0;width:2px;background:#f45c57;box-shadow:0 0 0 1px #0002}.timeline-playhead:after{content:"";position:absolute;left:3px;top:0;width:12px;height:10px;background:#f45c57;clip-path:polygon(0 0,100% 0,100% 60%,50% 100%,0 60%)}.timeline-playhead:hover:not(:disabled){background:transparent}.timeline-selection{padding:0 20px 12px;font-size:.8125rem;color:#555;min-height:32px}.clip-strip{display:flex;gap:6px;overflow-x:auto;padding:0 20px 16px;align-items:stretch}.clip-chip{flex:1 0 112px;min-width:112px;max-width:260px;text-align:left;background:#f5f5f5;border:2px solid transparent;position:relative;padding:10px;overflow:hidden}.clip-chip[aria-pressed=true]{border-color:#4e6413;background:#f0f6df}.clip-chip strong{display:block;font-size:.875rem}.clip-chip small{display:block;font-size:.75rem;white-space:nowrap}.clip-chip .clip-thumb{height:38px;width:100%;object-fit:cover;display:block;border-radius:2px;margin-bottom:7px;background:#ddd}.clip-empty{font-size:.875rem;padding:12px;background:#f6f6f6;width:100%;color:#666}.precision{border-top:1px solid var(--line)}.precision>summary{cursor:pointer;padding:12px 20px;font-size:.875rem;font-weight:600}.timeline-help{padding:0 20px 14px}.cut-item.selected .cut-number{background:var(--accent);color:#243006}.clip-order-label{padding:0 20px 9px;font-size:.875rem;font-weight:600}.timeline-track[aria-disabled=true]{opacity:.5;cursor:default}
+@media(max-width:600px){.timeline-tools{padding:14px 12px 10px;gap:6px}.timeline-caption,.timeline-selection,.clip-order-label{padding-left:12px;padding-right:12px}.timeline-tools .zoom{margin-left:0}.clip-strip{padding-left:12px;padding-right:12px}.timeline-caption{flex-wrap:wrap;gap:3px}.timeline-help{padding-left:12px;padding-right:12px}}
+.edit-lane{position:absolute;top:29px;left:0;right:0;height:76px;padding:0;display:block;overflow:visible;background:#eee;border-radius:3px}.timeline-segment{position:absolute;top:0;height:76px;min-width:0;padding:0;border:1px solid #777;border-radius:3px;background:#42464a;overflow:hidden;cursor:grab;touch-action:none}.timeline-segment:hover:not(:disabled){background:#42464a}.timeline-segment[aria-pressed=true]{border:2px solid #88ad29;box-shadow:inset 0 0 0 1px #d6fa6d}.segment-frames{display:flex;height:100%;width:100%;pointer-events:none;opacity:.85}.segment-frames img{flex:1;min-width:0;width:0;height:100%;object-fit:cover;pointer-events:none}.segment-label{position:absolute;bottom:0;left:0;right:0;padding:3px 6px;font-size:.75rem;color:white;background:#0009;text-align:left;white-space:nowrap;overflow:hidden;pointer-events:none}.edit-lane .clip-empty{margin:0;height:76px;display:flex;align-items:center;font-size:.8125rem}.timeline-playhead{pointer-events:auto;z-index:6;bottom:10px}.trim-window{z-index:7}.trim-handle{width:14px}.trim-handle.start{transform:none}.trim-handle.end{transform:none}.drop-marker{position:absolute;top:27px;height:80px;width:3px;background:#4576e6;z-index:9;pointer-events:none}.timeline-segment.moving{opacity:.35}.timeline-track{height:124px}.timeline-selection{min-height:34px}.timeline-tools button{white-space:nowrap}.transport-actions .play-button{min-width:110px}.timeline-caption strong{font-weight:600;color:#333}
+.trim-removed{position:absolute;top:0;height:76px;background:repeating-linear-gradient(135deg,#c9515126 0 6px,#c951514d 6px 12px);border:1px dashed #b56c6c;pointer-events:none}.timeline-segment.trimming{z-index:2;cursor:ew-resize}
+.erase-window{position:absolute;top:27px;height:78px;border:2px solid #c73535;background:repeating-linear-gradient(135deg,#e7434355 0 8px,#e7434333 8px 16px);z-index:10;pointer-events:none}.erase-handle{position:absolute;top:-2px;width:16px;height:78px;padding:0;border:0;background:#bc2929;color:#fff;pointer-events:auto;touch-action:none;cursor:ew-resize}.erase-handle:hover:not(:disabled){background:#9e1d1d}.erase-handle.start{left:-9px}.erase-handle.end{right:-9px}.erase-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0 20px 12px}.erase-actions output{flex:1;min-width:180px;font-size:.875rem;color:#a22525}.erase-confirm{background:#b42318;color:white;border-color:#b42318}.erase-confirm:hover:not(:disabled){background:#912017}.erase-mode .timeline-segment{cursor:crosshair}.erase-mode .timeline-playhead{pointer-events:none}#rangeMode[aria-pressed=true]{background:#fff0ef;color:#a22525;border-color:#c73535}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><div class="wordmark" aria-hidden="true">CLIP.</div><div><div class="eyebrow">LOCAL VIDEO EDITOR</div><h1>동영상 편집기</h1></div></div>
+    <div class="top-actions"><span class="private">파일 전송 없이, 내 컴퓨터에서</span><button id="openFile" class="primary">영상 열기</button><input id="fileInput" type="file" accept="video/*,.mp4,.mov,.webm,.m4v,.mkv" hidden></div>
+  </header>
+  <div class="layout">
+    <main class="workspace">
+      <section class="panel" aria-labelledby="previewTitle">
+        <div class="section-head"><div class="source-meta"><strong id="previewTitle">영상을 불러오세요</strong><small id="sourceInfo">한 번에 영상 한 개 · 브라우저에서 재생 가능한 파일</small></div><span class="badge">PREVIEW</span></div>
+        <div class="stage" id="dropZone">
+          <span class="preview-label" id="previewLabel" hidden>출력 화면 미리보기</span>
+          <button class="empty" id="dropButton"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="4" y="6" width="32" height="28" rx="3" stroke-width="1.3"/><path d="m17 14 10 6-10 6Z" stroke-width="1.3"/></svg><strong>영상을 끌어 놓거나 클릭해서 열기</strong><span>MP4, MOV, WebM 등 · 파일은 업로드되지 않습니다</span></button>
+          <canvas id="preview" width="1280" height="720" hidden aria-label="출력 비율이 적용된 영상 미리보기"></canvas>
+        </div>
+        <fieldset id="previewControls" disabled style="border:0;padding:0;margin:0;min-width:0">
+          <div class="transport"><div class="seek-row"><output id="currentTime" class="mono">00:00.00</output><input id="seek" type="range" min="0" max="1" step="0.01" value="0" aria-label="편집 영상 재생 위치"><output id="fullTime" class="mono">00:00.00</output></div><div class="transport-actions"><button id="prevFrame" class="small" title="왼쪽 방향키">◁ 이전</button><button id="play" class="primary play-button" title="Space">▶ 재생</button><button id="nextFrame" class="small" title="오른쪽 방향키">다음 ▷</button><span class="hint">편집 결과 미리보기</span><span class="spacer"></span><button id="snapshot" class="small quiet">장면 PNG 저장</button></div></div>
+        </fieldset>
+      </section>
+      <section class="panel cuts" aria-labelledby="cutTitle">
+        <div class="section-head"><h2 id="cutTitle"><span class="index mono">01</span>컷 편집</h2><button id="resetCuts" class="small quiet" disabled>전체 구간으로 초기화</button></div>
+        <fieldset id="cutControls" disabled style="border:0;padding:0;margin:0;min-width:0">
+          <div class="timeline-tools"><button id="splitClip" class="primary" title="S 또는 ⌘/Ctrl+B">✂ 분할</button><button id="deleteClip" title="Delete">삭제</button><button id="undoCut" title="⌘/Ctrl+Z">↶ 취소</button><button id="redoCut" title="⌘/Ctrl+Shift+Z">↷ 다시 실행</button><label class="zoom">확대<select id="timelineZoom" aria-label="타임라인 확대"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label></div>
+          <div class="erase-actions"><button id="rangeMode" aria-pressed="false">구간 지우기</button><output id="rangeInfo" hidden>타임라인에서 지울 부분을 드래그하세요.</output><button id="eraseRange" class="erase-confirm" hidden disabled>선택 구간 삭제</button><button id="cancelRange" hidden>취소</button></div>
+          <div class="timeline-caption"><strong>편집 타임라인 · 빈틈 없이 자동 연결</strong><span id="thumbnailStatus">영상을 열면 장면이 표시됩니다</span></div>
+          <div id="timelineScroll" class="timeline-scroll"><div id="timelineInner" class="timeline-inner"><div id="timelineTrack" class="timeline-track" aria-label="편집 영상 타임라인" aria-disabled="true">
+            <div id="timeRuler" class="time-ruler" aria-hidden="true"></div><canvas id="filmstrip" width="1600" height="90" hidden aria-hidden="true"></canvas>
+            <div id="clipStrip" class="edit-lane" aria-label="편집 영상 트랙"></div><div id="dropMarker" class="drop-marker" hidden></div>
+            <div id="trimWindow" class="trim-window" hidden><button id="trimStart" class="trim-handle start" role="slider" aria-label="선택 클립 시작 위치" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">Ⅱ</button><button id="trimEnd" class="trim-handle end" role="slider" aria-label="선택 클립 종료 위치" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">Ⅱ</button></div>
+            <button id="timelinePlayhead" class="timeline-playhead" role="slider" aria-label="편집 영상 재생 위치" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" hidden></button>
+            <div id="eraseWindow" class="erase-window" hidden><button id="eraseStart" class="erase-handle start" role="slider" aria-label="삭제 범위 시작" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">Ⅱ</button><button id="eraseEnd" class="erase-handle end" role="slider" aria-label="삭제 범위 끝" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">Ⅱ</button></div>
+          </div></div></div>
+          <p id="timelineSelection" class="timeline-selection">시간 눈금을 눌러 장면 이동 · 영상 조각을 눌러 선택</p>
+          <p class="hint timeline-help">영상 양끝 드래그: 길이 조절 · 영상 몸통 드래그: 순서 변경 · 삭제하면 뒤 영상이 앞으로 붙습니다.<br>Space 재생/정지 · S 또는 ⌘/Ctrl+B 분할 · Delete 삭제 · ⌘/Ctrl+Z 취소</p>
+          <details id="precision" class="precision"><summary>초 단위 정밀 조정 · 클립 순서 변경</summary>
+          <div class="timeline-tools"><button id="markIn" class="small">현재 위치 앞부분 자르기</button><button id="markOut" class="small">현재 위치 뒷부분 자르기</button><span class="hint">아래 초 입력은 원본 영상 기준입니다.</span></div>
+          <div class="cut-controls"><label><span class="label">시작 <small>초</small></span><input id="inPoint" type="number" min="0" step="0.01" value="0"></label><label><span class="label">종료 <small>초</small></span><input id="outPoint" type="number" min="0" step="0.01" value="0"></label><button id="replaceCut">이 구간만 남기기</button><button id="addCut" class="primary">구간 추가</button><button id="cancelCut" class="quiet" hidden>수정 취소</button></div>
+          <p class="hint inline-help">목록의 구간만 위에서 아래 순서로 연결합니다. 중간을 덜어내려면 앞·뒤 구간을 따로 남기세요.</p>
+          <ol id="cutList" class="cut-list"></ol>
+          </details>
+        </fieldset>
+        <div class="cut-total"><span id="cutCount">0개 구간</span><strong id="totalTime" class="mono">00:00.00</strong></div>
+      </section>
+      <div id="notice" class="notice" role="status" aria-live="polite">영상 열기 → 타임라인에서 분할·삭제 → 편집본 확인 → 내보내기</div>
+      <details class="footnote"><summary>지원 범위와 사용 시 참고사항</summary><ul>
+        <li>단일 영상에서 여러 구간을 추려 연결하는 간편 편집기입니다. 다른 영상끼리 합치기, 자막, 전환 효과는 포함하지 않습니다.</li>
+        <li>영상은 서버로 전송되지 않습니다. 작업은 메모리에만 보관되며 새로고침하거나 창을 닫으면 초기화됩니다.</li>
+        <li>브라우저에서 재생·인코딩할 수 있는 형식만 지원합니다. 확장자가 같아도 원본 코덱에 따라 열리지 않을 수 있습니다.</li>
+        <li>내보내기는 재생하면서 다시 인코딩합니다. 영상 길이 정도 또는 그 이상 걸리며, 정확한 프레임 단위 컷·고정 FPS·정확한 용량은 보장하지 않습니다.</li>
+        <li>내보내는 동안 이 탭을 유지하고 컴퓨터가 잠자기에 들어가지 않게 해주세요. 탭을 숨기면 품질 보호를 위해 취소됩니다.</li>
+        <li>짧은 영상·1080p 이하 권장. 최대 출력은 3840 × 2160에 해당하는 픽셀 수이며 결과 파일은 500 MB까지입니다. 브라우저 메모리에 따라 더 일찍 실패할 수 있습니다.</li>
+        <li>30fps 원본을 60fps로 출력해도 새로운 중간 동작을 생성하지 않습니다. HDR 영상은 색상이 원본과 다를 수 있습니다.</li>
+      </ul></details>
+    </main>
+    <aside class="panel settings" aria-labelledby="outputTitle">
+      <div class="section-head"><h2 id="outputTitle"><span class="index mono">02</span>출력 설정</h2><span id="formatBadge" class="badge">LOCAL</span></div>
+      <fieldset id="settingsControls" disabled>
+        <div class="form-section"><h3>화면 크기</h3>
+          <div class="fields"><label class="field"><span class="label">비율</span><select id="ratio"><option value="source">원본 비율</option><option value="16:9">16:9 · 가로</option><option value="9:16">9:16 · 세로</option><option value="1:1">1:1 · 정사각형</option><option value="4:5">4:5 · 피드</option><option value="custom">직접 입력</option></select></label><label class="field"><span class="label">해상도</span><select id="resolution"><option value="source">원본 크기 기준</option><option value="1920">긴 변 1920px</option><option value="1280" selected>긴 변 1280px</option><option value="854">긴 변 854px</option><option value="640">긴 변 640px</option></select></label></div>
+          <div class="fields"><label class="field"><span class="label">가로 <small>px</small></span><input id="width" type="number" min="16" max="3840" step="2" value="1280" readonly></label><label class="field"><span class="label">세로 <small>px</small></span><input id="height" type="number" min="16" max="3840" step="2" value="720" readonly></label></div>
+          <div class="fields"><label class="field"><span class="label">화면 맞춤</span><select id="fit"><option value="contain">전체 보이기 · 여백</option><option value="cover">화면 채우기 · 중앙 자르기</option></select></label><label class="field"><span class="label">여백 색상</span><select id="background"><option value="#000000">검정</option><option value="#ffffff">흰색</option></select></label></div>
+        </div>
+        <div class="form-section"><h3>형식 · 코덱</h3>
+          <div class="fields"><label class="field"><span class="label">형식</span><select id="format"></select></label><label class="field"><span class="label">비디오 코덱</span><select id="codec"></select></label></div>
+          <div class="fields"><label class="field"><span class="label">프레임속도</span><select id="fps"><option value="24">24 fps</option><option value="25">25 fps</option><option value="30" selected>30 fps</option><option value="60">60 fps</option></select></label><label class="field"><span class="label">오디오 비트전송률</span><select id="audioRate"><option value="96000">96 kbps</option><option value="128000" selected>128 kbps</option><option value="192000">192 kbps</option></select></label></div>
+          <label class="check"><input id="mute" type="checkbox">오디오 제거</label>
+          <p id="codecHint" class="hint" style="margin-top:9px">사용 가능한 코덱을 확인하고 있습니다.</p>
+        </div>
+        <div class="form-section"><h3>용량 · 비트전송률</h3>
+          <label class="field"><span class="label">설정 방식</span><select id="rateMode"><option value="bitrate">비트전송률 직접 입력</option><option value="target">목표 용량으로 계산</option></select></label>
+          <label class="field" id="bitrateField"><span class="label">비디오 비트전송률</span><div class="unit-field"><input id="bitrate" type="number" min="0.1" max="50" step="0.1" value="5"><span>Mbps</span></div></label>
+          <label class="field" id="targetField" hidden><span class="label">목표 파일 용량 <small>근사치</small></span><div class="unit-field"><input id="targetMB" type="number" min="0.1" max="500" step="0.1" value="10"><span>MB</span></div></label>
+          <p id="rateHint" class="hint subtle">비트전송률이 높을수록 화질과 용량이 함께 증가합니다.</p>
+        </div>
+      </fieldset>
+      <div class="export-summary">
+        <dl class="summary-grid"><div><dt>출력 크기</dt><dd id="summarySize" class="mono">—</dd></div><div><dt>편집 길이</dt><dd id="summaryTime" class="mono">—</dd></div><div><dt>계산 용량 · 보장 아님</dt><dd id="summaryMB" class="mono">—</dd></div><div><dt>비디오 비트전송률</dt><dd id="summaryRate" class="mono">—</dd></div></dl>
+        <button id="export" class="primary export-button" disabled>영상 내보내기</button>
+        <p class="hint" style="margin-top:8px">재인코딩 방식 · 내보내는 동안 이 탭 유지</p>
+        <div id="progressWrap" class="progress-wrap" hidden><progress id="progress" max="1" value="0" aria-label="영상 내보내기 진행률"></progress><div class="progress-row"><span id="progressText">준비 중…</span><button id="cancel" class="small">취소</button></div></div>
+        <div id="result" class="result" hidden><strong>내보내기 완료</strong><p id="resultInfo" class="hint"></p><a id="download">편집 영상 다운로드</a><small id="resultSettings"></small></div>
+      </div>
+    </aside>
+  </div>
+  <footer class="bottom"><span>CLIP. / SINGLE-FILE EDITOR</span><span>설치 없음 · 외부 라이브러리 없음 · 로컬 처리</span></footer>
+</div>
+<video id="sourceVideo" playsinline preload="auto" hidden></video>
+<script id="video-engine">
+'use strict';
+// Native browser encoding only: no remote dependencies or file uploads.
+const ClipEngine = (() => {
+  const candidates = [
+    {container:'mp4',codec:'h264',label:'H.264',audio:'AAC',mime:'video/mp4;codecs=avc1,mp4a.40.2',silent:'video/mp4;codecs=avc1'},
+    {container:'webm',codec:'vp9',label:'VP9',audio:'Opus',mime:'video/webm;codecs=vp9,opus',silent:'video/webm;codecs=vp9'},
+    {container:'webm',codec:'vp8',label:'VP8',audio:'Opus',mime:'video/webm;codecs=vp8,opus',silent:'video/webm;codecs=vp8'}
+  ];
+  const aborted = () => new DOMException('작업이 취소되었습니다.','AbortError');
+  function formats(silent=false) { return typeof MediaRecorder==='undefined' ? [] : candidates.filter(c=>MediaRecorder.isTypeSupported(silent?c.silent:c.mime)); }
+  function waitEvent(target, event, signal, timeout=15000) {
+    return new Promise((resolve,reject)=>{
+      let timer;
+      const clear=()=>{clearTimeout(timer);target.removeEventListener(event,done);target.removeEventListener('error',fail);signal?.removeEventListener('abort',cancel);};
+      const done=()=>{clear();resolve();};
+      const fail=()=>{clear();reject(new Error('영상을 처리할 수 없습니다. 원본 코덱 또는 출력 설정을 확인해주세요.'));};
+      const cancel=()=>{clear();reject(aborted());};
+      target.addEventListener(event,done,{once:true});target.addEventListener('error',fail,{once:true});signal?.addEventListener('abort',cancel,{once:true});
+      timer=setTimeout(()=>{clear();reject(new Error('영상 처리 응답이 없습니다. 더 작은 영상이나 다른 코덱으로 다시 시도해주세요.'));},timeout);
+      if(signal?.aborted) cancel();
+    });
+  }
+  async function seek(video,time,signal) {
+    if(signal?.aborted) throw aborted();
+    if(Math.abs(video.currentTime-time)<0.002 && video.readyState>=2) return;
+    const ready=waitEvent(video,'seeked',signal);video.currentTime=time;await ready;
+  }
+  async function load(video,url,signal) {
+    const ready=waitEvent(video,'loadeddata',signal,20000);video.src=url;video.load();await ready;
+    if(!Number.isFinite(video.duration)) {
+      const end=waitEvent(video,'timeupdate',signal);video.currentTime=1e10;await end;
+      await seek(video,0,signal);
+    }
+    if(!Number.isFinite(video.duration)||video.duration<=0||!video.videoWidth) throw new Error('영상 길이 또는 화면 크기를 읽을 수 없습니다. 다른 파일로 시도해주세요.');
+    return {duration:video.duration,width:video.videoWidth,height:video.videoHeight};
+  }
+  function paint(ctx,video,config) {
+    const {width:w,height:h,fit,background}=config;
+    ctx.fillStyle=background;ctx.fillRect(0,0,w,h);
+    if(!video.videoWidth||video.readyState<2) return;
+    const scale=(fit==='cover'?Math.max:Math.min)(w/video.videoWidth,h/video.videoHeight);
+    const dw=video.videoWidth*scale,dh=video.videoHeight*scale;
+    ctx.drawImage(video,(w-dw)/2,(h-dh)/2,dw,dh);
+  }
+  function total(segments) { return segments.reduce((n,s)=>n+s.end-s.start,0); }
+  function validateSegments(segments,duration) {
+    if(!Array.isArray(segments)||!segments.length||segments.length>100) throw new Error('남길 구간을 1~100개 지정해주세요.');
+    return segments.map(s=>{
+      if(!s || !Number.isFinite(s.start)||!Number.isFinite(s.end)||s.start<0||s.end>duration+0.015||s.end-s.start<0.1) throw new Error('구간은 원본 범위 안에서 0.1초 이상으로 지정해주세요.');
+      return {start:s.start,end:Math.min(s.end,duration)};
+    });
+  }
+  function settings(raw,segments) {
+    const width=Number(raw.width),height=Number(raw.height),fps=Number(raw.fps),seconds=total(segments);
+    if(!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width>3840||height>3840||width%2||height%2||width*height>8294400) throw new Error('가로·세로는 16~3840 사이의 짝수이며 총 8,294,400픽셀 이하여야 합니다.');
+    if(![24,25,30,60].includes(fps)) throw new Error('지원하지 않는 프레임속도입니다.');
+    if(!Number.isFinite(seconds)||seconds<0.1) throw new Error('내보낼 구간이 없습니다.');
+    const audioRate=raw.mute?0:Number(raw.audioRate);
+    if(![0,96000,128000,192000].includes(audioRate)) throw new Error('오디오 비트전송률을 확인해주세요.');
+    const mb=Number(raw.targetMB);
+    if(raw.rateMode==='target'&&(!Number.isFinite(mb)||mb<0.1||mb>500)) throw new Error('목표 용량은 0.1~500 MB로 입력해주세요.');
+    const videoRate=Math.round(raw.rateMode==='target' ? mb*1e6*8*0.96/seconds-audioRate : Number(raw.bitrate)*1e6);
+    if(!Number.isFinite(videoRate)||videoRate<100000||videoRate>50000000) throw new Error(raw.rateMode==='target'?'목표 용량이 너무 작거나 큽니다. 비디오 0.1~50 Mbps 범위가 되도록 조정해주세요.':'비디오 비트전송률은 0.1~50 Mbps로 입력해주세요.');
+    const estimatedMB=(videoRate+audioRate)*seconds/8/1e6;
+    if(estimatedMB>500) throw new Error('계산 용량이 500 MB를 넘습니다. 구간·해상도·비트전송률을 줄여주세요.');
+    const format=formats(Boolean(raw.mute)).find(f=>f.container===raw.format&&f.codec===raw.codec);
+    if(!format) throw new Error('이 브라우저에서 지원하지 않는 형식·코덱 조합입니다.');
+    if(!['contain','cover'].includes(raw.fit)||!['#000000','#ffffff'].includes(raw.background)) throw new Error('화면 맞춤 설정을 확인해주세요.');
+    return {width,height,fps,seconds,audioRate,videoRate,estimatedMB,format,mime:raw.mute?format.silent:format.mime,fit:raw.fit,background:raw.background,mute:Boolean(raw.mute)};
+  }
+  // Chrome's streamed WebM omits duration. Add it only to a simple, unindexed header;
+  // indexed or unfamiliar files are left untouched, never blindly rewritten.
+  async function webmDuration(blob,seconds) {
+    const bytes=new Uint8Array(await blob.slice(0,65536).arrayBuffer());
+    function vint(at,id=false) {
+      if(at>=bytes.length||!bytes[at]) return null;
+      let mask=128,len=1;while(!(bytes[at]&mask)){mask>>=1;len++;}
+      if(len>8||at+len>bytes.length) return null;
+      let val=id?bytes[at]:bytes[at]&(mask-1),unknown=!id&&val===mask-1;
+      for(let i=1;i<len;i++){val=val*256+bytes[at+i];unknown=unknown&&bytes[at+i]===255;}
+      return {len,val,unknown};
+    }
+    function element(at) {
+      const id=vint(at,true);if(!id)return null;const size=vint(at+id.len);if(!size)return null;
+      const start=at+id.len+size.len;return {id:id.val,size,start,end:start+size.val,sizeAt:at+id.len};
+    }
+    function encodeSize(value,len) {
+      if(value>=2**(7*len)-1)return null;
+      const out=new Uint8Array(len);for(let i=len-1;i>=0;i--){out[i]=value%256;value=Math.floor(value/256);}out[0]|=1<<(8-len);return out;
+    }
+    let at=0,segment;
+    while(at<bytes.length){const e=element(at);if(!e)return blob;if(e.id===0x18538067){segment=e;break;}at=e.end;}
+    if(!segment)return blob;
+    at=segment.start;let info,indexed=false;
+    while(at<bytes.length){const e=element(at);if(!e)break;if(e.id===0x114d9b74||e.id===0x1c53bb6b)indexed=true;if(e.id===0x1549a966)info=e;if(e.id===0x1f43b675)break;at=e.end;}
+    if(!info||info.end>bytes.length)return blob;
+    let scale=1000000,duration;
+    for(at=info.start;at<info.end;){const e=element(at);if(!e||e.end>info.end)return blob;if(e.id===0x2ad7b1){scale=0;for(let i=e.start;i<e.end;i++)scale=scale*256+bytes[i];}if(e.id===0x4489)duration=e;at=e.end;}
+    if(duration && [4,8].includes(duration.size.val)) {
+      const data=new Uint8Array(duration.size.val),view=new DataView(data.buffer);
+      if(data.length===4)view.setFloat32(0,seconds*1e9/scale);else view.setFloat64(0,seconds*1e9/scale);
+      return new Blob([blob.slice(0,duration.start),data,blob.slice(duration.end)],{type:blob.type});
+    }
+    if(indexed)return blob;
+    const added=new Uint8Array(11);added.set([0x44,0x89,0x88]);new DataView(added.buffer).setFloat64(3,seconds*1e9/scale);
+    const size=encodeSize(info.size.val+11,info.size.len);if(!size)return blob;bytes.set(size,info.sizeAt);
+    if(!segment.size.unknown){const ss=encodeSize(segment.size.val+11,segment.size.len);if(!ss)return blob;bytes.set(ss,segment.sizeAt);}
+    return new Blob([bytes.slice(0,info.end),added,blob.slice(info.end)],{type:blob.type});
+  }
+  async function encode(url,config,segments,signal,onProgress=()=>{}) {
+    if(signal.aborted)throw aborted();
+    const video=document.createElement('video');video.playsInline=true;video.preload='auto';
+    const canvas=document.createElement('canvas');canvas.width=config.width;canvas.height=config.height;
+    const ctx=canvas.getContext('2d',{alpha:false});
+    let audio,stream,recorder,ticker,recordingError,wakeLock,encodedSeconds=0;
+    const chunks=[];let byteCount=0;
+    try {
+      // Create/resume audio within the export click's activation, before loading media.
+      if(!config.mute){audio=new (window.AudioContext||window.webkitAudioContext)();await audio.resume();}
+      const info=await load(video,url,signal);segments=validateSegments(segments,info.duration);
+      try{wakeLock=await navigator.wakeLock?.request('screen');}catch{/* Optional on file://. */}
+      stream=canvas.captureStream(config.fps);
+      if(audio){const source=audio.createMediaElementSource(video),destination=audio.createMediaStreamDestination();source.connect(destination);destination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));}
+      else video.muted=true;
+      recorder=new MediaRecorder(stream,{mimeType:config.mime,videoBitsPerSecond:config.videoRate,...(config.audioRate?{audioBitsPerSecond:config.audioRate}:{})});
+      recorder.addEventListener('dataavailable',e=>{if(e.data.size){byteCount+=e.data.size;if(byteCount>500e6){recordingError=new Error('출력이 500 MB를 넘어 중단했습니다. 비트전송률을 줄여주세요.');}else chunks.push(e.data);}});
+      recorder.addEventListener('error',e=>{recordingError=e.error||new Error('인코딩에 실패했습니다. 다른 코덱이나 낮은 해상도로 시도해주세요.');});
+      let doneSeconds=0;
+      for(let i=0;i<segments.length;i++) {
+        const part=segments[i];await seek(video,part.start,signal);paint(ctx,video,config);
+        const startAt=performance.now();
+        // Some encoders emit "start" only after both video and audio arrive.
+        // Begin playback before waiting for data, otherwise audio can deadlock startup.
+        if(recorder.state==='inactive')recorder.start(250);else recorder.resume();
+        await video.play();
+        await new Promise((resolve,reject)=>{
+          let finished=false;
+          const finish=error=>{if(finished)return;finished=true;clearInterval(ticker);signal.removeEventListener('abort',cancel);video.pause();error?reject(error):resolve();};
+          const cancel=()=>finish(aborted());signal.addEventListener('abort',cancel,{once:true});
+          const tick=()=>{
+            if(signal.aborted)return cancel();if(recordingError)return finish(recordingError);
+            if(video.error)return finish(new Error('원본 영상을 재생할 수 없습니다.'));
+            if(performance.now()-startAt>(part.end-part.start)*3000+20000)return finish(new Error('재생이 지연되어 중단했습니다. 낮은 해상도로 다시 시도해주세요.'));
+            paint(ctx,video,config);const elapsed=Math.max(0,Math.min(part.end-part.start,video.currentTime-part.start));
+            onProgress({ratio:(doneSeconds+elapsed)/config.seconds,part:i+1,parts:segments.length,seconds:doneSeconds+elapsed});
+            if(video.currentTime>=part.end-0.006||video.ended)finish();
+          };
+          ticker=setInterval(tick,1000/config.fps);tick();
+        });
+        const paused=waitEvent(recorder,'pause',signal);recorder.pause();await paused;
+        encodedSeconds+=(performance.now()-startAt)/1000;doneSeconds+=part.end-part.start;
+      }
+      const stopped=waitEvent(recorder,'stop',signal);recorder.stop();await stopped;
+      if(signal.aborted)throw aborted();if(recordingError)throw recordingError;
+      if(!byteCount)throw new Error('출력 데이터가 없습니다. 다른 형식으로 다시 시도해주세요.');
+      let blob=new Blob(chunks,{type:recorder.mimeType});
+      if(config.format.container==='webm')blob=await webmDuration(blob,encodedSeconds);
+      return {blob,seconds:encodedSeconds,mime:recorder.mimeType,videoRate:recorder.videoBitsPerSecond};
+    } finally {
+      clearInterval(ticker);video.pause();
+      if(recorder&&recorder.state!=='inactive')recorder.stop();
+      stream?.getTracks().forEach(t=>t.stop());video.removeAttribute('src');video.load();
+      if(audio&&audio.state!=='closed')await audio.close().catch(()=>{});
+      await wakeLock?.release().catch(()=>{});
+    }
+  }
+  return Object.freeze({formats,load,seek,paint,total,validateSegments,settings,encode,webmDuration});
+})();
+</script>
+<script id="editor-app">
+'use strict';
+(() => {
+  const $=id=>document.getElementById(id),video=$('sourceVideo'),canvas=$('preview'),ctx=canvas.getContext('2d',{alpha:false});
+  let file=null,sourceURL=null,downloadURL=null,meta=null,segments=[],busy=false,loading=false,loadAbort=null,exportAbort=null,previewEnd=null,raf=0,editingIndex=null;
+  let selectedClip=-1,history=[],future=[],drag=null,thumbAbort=null,thumbBusy=false,thumbs=[],sequenceAt=null,previewEpoch=0,cursorTime=0;
+  let rangeMode=false,eraseSelection=null,rangeDrag=null;
+  const ids=['ratio','resolution','width','height','fit','background','format','codec','fps','audioRate','mute','rateMode','bitrate','targetMB'];
+  const clock=n=>{const ticks=Math.round(Math.max(0,Number(n)||0)*100);return String(Math.floor(ticks/6000)).padStart(2,'0')+':'+(ticks%6000/100).toFixed(2).padStart(5,'0');};
+  const notice=(message,kind='')=>{$('notice').textContent=message;$('notice').className='notice'+(kind?' '+kind:'');};
+  function rawSettings(){return Object.fromEntries(ids.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value]));}
+  function currentConfig(){if(!meta)throw new Error('영상을 먼저 열어주세요.');return ClipEngine.settings(rawSettings(),ClipEngine.validateSegments(segments,meta.duration));}
+  function syncEnabled(){const off=!meta||busy||loading;$('previewControls').disabled=off;$('cutControls').disabled=off;$('settingsControls').disabled=off;$('resetCuts').disabled=off;$('openFile').disabled=busy||loading;$('dropButton').disabled=busy||loading;$('export').disabled=off||!segments.length||!ClipEngine.formats($('mute').checked).length;syncTimeline();}
+  function revokeResult(){if(downloadURL)URL.revokeObjectURL(downloadURL);downloadURL=null;$('result').hidden=true;$('download').removeAttribute('href');}
+  function stopPreview(){previewEpoch++;video.pause();previewEnd=null;sequenceAt=null;$('play').textContent='▶ 재생';cancelAnimationFrame(raf);}
+  function draw(){
+    if(!meta)return;const w=Number($('width').value),h=Number($('height').value);
+    if(!Number.isFinite(w)||!Number.isFinite(h)||w<16||h<16||w>3840||h>3840||w*h>8294400)return;
+    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+    if(segments.length)ClipEngine.paint(ctx,video,{width:w,height:h,fit:$('fit').value,background:$('background').value});else{ctx.fillStyle='#111';ctx.fillRect(0,0,w,h);}
+    if(sequenceAt!==null&&segments[sequenceAt]){const s=segments[sequenceAt];cursorTime=editOffset(sequenceAt)+Math.max(0,Math.min(s.end-s.start,video.currentTime-s.start));}
+    $('seek').value=cursorTime;$('currentTime').textContent=clock(cursorTime);syncTimeline();
+  }
+  function loop(){draw();if(previewEnd!==null&&(video.currentTime>=previewEnd-.004||video.ended)){const next=sequenceAt===null?null:sequenceAt+1;if(next!==null&&next<segments.length)playSequence(next);else stopPreview();return;}if(!video.paused)raf=requestAnimationFrame(loop);}
+  async function playPreview(start,end,sequence){stopPreview();const epoch=previewEpoch;try{await ClipEngine.seek(video,start);if(epoch!==previewEpoch)return;previewEnd=end;sequenceAt=sequence;await video.play();if(epoch!==previewEpoch)return;$('play').textContent='Ⅱ 일시정지';loop();}catch(e){if(epoch===previewEpoch){stopPreview();notice(e.message,'error');}}}
+  function playSequence(index=0,source=null){const s=segments[index];if(!s)return;cursorTime=editOffset(index)+(source===null?0:source-s.start);syncTimeline();return playPreview(source??s.start,s.end,index);}
+  function togglePlayback(){if(!meta||busy||loading||drag||!segments.length)return;if(!video.paused||sequenceAt!==null){draw();stopPreview();return;}if(cursorTime>=editLength()-.02)cursorTime=0;const at=locateEdit(cursorTime);playSequence(at.index,at.source);}
+  function dimensions(){
+    if(!meta)return;const custom=$('ratio').value==='custom';$('width').readOnly=!custom;$('height').readOnly=!custom;$('resolution').disabled=custom;
+    if(custom)return;
+    const ratio=$('ratio').value==='source'?meta.width/meta.height:$('ratio').value.split(':').map(Number).reduce((a,b)=>a/b);
+    let long=$('resolution').value==='source'?Math.max(meta.width,meta.height):Number($('resolution').value);
+    if($('ratio').value==='source')long=Math.min(long,Math.max(meta.width,meta.height));
+    long=Math.min(3840,long);let w=ratio>=1?long:long*ratio,h=ratio>=1?long/ratio:long;
+    if(w*h>8294400){const scale=Math.sqrt(8294400/(w*h));w*=scale;h*=scale;}
+    $('width').value=Math.max(16,Math.floor(w/2)*2);$('height').value=Math.max(16,Math.floor(h/2)*2);
+  }
+  function setOptions(select,options,previous){select.replaceChildren(...options.map(([value,label])=>{const el=document.createElement('option');el.value=value;el.textContent=label;return el;}));if(options.some(o=>o[0]===previous))select.value=previous;}
+  function populateFormats(){const all=ClipEngine.formats($('mute').checked),old=$('format').value;setOptions($('format'),[...new Set(all.map(f=>f.container))].map(f=>[f,f.toUpperCase()]),old);populateCodecs();}
+  function populateCodecs(){const all=ClipEngine.formats($('mute').checked).filter(f=>f.container===$('format').value);setOptions($('codec'),all.map(f=>[f.codec,f.label]),$('codec').value);}
+  function update(){
+    syncEnabled();$('targetField').hidden=$('rateMode').value!=='target';$('bitrateField').hidden=$('rateMode').value==='target';$('audioRate').disabled=$('mute').checked;video.muted=$('mute').checked;$('background').disabled=$('fit').value==='cover';
+    const f=ClipEngine.formats($('mute').checked).find(f=>f.container===$('format').value&&f.codec===$('codec').value);
+    $('codecHint').textContent=f?'비디오 '+f.label+' / '+($('mute').checked?'오디오 없음':'오디오 '+f.audio)+' · 브라우저 지원 조합만 표시':'지원 가능한 인코더가 없습니다. 최신 데스크톱 Chrome에서 열어주세요.';
+    $('formatBadge').textContent=$('format').value.toUpperCase()||'LOCAL';
+    $('summaryTime').textContent=segments.length?clock(ClipEngine.total(segments)):'—';$('summarySize').textContent=meta?$('width').value+' × '+$('height').value:'—';
+    try{const c=currentConfig();$('summaryRate').textContent=(c.videoRate/1e6).toFixed(2)+' Mbps';$('summaryMB').textContent='약 '+c.estimatedMB.toFixed(1)+' MB';$('rateHint').textContent=$('rateMode').value==='target'?'영상 길이·오디오를 반영해 계산합니다. 실제 파일은 목표 용량을 초과하거나 작아질 수 있습니다.':'계산 용량은 참고값입니다. 실제 용량은 영상 내용과 브라우저 인코더에 따라 달라집니다.';}catch(e){$('summaryRate').textContent='—';$('summaryMB').textContent='—';if(meta){$('rateHint').textContent=e.message;$('export').disabled=true;}}
+    draw();
+  }
+  function endCutEdit(){editingIndex=null;$('replaceCut').textContent='이 구간만 남기기';$('cancelCut').hidden=true;$('addCut').hidden=false;}
+  function renderCuts(){
+    endCutEdit();
+    const selected=segments[selectedClip];if(selected){$('inPoint').value=selected.start.toFixed(2);$('outPoint').value=selected.end.toFixed(2);}
+    $('cutList').replaceChildren();segments.forEach((s,i)=>{
+      const li=document.createElement('li');li.className='cut-item'+(i===selectedClip?' selected':'');const n=document.createElement('span');n.className='cut-number mono';n.textContent=String(i+1).padStart(2,'0');
+      const info=document.createElement('div');info.className='cut-info mono';info.textContent=clock(s.start)+' → '+clock(s.end);const small=document.createElement('small');small.textContent=(s.end-s.start).toFixed(2)+'초';info.append(small);
+      const actions=document.createElement('div');actions.className='cut-actions';
+      [['보기',()=>{selectClip(i,false);playSequence(i);}],['수정',()=>{selectClip(i,false);editingIndex=i;$('replaceCut').textContent=(i+1)+'번 구간 수정 적용';$('cancelCut').hidden=false;$('addCut').hidden=true;notice((i+1)+'번 구간의 시간을 수정한 뒤 “수정 적용”을 눌러주세요.');}],['↑',()=>moveClip(i,-1)],['↓',()=>moveClip(i,1)],['삭제',()=>deleteSelected(i)]].forEach(([text,action],j)=>{const b=document.createElement('button');b.textContent=text;b.type='button';b.setAttribute('aria-label',(i+1)+'번 구간 '+({2:'위로',3:'아래로'}[j]||text));b.disabled=(j===2&&i===0)||(j===3&&i===segments.length-1);b.addEventListener('click',()=>{if(busy||loading)return;action();});actions.append(b);});
+      li.append(n,info,actions);$('cutList').append(li);
+    });$('cutCount').textContent=segments.length+'개 구간 · 자동 연결';$('totalTime').textContent=clock(editLength());$('fullTime').textContent=clock(editLength());$('seek').max=editLength()||1;renderRuler();renderClipStrip();update();
+  }
+  function selectedSegment(){return ClipEngine.validateSegments([{start:Number($('inPoint').value),end:Number($('outPoint').value)}],meta.duration)[0];}
+  // Timeline edits share the same segment list used by the existing export engine.
+  const copyCuts=cuts=>cuts.map(s=>({...s}));
+  const editLength=()=>ClipEngine.total(segments);
+  const editOffset=(index,cuts=segments)=>ClipEngine.total(cuts.slice(0,index));
+  const timelineSpan=()=>Math.max(1,meta?.duration||0,editLength());
+  // Keep the original track layout while dragging the in-point; close the gap on release.
+  const visibleSegment=index=>drag?.edge==='start'&&drag.index===index?drag.pending||segments[index]:segments[index];
+  const visibleOffset=index=>editOffset(index)+(drag?.edge==='start'&&drag.index===index?(visibleSegment(index).start-drag.before.segments[index].start):0);
+  function locateEdit(time,cuts=segments){let offset=0;for(let i=0;i<cuts.length;i++){const s=cuts[i],length=s.end-s.start;if(time<offset+length-1e-7||i===cuts.length-1)return {index:i,source:s.start+Math.max(0,Math.min(length,time-offset)),offset};offset+=length;}return {index:-1,source:0,offset:0};}
+  const captureEdit=()=>({segments:copyCuts(segments),selected:selectedClip,cursor:cursorTime});
+  function remember(before){history.push(before);if(history.length>60)history.shift();future=[];}
+  function applyCuts(next,selected=0,position=cursorTime){
+    if(!meta||busy||loading||drag||rangeDrag)return false;
+    const checked=next.length?ClipEngine.validateSegments(next,meta.duration):[];
+    if(JSON.stringify(checked)!==JSON.stringify(segments))remember(captureEdit());
+    clearRange();stopPreview();segments=copyCuts(checked);selectedClip=segments.length?Math.max(0,Math.min(selected,segments.length-1)):-1;cursorTime=Math.max(0,Math.min(editLength(),position));renderCuts();scrubTo(cursorTime);return true;
+  }
+  function restoreEdit(from,to){if(!meta||busy||loading||drag||rangeDrag||!from.length)return;clearRange();stopPreview();to.push(captureEdit());const state=from.pop();segments=copyCuts(state.segments);selectedClip=state.selected;cursorTime=state.cursor;renderCuts();scrubTo(cursorTime);}
+  function undoEdit(){restoreEdit(history,future);notice('직전 컷 편집을 되돌렸습니다.');}
+  function redoEdit(){restoreEdit(future,history);notice('취소한 편집을 다시 적용했습니다.');}
+  function selectClip(index,seekToStart=true){
+    if(busy||loading||drag||!segments[index])return;stopPreview();selectedClip=index;const s=segments[index];$('inPoint').value=s.start.toFixed(2);$('outPoint').value=s.end.toFixed(2);renderCuts();if(seekToStart)scrubTo(editOffset(index));
+  }
+  function splitSelected(){
+    if(!meta||busy||loading||drag||rangeMode)return;const at=locateEdit(cursorTime),s=segments[at.index],t=at.source;
+    if(!s||t-s.start<.101||s.end-t<.101){notice('선택한 클립 안쪽으로 재생 위치를 옮겨주세요. 분할 후 양쪽이 0.1초 이상이어야 합니다.');return;}
+    if(segments.length>=100){notice('최대 100개 클립까지 나눌 수 있습니다.','error');return;}
+    const next=copyCuts(segments);next.splice(at.index,1,{start:s.start,end:t},{start:t,end:s.end});applyCuts(next,at.index+1);notice('재생 막대 위치에서 분할했습니다. 필요 없는 부분을 눌러 삭제하세요.','success');
+  }
+  function deleteSelected(index=selectedClip){if(!segments[index]||busy||loading||drag)return;const start=editOffset(index),length=segments[index].end-segments[index].start,next=copyCuts(segments),position=cursorTime<=start?cursorTime:Math.max(start,cursorTime-length);next.splice(index,1);applyCuts(next,Math.min(index,next.length-1),position);notice('선택한 부분을 삭제하고 뒤 영상을 앞으로 연결했습니다.');}
+  function trimAtCursor(edge){
+    const at=locateEdit(cursorTime),s=segments[at.index];if(!s||busy||loading||drag)return;const next=copyCuts(segments);next[at.index]={...s,[edge]:at.source};
+    try{applyCuts(next,at.index,edge==='start'?at.offset:cursorTime);$('inPoint').value=segments[at.index].start.toFixed(2);$('outPoint').value=segments[at.index].end.toFixed(2);notice('현재 장면 '+(edge==='start'?'앞':'뒤')+'의 선택 구간을 잘랐습니다.','success');}catch{notice('남길 길이가 0.1초 이상인 위치를 선택해주세요.','error');}
+  }
+  function moveClip(index,offset){if(!segments[index+offset])return;const next=copyCuts(segments);[next[index],next[index+offset]]=[next[index+offset],next[index]];applyCuts(next,index+offset,editOffset(index+offset,next));}
+  function renderClipStrip(){
+    $('clipStrip').replaceChildren();if(!segments.length){const p=document.createElement('p');p.className='clip-empty';p.textContent=meta?'남길 클립이 없습니다. 실행 취소하거나 전체 구간으로 초기화하세요.':'영상을 열면 클립이 표시됩니다.';$('clipStrip').append(p);return;}
+    if(drag?.edge==='start'&&drag.pending){const delta=drag.pending.start-drag.before.segments[drag.index].start;if(delta>0){const removed=document.createElement('div');removed.className='trim-removed';removed.setAttribute('aria-hidden','true');removed.style.left=editOffset(drag.index)/timelineSpan()*100+'%';removed.style.width=delta/timelineSpan()*100+'%';$('clipStrip').append(removed);}}
+    segments.forEach((original,i)=>{const s=visibleSegment(i),b=document.createElement('button');b.type='button';b.className='timeline-segment'+(drag?.edge==='start'&&drag.index===i?' trimming':'');b.dataset.index=i;b.setAttribute('aria-pressed',String(i===selectedClip));b.setAttribute('aria-label',(i+1)+'번 구간 선택, 원본 '+clock(s.start)+'부터 '+clock(s.end));b.style.left=visibleOffset(i)/timelineSpan()*100+'%';b.style.width=(s.end-s.start)/timelineSpan()*100+'%';
+      const frames=document.createElement('span');frames.className='segment-frames';const count=Math.max(1,Math.min(24,Math.ceil((s.end-s.start)/timelineSpan()*$('timelineTrack').clientWidth/90)));
+      for(let j=0;thumbs.length&&j<count;j++){const t=s.start+(s.end-s.start)*(j+.5)/count,image=thumbs.reduce((a,b)=>Math.abs(b.time-t)<Math.abs(a.time-t)?b:a),img=document.createElement('img');img.src=image.url;img.alt='';img.draggable=false;frames.append(img);}
+      const label=document.createElement('span');label.className='segment-label';label.textContent=String(i+1).padStart(2,'0')+' · '+clock(s.end-s.start);b.append(frames,label);b.onclick=e=>{if(e.detail===0)selectClip(i);};$('clipStrip').append(b);});
+  }
+  function syncTimeline(){
+    const off=!meta||busy||loading,s=visibleSegment(selectedClip),duration=timelineSpan(),t=drag?.edge==='start'?visibleOffset(drag.index):cursorTime,at=locateEdit(cursorTime),active=segments[at.index];
+    $('timelineTrack').setAttribute('aria-disabled',String(off));$('timelinePlayhead').hidden=!meta;$('timelinePlayhead').disabled=off;$('timelinePlayhead').style.left=t/duration*100+'%';$('timelinePlayhead').setAttribute('aria-valuemax',String(duration));$('timelinePlayhead').setAttribute('aria-valuenow',t.toFixed(2));$('timelinePlayhead').setAttribute('aria-valuetext',clock(t));
+    $('timelinePlayhead').setAttribute('aria-valuemax',String(editLength()));
+    $('splitClip').disabled=off||!active||at.source-active.start<.101||active.end-at.source<.101||segments.length>=100;$('deleteClip').disabled=off||!s;$('undoCut').disabled=off||!history.length;$('redoCut').disabled=off||!future.length;$('play').disabled=off||!segments.length;$('markIn').disabled=off||!active;$('markOut').disabled=off||!active;
+    $('trimWindow').hidden=rangeMode||!s||!meta;const start=s?visibleOffset(selectedClip)/duration*100:0,end=s?(visibleOffset(selectedClip)+s.end-s.start)/duration*100:0;
+    $('trimWindow').style.left=start+'%';$('trimWindow').style.width=(end-start)+'%';
+    for(const [id,edge] of [['trimStart','start'],['trimEnd','end']]){const el=$(id);el.disabled=off||!s;el.setAttribute('aria-valuemin',String(edge==='end'&&s?s.start+.101:0));el.setAttribute('aria-valuemax',String(edge==='start'&&s?Math.max(0,s.end-.101):duration));el.setAttribute('aria-valuenow',String(s?s[edge]:0));el.setAttribute('aria-valuetext',clock(s?s[edge]:0));}
+    $('timelineSelection').textContent=s?'선택: 클립 '+(selectedClip+1)+' · '+clock(s.start)+' → '+clock(s.end)+' · '+(s.end-s.start).toFixed(2)+'초'+(drag?.edge==='start'?' · 놓으면 빈틈이 자동으로 연결됩니다':''):'클립을 선택하고 양끝의 연두색 손잡이로 길이를 조절하세요.';
+    for(const b of $('clipStrip').children)if(b.dataset.index!==undefined)b.setAttribute('aria-pressed',String(Number(b.dataset.index)===selectedClip));
+    syncRange();
+  }
+  function clearRange(){rangeMode=false;eraseSelection=null;rangeDrag=null;}
+  function syncRange(){
+    const off=!meta||busy||loading,total=editLength(),r=eraseSelection,ready=r&&r.end-r.start>=.1;
+    $('rangeMode').disabled=off||!segments.length;$('rangeMode').setAttribute('aria-pressed',String(rangeMode));$('timelineTrack').classList.toggle('erase-mode',rangeMode);
+    for(const id of ['rangeInfo','eraseRange','cancelRange'])$(id).hidden=!rangeMode;
+    $('eraseRange').disabled=off||!ready||Boolean(rangeDrag);$('cancelRange').disabled=off;
+    $('rangeInfo').textContent=r?'삭제할 부분 '+clock(r.start)+' → '+clock(r.end)+' · '+(r.end-r.start).toFixed(2)+'초':'타임라인에서 지울 부분을 드래그하세요.';
+    $('eraseWindow').hidden=!rangeMode||!r||r.end-r.start<.001;
+    if(r){$('eraseWindow').style.left=r.start/timelineSpan()*100+'%';$('eraseWindow').style.width=(r.end-r.start)/timelineSpan()*100+'%';}
+    for(const [id,edge] of [['eraseStart','start'],['eraseEnd','end']]){const el=$(id);el.disabled=off||!r;el.setAttribute('aria-valuemin',String(edge==='end'&&r?r.start:0));el.setAttribute('aria-valuemax',String(edge==='start'&&r?r.end:total));el.setAttribute('aria-valuenow',String(r?r[edge]:0));el.setAttribute('aria-valuetext',clock(r?r[edge]:0));}
+    if(rangeMode){$('splitClip').disabled=true;$('deleteClip').disabled=true;$('timelineSelection').textContent='빨간색 부분만 삭제됩니다. 양끝을 조절하거나 다른 범위를 다시 드래그하세요. · Esc 취소';}
+  }
+  function removeRange(){
+    if(!rangeMode||!eraseSelection||rangeDrag||busy||loading||drag)return;const {start,end}=eraseSelection;if(end-start<.1)return;
+    const next=[];let offset=0;for(const s of segments){const finish=offset+s.end-s.start;if(end<=offset||start>=finish)next.push({...s});else{if(start>offset)next.push({start:s.start,end:s.start+start-offset});if(end<finish)next.push({start:s.start+end-offset,end:s.end});}offset=finish;}
+    if(next.some(s=>s.end-s.start<.1)){notice('남는 조각이 0.1초보다 짧습니다. 빨간색 범위를 구간 경계까지 늘리거나 조금 줄여주세요.','error');return;}
+    try{if(applyCuts(next,Math.max(0,locateEdit(start,next).index),start)){
+      rangeMode=segments.length>0;syncTimeline();
+      notice((end-start).toFixed(2)+'초를 삭제하고 앞뒤 영상을 연결했습니다. '+(rangeMode?'다음으로 지울 부분을 바로 드래그하세요. Esc 또는 취소로 모드를 종료합니다.':'남은 영상이 없습니다. 실행 취소로 복구할 수 있습니다.'),'success');
+      $(rangeMode?'rangeMode':'undoCut').focus();
+    }}catch(e){notice(e.message,'error');}
+  }
+  function moveRange(e){
+    if(!rangeDrag||rangeDrag.pointerId!==e.pointerId)return;const t=timelineTime(e.clientX),d=rangeDrag;
+    if(d.edge){const v=d.before[d.edge]+(e.clientX-d.startX)*d.scale;eraseSelection=d.edge==='start'?{start:Math.max(0,Math.min(d.before.end-.001,v)),end:d.before.end}:{start:d.before.start,end:Math.min(editLength(),Math.max(d.before.start+.001,v))};}
+    else eraseSelection={start:Math.min(d.anchor,t),end:Math.max(d.anchor,t)};
+    scrubTo(d.edge?eraseSelection[d.edge]:t);
+  }
+  function finishRange(cancel=false){if(!rangeDrag)return;const d=rangeDrag;rangeDrag=null;if(cancel){eraseSelection=d.before;scrubTo(d.cursor);}syncTimeline();}
+  $('rangeMode').onclick=()=>{if(busy||loading||drag||rangeDrag||!segments.length)return;stopPreview();if(rangeMode)clearRange();else{rangeMode=true;eraseSelection=null;}syncTimeline();};
+  $('cancelRange').onclick=()=>{finishRange(true);clearRange();syncTimeline();$('rangeMode').focus();};$('eraseRange').onclick=removeRange;
+  // Capture range gestures before the existing trim/reorder gestures.
+  $('timelineTrack').addEventListener('pointerdown',e=>{if(!rangeMode)return;e.stopImmediatePropagation();if(!meta||busy||loading||rangeDrag||e.button!==0)return;e.preventDefault();stopPreview();const edge=e.target.closest('#eraseStart')?'start':e.target.closest('#eraseEnd')?'end':null;rangeDrag={pointerId:e.pointerId,edge,anchor:timelineTime(e.clientX),startX:e.clientX,scale:timelineSpan()/Math.max(1,$('timelineTrack').getBoundingClientRect().width),before:eraseSelection?{...eraseSelection}:null,cursor:cursorTime};$('timelineTrack').setPointerCapture(e.pointerId);moveRange(e);},true);
+  $('timelineTrack').addEventListener('pointermove',e=>{if(rangeDrag){e.stopImmediatePropagation();moveRange(e);}},true);
+  $('timelineTrack').addEventListener('pointerup',e=>{if(rangeDrag?.pointerId===e.pointerId){e.stopImmediatePropagation();moveRange(e);finishRange();if($('timelineTrack').hasPointerCapture(e.pointerId))$('timelineTrack').releasePointerCapture(e.pointerId);}},true);
+  for(const type of ['pointercancel','lostpointercapture'])$('timelineTrack').addEventListener(type,()=>finishRange(true));
+  for(const [id,edge] of [['eraseStart','start'],['eraseEnd','end']])$(id).addEventListener('keydown',e=>{if(!rangeMode||!eraseSelection||busy||loading||rangeDrag||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const r=eraseSelection,delta=(e.shiftKey?1:1/Number($('fps').value))*(e.key==='ArrowLeft'?-1:1),t=e.key==='Home'?0:e.key==='End'?editLength():r[edge]+delta;r[edge]=edge==='start'?Math.max(0,Math.min(r.end-.001,t)):Math.min(editLength(),Math.max(r.start+.001,t));scrubTo(r[edge]);});
+  document.addEventListener('keydown',e=>{if(!rangeMode||busy||loading||e.isComposing||e.target.closest('input,select,textarea,[contenteditable=true]'))return;if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();finishRange(true);clearRange();syncTimeline();$('rangeMode').focus();}else if(['Delete','Backspace'].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();removeRange();}},true);
+  function renderRuler(){
+    const zoom=Number($('timelineZoom').value)||1;$('timelineInner').style.width=zoom*100+'%';$('timeRuler').replaceChildren();if(!meta)return;
+    const ticks=4*zoom;for(let i=0;i<=ticks;i++){const el=document.createElement('span');el.style.left=i/ticks*100+'%';el.textContent=clock(timelineSpan()*i/ticks);$('timeRuler').append(el);}
+  }
+  async function generateThumbnails(url,duration){
+    thumbAbort?.abort();const controller=new AbortController();thumbAbort=controller;thumbBusy=true;thumbs=[];
+    const v=document.createElement('video');v.muted=true;v.playsInline=true;const strip=$('filmstrip'),sc=strip.getContext('2d'),frame=document.createElement('canvas');frame.width=160;frame.height=90;const fc=frame.getContext('2d');sc.fillStyle='#28292b';sc.fillRect(0,0,strip.width,strip.height);$('thumbnailStatus').textContent='장면 미리보기 만드는 중…';
+    try{await ClipEngine.load(v,url,controller.signal);for(let i=0;i<16;i++){if(controller.signal.aborted)return;const t=Math.min(Math.max(0,duration-.03),duration*(i+.5)/16);await ClipEngine.seek(v,t,controller.signal);if(controller.signal.aborted)return;ClipEngine.paint(fc,v,{width:160,height:90,fit:'cover',background:'#000000'});sc.drawImage(frame,30,0,100,90,i*100,0,100,90);thumbs.push({time:t,url:frame.toDataURL('image/jpeg',.65)});}
+      if(!controller.signal.aborted){$('thumbnailStatus').textContent='장면 미리보기 준비됨';renderClipStrip();}
+    }catch(e){if(!controller.signal.aborted)$('thumbnailStatus').textContent='장면 표시 불가 · 시간 탐색은 사용 가능';}
+    finally{v.pause();v.removeAttribute('src');v.load();if(thumbAbort===controller)thumbBusy=false;}
+  }
+  function timelineTime(clientX){const rect=$('timelineTrack').getBoundingClientRect();return Math.max(0,Math.min(editLength(),(clientX-rect.left)/Math.max(1,rect.width)*timelineSpan()));}
+  function trimmed(s,edge,time){return edge==='start'?{start:Math.max(0,Math.min(time,s.end-.101)),end:s.end}:{start:s.start,end:Math.min(meta.duration,Math.max(time,s.start+.101))};}
+  function scrubTo(time){stopPreview();cursorTime=Math.max(0,Math.min(editLength(),time));const at=locateEdit(cursorTime);if(at.index>=0)video.currentTime=at.source;$('seek').value=cursorTime;$('currentTime').textContent=clock(cursorTime);draw();syncTimeline();}
+  function movePointer(e){
+    if(!drag||e.pointerId!==drag.pointerId)return;const dx=e.clientX-drag.startX;
+    if(drag.edge){const original=drag.before.segments[drag.index],s=trimmed(original,drag.edge,original[drag.edge]+dx*drag.scale);cursorTime=editOffset(drag.index)+(drag.edge==='end'?s.end-s.start:0);video.currentTime=s[drag.edge];$('inPoint').value=s.start.toFixed(2);$('outPoint').value=s.end.toFixed(2);if(drag.edge==='start'){drag.pending=s;renderClipStrip();draw();}else{segments[drag.index]=s;renderCuts();}}
+    else if(drag.kind==='scrub')scrubTo(timelineTime(e.clientX));
+    else if(Math.abs(dx)>6||drag.kind==='reorder'){drag.kind='reorder';const rect=$('timelineTrack').getBoundingClientRect(),time=(e.clientX-rect.left)*drag.scale,cuts=drag.before.segments;let slot=0;while(slot<cuts.length&&time>editOffset(slot,cuts)+(cuts[slot].end-cuts[slot].start)/2)slot++;drag.slot=slot;$('dropMarker').hidden=false;$('dropMarker').style.left=editOffset(slot,cuts)/timelineSpan()*100+'%';$('clipStrip').children[drag.index]?.classList.add('moving');}
+  }
+  function finishPointer(cancel=false){
+    if(!drag)return;const {before,edge,index,kind,slot,pending}=drag,next=copyCuts(segments),position=cursorTime;if(edge==='start'&&pending)next[index]={...pending};drag=null;$('dropMarker').hidden=true;
+    if(cancel){segments=copyCuts(before.segments);selectedClip=before.selected;cursorTime=before.cursor;renderCuts();scrubTo(cursorTime);return;}
+    if(edge){segments=copyCuts(before.segments);selectedClip=before.selected;cursorTime=before.cursor;applyCuts(next,index,position);notice('양끝 길이를 조절하고 뒤 구간을 자동으로 연결했습니다.','success');}
+    else if(kind==='reorder'){const cuts=copyCuts(before.segments),[moved]=cuts.splice(index,1),target=Math.max(0,Math.min(cuts.length,slot-(slot>index?1:0)));cuts.splice(target,0,moved);applyCuts(cuts,target,editOffset(target,cuts));notice('영상 순서를 변경했습니다.','success');}
+  }
+  $('timelineTrack').addEventListener('pointerdown',e=>{if(!meta||busy||loading||drag||e.button!==0)return;const edge=e.target.closest('#trimStart')?'start':e.target.closest('#trimEnd')?'end':null,body=e.target.closest('.timeline-segment');if(edge&&!segments[selectedClip])return;e.preventDefault();stopPreview();endCutEdit();const before=captureEdit();if(body){selectedClip=Number(body.dataset.index);scrubTo(timelineTime(e.clientX));renderCuts();}drag={pointerId:e.pointerId,edge,index:selectedClip,before,kind:edge?'trim':body?'candidate':'scrub',startX:e.clientX,scale:timelineSpan()/Math.max(1,$('timelineTrack').getBoundingClientRect().width),slot:0};$('timelineTrack').setPointerCapture(e.pointerId);if(!body)movePointer(e);});
+  $('timelineTrack').addEventListener('pointermove',movePointer);
+  $('timelineTrack').addEventListener('pointerup',e=>{if(drag?.pointerId===e.pointerId){movePointer(e);finishPointer();if($('timelineTrack').hasPointerCapture(e.pointerId))$('timelineTrack').releasePointerCapture(e.pointerId);}});
+  $('timelineTrack').addEventListener('pointercancel',()=>finishPointer(true));$('timelineTrack').addEventListener('lostpointercapture',()=>finishPointer(true));
+  ['trimStart','trimEnd','timelinePlayhead'].forEach(id=>$(id).addEventListener('keydown',e=>{if(!meta||busy||loading||drag||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const edge=id==='trimStart'?'start':id==='trimEnd'?'end':null,s=segments[selectedClip];if(edge&&!s)return;const base=edge?s[edge]:cursorTime,delta=(e.shiftKey?1:1/Number($('fps').value))*(e.key==='ArrowLeft'?-1:1),t=e.key==='Home'?0:e.key==='End'?(edge?meta.duration:editLength()):base+delta;if(edge){const next=copyCuts(segments);next[selectedClip]=trimmed(s,edge,t);applyCuts(next,selectedClip,editOffset(selectedClip)+(edge==='end'?next[selectedClip].end-next[selectedClip].start:0));$(id).focus();}else scrubTo(t);}));
+  $('timelineZoom').onchange=()=>{renderRuler();renderClipStrip();};$('splitClip').onclick=splitSelected;$('deleteClip').onclick=()=>deleteSelected();$('undoCut').onclick=undoEdit;$('redoCut').onclick=redoEdit;
+  document.addEventListener('keydown',e=>{if(e.defaultPrevented||!meta||busy||loading||drag||e.isComposing||e.target.closest('input,select,textarea,[contenteditable=true]'))return;const key=e.key.toLowerCase();if((e.metaKey||e.ctrlKey)&&key==='z'){e.preventDefault();e.shiftKey?redoEdit():undoEdit();return;}if((e.metaKey||e.ctrlKey)&&key==='b'){e.preventDefault();splitSelected();return;}if(e.ctrlKey&&key==='y'){e.preventDefault();redoEdit();return;}if(e.metaKey||e.ctrlKey||e.altKey)return;if(e.code==='Space'&&!e.target.closest('summary')){e.preventDefault();togglePlayback();}else if(key==='s'){e.preventDefault();splitSelected();}else if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected();}else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();scrubTo(cursorTime+(e.key==='ArrowLeft'?-1:1)/Number($('fps').value));}});
+  async function openFile(selected){
+    if(!selected||busy||loading)return;
+    if(!selected.size){notice('비어 있는 파일은 열 수 없습니다.','error');return;}
+    if(!selected.type.startsWith('video/')&&!/\.(mp4|mov|webm|m4v|mkv|avi|mpeg|mpg|ogv)$/i.test(selected.name)){notice('동영상 파일을 선택해주세요.','error');return;}
+    if(meta&&!confirm('다른 영상을 열면 현재 구간과 다운로드 결과가 초기화됩니다. 계속할까요?'))return;
+    finishPointer(true);clearRange();thumbAbort?.abort();thumbs=[];history=[];future=[];cursorTime=0;selectedClip=-1;loading=true;stopPreview();meta=null;segments=[];revokeResult();syncEnabled();$('filmstrip').getContext('2d').clearRect(0,0,1600,90);$('thumbnailStatus').textContent='영상 정보를 읽는 중…';notice('영상 정보를 읽고 있습니다…');
+    loadAbort?.abort();loadAbort=new AbortController();if(sourceURL)URL.revokeObjectURL(sourceURL);sourceURL=URL.createObjectURL(selected);
+    try{
+      meta=await ClipEngine.load(video,sourceURL,loadAbort.signal);file=selected;segments=[{start:0,end:meta.duration}];selectedClip=0;
+      $('previewTitle').textContent=file.name;$('sourceInfo').textContent=meta.width+' × '+meta.height+' px / '+clock(meta.duration)+' / '+(file.size/1e6).toFixed(1)+' MB';
+      $('seek').max=meta.duration;$('seek').value=0;$('fullTime').textContent=clock(meta.duration);$('inPoint').value='0';$('outPoint').value=meta.duration.toFixed(2);$('inPoint').max=meta.duration;$('outPoint').max=meta.duration;
+      $('dropButton').hidden=true;canvas.hidden=false;$('previewLabel').hidden=false;dimensions();renderCuts();
+      $('timelineZoom').value='1';$('timelineScroll').scrollLeft=0;renderRuler();generateThumbnails(sourceURL,meta.duration);
+      notice(meta.duration>300?'영상을 열었습니다. 긴 영상은 먼저 짧은 구간으로 테스트해주세요.':'타임라인에서 자를 위치를 고른 뒤 “분할”을 누르세요. 연두색 손잡이로 앞뒤를 줄일 수도 있습니다.');
+    }catch(e){meta=null;file=null;video.removeAttribute('src');video.load();URL.revokeObjectURL(sourceURL);sourceURL=null;$('previewTitle').textContent='영상을 불러오세요';$('sourceInfo').textContent='브라우저에서 재생 가능한 파일을 선택해주세요.';canvas.hidden=true;$('dropButton').hidden=false;$('previewLabel').hidden=true;notice(e.message,'error');}
+    finally{loading=false;if(!meta)$('thumbnailStatus').textContent='다른 영상을 선택해주세요';renderCuts();renderRuler();update();}
+  }
+  $('openFile').onclick=$('dropButton').onclick=()=>{$('fileInput').value='';$('fileInput').click();};
+  $('fileInput').onchange=()=>openFile($('fileInput').files[0]);
+  ['dragenter','dragover'].forEach(type=>$('dropZone').addEventListener(type,e=>{e.preventDefault();if(!busy&&!loading)$('dropZone').classList.add('over');}));
+  ['dragleave','drop'].forEach(type=>$('dropZone').addEventListener(type,e=>{e.preventDefault();$('dropZone').classList.remove('over');}));
+  $('dropZone').addEventListener('drop',e=>{if(e.dataTransfer.files.length>1){notice('한 번에 영상 한 개를 열어주세요.','error');return;}openFile(e.dataTransfer.files[0]);});
+  window.addEventListener('dragover',e=>e.preventDefault());window.addEventListener('drop',e=>e.preventDefault());
+  $('play').onclick=togglePlayback;
+  $('prevFrame').onclick=()=>scrubTo(cursorTime-1/Number($('fps').value));$('nextFrame').onclick=()=>scrubTo(cursorTime+1/Number($('fps').value));
+  $('seek').oninput=()=>scrubTo(Number($('seek').value));
+  video.addEventListener('seeked',draw);video.addEventListener('ended',()=>{if(!video.ended)return;draw();if(sequenceAt!==null&&sequenceAt+1<segments.length)playSequence(sequenceAt+1);else stopPreview();});
+  $('markIn').onclick=()=>trimAtCursor('start');$('markOut').onclick=()=>trimAtCursor('end');
+  $('replaceCut').onclick=()=>{try{const next=selectedSegment(),editing=editingIndex!==null,at=editingIndex;if(editing){const cuts=copyCuts(segments);cuts[at]=next;applyCuts(cuts,at);}else applyCuts([next]);notice(editing?'해당 구간을 수정했습니다.':'선택한 구간만 남겼습니다.','success');}catch(e){notice(e.message,'error');}};
+  $('cancelCut').onclick=()=>{endCutEdit();notice('구간 수정을 취소했습니다.');};
+  $('addCut').onclick=()=>{try{if(segments.length>=100)throw new Error('최대 100개 구간까지 추가할 수 있습니다.');applyCuts([...copyCuts(segments),selectedSegment()],segments.length);notice('구간을 목록 끝에 추가했습니다. 기존 구간과 겹치면 해당 장면이 반복됩니다.');}catch(e){notice(e.message,'error');}};
+  $('resetCuts').onclick=()=>{applyCuts([{start:0,end:meta.duration}],0,0);$('inPoint').value=0;$('outPoint').value=meta.duration.toFixed(2);notice('전체 구간으로 초기화했습니다.');};
+  ids.forEach(id=>$(id).addEventListener('change',()=>{if(id==='ratio'||id==='resolution')dimensions();if(id==='format')populateCodecs();if(id==='mute')populateFormats();update();}));
+  ['width','height','bitrate','targetMB'].forEach(id=>$(id).addEventListener('input',update));
+  $('snapshot').onclick=()=>{draw();canvas.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name.replace(/\.[^.]+$/,'')+'-frame-'+video.currentTime.toFixed(2)+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);},'image/png');};
+  $('cancel').onclick=()=>exportAbort?.abort();
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&busy){exportAbort?.abort();notice('탭이 숨겨져 내보내기를 취소했습니다. 이 탭을 유지한 상태에서 다시 실행해주세요.','error');}});
+  $('export').onclick=async()=>{
+    let config;try{config=currentConfig();}catch(e){notice(e.message,'error');return;}
+    finishPointer();stopPreview();if(thumbBusy){thumbAbort?.abort();$('thumbnailStatus').textContent='썸네일 생성 중단 · 내보내기 우선';}revokeResult();busy=true;syncEnabled();exportAbort=new AbortController();$('progressWrap').hidden=false;$('progress').value=0;$('progressText').textContent='인코더 준비 중…';$('export').textContent='내보내는 중…';
+    notice('내보내는 동안 이 탭을 유지해주세요. 영상은 외부로 전송되지 않습니다.');
+    try{
+      const result=await ClipEngine.encode(sourceURL,config,segments.map(s=>({...s})),exportAbort.signal,p=>{$('progress').value=p.ratio;$('progressText').textContent=Math.floor(p.ratio*100)+'% · 구간 '+p.part+'/'+p.parts;});
+      downloadURL=URL.createObjectURL(result.blob);$('download').href=downloadURL;$('download').download=file.name.replace(/\.[^.]+$/,'')+'-edited.'+config.format.container;
+      $('resultInfo').textContent=(result.blob.size/1e6).toFixed(2)+' MB · '+config.width+' × '+config.height+' · '+config.format.container.toUpperCase();
+      $('resultSettings').textContent=config.format.label+' / 요청 '+config.fps+'fps · 현재 설정이 아닌 완료된 출력 기준';$('result').hidden=false;$('progress').value=1;
+      notice('내보내기가 완료되었습니다. “편집 영상 다운로드”를 눌러 저장한 뒤 재생을 확인해주세요.','success');
+    }catch(e){if(!document.hidden)notice(e.name==='AbortError'?'내보내기를 취소했습니다. 편집 내용은 유지됩니다.':e.message,e.name==='AbortError'?'':'error');}
+    finally{busy=false;exportAbort=null;$('progressWrap').hidden=true;$('export').textContent='영상 내보내기';update();}
+  };
+  window.addEventListener('beforeunload',e=>{if(busy){e.preventDefault();e.returnValue='';}});
+  // Optional browser agent interface. No automatic file access or automatic exports.
+  const lifecycle=new AbortController(),mc=document.modelContext;
+  if(mc?.registerTool){
+    const register=tool=>{try{Promise.resolve(mc.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{/* Unsupported experimental API. */}};
+    register({name:'read_video_edit',description:'현재 열린 로컬 영상의 구간과 출력 설정을 읽습니다. 파일을 전송하지 않습니다.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({loaded:Boolean(meta),source:meta,segments:segments.map(s=>({...s})),settings:rawSettings(),exporting:busy})});
+    register({name:'replace_video_segments',description:'열려 있는 영상에서 남길 구간 목록을 초 단위로 교체합니다. 다운로드나 내보내기를 시작하지 않습니다.',inputSchema:{type:'object',properties:{segments:{type:'array',minItems:1,maxItems:100,items:{type:'object',properties:{start:{type:'number'},end:{type:'number'}},required:['start','end'],additionalProperties:false}}},required:['segments'],additionalProperties:false},annotations:{readOnlyHint:false},execute:input=>{if(!meta||busy||loading||drag)throw new Error('편집 가능한 영상을 먼저 열어주세요.');const next=ClipEngine.validateSegments(input?.segments,meta.duration);applyCuts(next);notice('남길 구간 목록을 변경했습니다.');return {segments:segments.map(s=>({...s})),seconds:ClipEngine.total(segments)};}});
+    window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
+  }
+  populateFormats();renderCuts();
+  if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream)notice('이 브라우저는 영상 내보내기를 지원하지 않습니다. 최신 데스크톱 Chrome에서 열어주세요.','error');
+})();
+</script>
+</body>
+</html>
