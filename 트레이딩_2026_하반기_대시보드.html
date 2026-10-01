@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<!-- saved from url=(0086)file:///Users/musinsa/Documents/Codex/2026-07-22/new-chat/trading_sales_dashboard.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>트레이딩 2026 GMV 목표·진행 대시보드</title>
+  <meta name="description" content="2026 수정사업계획을 기준으로 정리한 트레이딩 GMV 목표·실적 대시보드">
+  <style>
+    :root {
+      --ink: #171717;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --soft: #f6f6f6;
+      --paper: #ffffff;
+      --navy: #202020;
+      --orange: #202020;
+      --orange-soft: #f1f1f1;
+      --blue: #a1a1aa;
+      --blue-soft: #f4f4f5;
+      --green: #52525b;
+      --green-soft: #f4f4f5;
+      --red: #52525b;
+      --red-soft: #f4f4f5;
+      --shadow: none;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: #f7f7f7;
+      color: var(--ink);
+      font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    button, select { font: inherit; }
+    button { color: inherit; }
+    .wrap { width: min(1440px, calc(100% - 40px)); margin: 0 auto; }
+
+    .hero {
+      padding: 54px 0 88px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .hero h1 {
+      max-width: 820px;
+      margin: 0;
+      font-size: clamp(34px, 4.8vw, 68px);
+      line-height: 1.08;
+      letter-spacing: -.055em;
+    }
+    .hero-copy {
+      max-width: 760px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .source-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
+    .source-pill {
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    main { padding: 32px 0 64px; }
+    .section { margin-top: 26px; }
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 14px;
+    }
+    .section-head h2 { margin: 0; font-size: 24px; letter-spacing: -.035em; }
+    .section-head p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .label {
+      display: inline-block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .card-pad { padding: 24px; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: -58px;
+      position: relative;
+      z-index: 3;
+    }
+    .kpi { padding: 21px; min-height: 150px; }
+    .kpi-top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+    .kpi-name { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .tag {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag.orange, .tag.red { color: var(--muted); background: var(--soft); }
+    .kpi-value { margin-top: 19px; font-size: 33px; font-weight: 850; letter-spacing: -.045em; }
+    .kpi-unit { margin-left: 2px; font-size: 14px; color: var(--muted); font-weight: 600; }
+    .kpi-note { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .negative { color: var(--ink); }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, .75fr); gap: 16px; }
+    .chart-card { min-width: 0; }
+    .chart-title-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 15px; }
+    .chart-title { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .legend { display: flex; gap: 13px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .brand-chart-box .legend span:last-child .dot { background: #b56f6f !important; }
+    .canvas-box { height: 330px; position: relative; }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .august-box { display: flex; flex-direction: column; gap: 14px; }
+    .compare-block { padding: 18px; border-radius: 8px; background: var(--soft); }
+    .compare-line { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+    .compare-line strong { font-size: 23px; letter-spacing: -.03em; }
+    .compare-line span { color: var(--muted); font-size: 12px; }
+    .track { height: 10px; border-radius: 99px; background: #dfe4eb; margin-top: 12px; overflow: hidden; }
+    .track > i { display: block; height: 100%; border-radius: inherit; background: #a1a1aa; }
+    .track.orange > i { background: #3f3f46; }
+    .variance {
+      border-left: 3px solid #a1a1aa;
+      padding: 14px 15px;
+      border-radius: 0 12px 12px 0;
+      background: var(--red-soft);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .variance strong { display: block; margin-bottom: 3px; color: var(--ink); }
+
+    .annual-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .annual-card { padding: 20px; }
+    .annual-card span { display: block; color: var(--muted); font-size: 12px; }
+    .annual-card strong { display: block; margin-top: 8px; font-size: 28px; letter-spacing: -.04em; }
+    .annual-card small { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .progress-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .progress-card { padding: 20px; }
+    .progress-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+    .progress-head h3 { margin: 0; font-size: 17px; }
+    .progress-head strong { font-size: 24px; letter-spacing: -.035em; }
+    .progress-meta { display: flex; justify-content: space-between; gap: 14px; margin-top: 10px; color: var(--muted); font-size: 12px; }
+    .progress-table { margin-top: 12px; }
+    .progress-table .track { min-width: 110px; margin-top: 0; }
+    .progress-table td:nth-child(4) { min-width: 160px; }
+
+    .bar-list { display: grid; gap: 13px; margin-top: 20px; }
+    .bar-row { display: grid; grid-template-columns: 110px minmax(120px, 1fr) 74px; gap: 13px; align-items: center; }
+    .bar-brand { font-size: 13px; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { height: 18px; background: #eef1f5; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; min-width: 3px; border-radius: inherit; background: #3f3f46; transition: width .35s ease; }
+    .bar-fill.team2 { background: #a1a1aa; }
+    .bar-value { text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    .brand-list { display: grid; gap: 18px; }
+    .brand-panel { padding: 24px; }
+    .brand-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+    .brand-head h3 { margin: 0; font-size: 23px; letter-spacing: -.035em; }
+    .brand-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .brand-total { text-align: right; }
+    .brand-total span { display: block; color: var(--muted); font-size: 11px; }
+    .brand-total strong { display: block; margin-top: 2px; font-size: 25px; letter-spacing: -.035em; }
+    .brand-metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1px; margin: 20px 0; border: 1px solid var(--line); background: var(--line); }
+    .brand-metric { padding: 13px 14px; background: #fff; }
+    .brand-metric span { display: block; color: var(--muted); font-size: 11px; }
+    .brand-metric strong { display: block; margin-top: 3px; font-size: 18px; }
+    .brand-layout { display: grid; grid-template-columns: minmax(330px, .8fr) minmax(600px, 1.2fr); gap: 18px; align-items: start; }
+    .brand-chart-box { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 8px; }
+    .brand-chart-box .canvas-box { height: 270px; }
+    .brand-panel table { min-width: 780px; }
+    .brand-panel th, .brand-panel td { padding: 10px 11px; font-size: 12px; }
+    .channel-name { white-space: nowrap; }
+    .share-cell { white-space: nowrap; }
+    .sub-row td { color: var(--muted); background: #fafafa; }
+    .store-row-off td { color: #a1a1aa; text-decoration: line-through; text-decoration-thickness: 1px; }
+    .store-note { display: flex; align-items: center; flex-wrap: wrap; gap: 3px 6px; margin: 13px 0 0; color: var(--muted); font-size: 11px; }
+    .store-note b { color: var(--ink); }
+    .store-separator { color: #d4d4d8; }
+    .store-toggle { border: 0; border-bottom: 1px solid currentColor; background: transparent; padding: 0 1px; color: #3f3f46; cursor: pointer; font-size: inherit; font-weight: 750; line-height: inherit; }
+    .store-toggle::before { content: "●"; margin-right: 4px; font-size: 6px; vertical-align: 1px; }
+    .store-toggle:not(.active) { color: #a1a1aa; text-decoration: line-through; }
+    .store-toggle:focus-visible { outline: 2px solid #52525b; outline-offset: 3px; border-radius: 2px; }
+
+    .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; background: #fff; }
+    th, td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: right; font-size: 13px; }
+    th { background: #f3f4f6; color: var(--ink); font-size: 12px; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover td { background: #fafbfc; }
+    .team-chip { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .status.ok, .status.check { color: var(--muted); }
+
+    .revisions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .revision { padding: 18px; }
+    .revision-head { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+    .revision h3 { margin: 0; font-size: 16px; }
+    .revision small { color: var(--muted); }
+    .revision-values { display: flex; align-items: end; gap: 9px; margin-top: 17px; }
+    .revision-values b { font-size: 27px; letter-spacing: -.035em; }
+    .arrow { color: var(--muted); padding-bottom: 4px; }
+    .up, .down { color: var(--ink); }
+    .revision p { min-height: 40px; margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+
+    .insights { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .insight { padding: 21px; border-top: 3px solid #d4d4d8; }
+    .insight:nth-child(2), .insight:nth-child(3) { border-top-color: #d4d4d8; }
+    .insight-num { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+    .insight h3 { margin: 11px 0 7px; font-size: 17px; letter-spacing: -.025em; }
+    .insight p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .guide {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 23px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .guide h2 { margin: 0 0 8px; font-size: 20px; }
+    .guide p { margin: 0; color: var(--muted); font-size: 13px; }
+    .term-list { display: grid; gap: 8px; }
+    .term { display: grid; grid-template-columns: 110px 1fr; gap: 12px; font-size: 12px; }
+    .term b { color: var(--ink); }
+    .term span { color: var(--muted); }
+
+    footer { padding: 28px 0 44px; color: var(--muted); font-size: 11px; }
+    footer strong { color: var(--ink); }
+    footer ul { margin: 8px 0 0; padding-left: 18px; }
+
+    @media (max-width: 1080px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .annual-summary { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .brand-layout { grid-template-columns: 1fr; }
+      .revisions, .insights { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 700px) {
+      .wrap { width: min(100% - 24px, 1440px); }
+      .hero { padding: 44px 0 76px; }
+      main { padding-top: 0; }
+      .kpis { grid-template-columns: 1fr; margin-top: -46px; }
+      .kpi { min-height: auto; }
+      .section { margin-top: 20px; }
+      .section-head { align-items: start; flex-direction: column; }
+      .brand-head { align-items: start; }
+      .brand-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .brand-panel { padding: 18px; }
+      .card-pad { padding: 18px; }
+      .canvas-box { height: 290px; }
+      .bar-row { grid-template-columns: 84px minmax(100px,1fr) 62px; gap: 9px; }
+      .annual-summary, .progress-grid { grid-template-columns: 1fr; }
+      .revisions, .insights, .guide { grid-template-columns: 1fr; }
+      .term { grid-template-columns: 92px 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .hero { padding: 28px 0 68px; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      main { padding-top: 0; }
+      .card { box-shadow: none; break-inside: avoid; }
+      .section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">2026 Sales Dashboard</p>
+      <h1>트레이딩<br>2026 GMV 목표·진행</h1>
+      <p class="hero-copy">2026년 하반기 수정사업계획의 GMV를 기준으로 상반기 계획과 실적, 연간 목표 진행률, 하반기 월별 목표를 한 문서에 정리했습니다.</p>
+      <div class="source-pills">
+        <span class="source-pill">기준 · 2026년 하반기 수정사업계획</span>
+        <span class="source-pill">실적 · 2026년 6월 누적</span>
+        <span class="source-pill">단위 · 억원 / GMV(VAT 포함)</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <section class="kpis" aria-label="핵심 지표">
+      <article class="card kpi">
+        <div class="kpi-top"><span class="kpi-name">하반기 전체 GMV 목표</span><span class="tag">사업계획</span></div>
+        <div class="kpi-value">578.0<span class="kpi-unit">억원</span></div>
+        <div class="kpi-note">7~12월 전체 브랜드 합계</div>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-top"><span class="kpi-name">브랜드1 조직 하반기 목표</span><span class="tag orange">89.3%</span></div>
+        <div class="kpi-value">516.0<span class="kpi-unit">억원</span></div>
+        <div class="kpi-note">하반기 전체 목표의 대부분을 차지</div>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-top"><span class="kpi-name">브랜드2 조직 하반기 목표</span><span class="tag">10.7%</span></div>
+        <div class="kpi-value">62.0<span class="kpi-unit">억원</span></div>
+        <div class="kpi-note">하반기 전체 목표의 약 1/10</div>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-top"><span class="kpi-name">하반기 최대 목표월</span><span class="tag orange">11월</span></div>
+        <div class="kpi-value">123.4<span class="kpi-unit">억원</span></div>
+        <div class="kpi-note">7~12월 중 가장 높은 월간 GMV</div>
+      </article>
+    </section>
+
+    <section class="section" id="annual-progress">
+      <div class="section-head">
+        <div><span class="label">2026 Progress</span><h2>상반기 실적과 연간 목표 진행</h2><p>1~5월 판매입력 실적과 6월 실적 GMV를 합산해 연간 수정목표와 비교했습니다.</p></div>
+      </div>
+      <div class="annual-summary">
+        <article class="card annual-card"><span>2026 상반기 GMV 계획</span><strong>659.9억</strong><small>수정사업계획 1~6월 기준</small></article>
+        <article class="card annual-card"><span>2026 상반기 GMV 실적</span><strong>643.2억</strong><small>계획 대비 97.5% · 16.7억 미달</small></article>
+        <article class="card annual-card"><span>2026 연간 GMV 목표</span><strong>1,237.9억</strong><small>상반기 659.9억 + 하반기 578.0억</small></article>
+        <article class="card annual-card"><span>연간 목표 달성률</span><strong>52.0%</strong><small>6월 누적 실적 기준 · 잔여 594.7억</small></article>
+      </div>
+      <div class="progress-grid">
+        <article class="card progress-card">
+          <div class="progress-head"><h3>브랜드1 조직</h3><strong>52.5%</strong></div>
+          <div class="track orange"><i style="width:52.5%"></i></div>
+          <div class="progress-meta"><span>누적 실적 588.4억</span><span>연간 목표 1,120.5억</span></div>
+        </article>
+        <article class="card progress-card">
+          <div class="progress-head"><h3>브랜드2 조직</h3><strong>46.7%</strong></div>
+          <div class="track"><i style="width:46.7%"></i></div>
+          <div class="progress-meta"><span>누적 실적 54.8억</span><span>연간 목표 117.4억</span></div>
+        </article>
+      </div>
+      <div class="table-wrap progress-table">
+        <table aria-label="브랜드별 2026 연간 GMV 목표 달성 현황">
+          <thead><tr><th>조직 / 브랜드</th><th>6월 누적 실적</th><th>2026 연간 목표</th><th>달성률</th><th>잔여 목표</th></tr></thead>
+          <tbody>
+            <tr><td><span class="team-chip">브랜드1 조직</span><br><b>챔피온</b></td><td>66.8억</td><td>154.8억</td><td><div class="track orange"><i style="width:43.1%"></i></div><b>43.1%</b></td><td>88.0억</td></tr>
+            <tr><td><span class="team-chip">브랜드1 조직</span><br><b>디키즈</b></td><td>94.5억</td><td>211.3억</td><td><div class="track orange"><i style="width:44.7%"></i></div><b>44.7%</b></td><td>116.8억</td></tr>
+            <tr><td><span class="team-chip">브랜드1 조직</span><br><b>잔스포츠</b></td><td>136.7억</td><td>245.2억</td><td><div class="track orange"><i style="width:55.8%"></i></div><b>55.8%</b></td><td>108.4억</td></tr>
+            <tr><td><span class="team-chip">브랜드1 조직</span><br><b>이스트팩</b></td><td>0.0억</td><td>36.0억</td><td><div class="track orange"><i style="width:0%"></i></div><b>0.0%</b></td><td>36.0억</td></tr>
+            <tr><td><span class="team-chip">브랜드1 조직</span><br><b>토앤토</b></td><td>40.7억</td><td>60.9억</td><td><div class="track orange"><i style="width:66.7%"></i></div><b>66.7%</b></td><td>20.3억</td></tr>
+            <tr><td><span class="team-chip">브랜드1 조직</span><br><b>베이프</b></td><td>48.2억</td><td>104.4억</td><td><div class="track orange"><i style="width:46.2%"></i></div><b>46.2%</b></td><td>56.2억</td></tr>
+            <tr><td><span class="team-chip">브랜드2 조직</span><br><b>노아</b></td><td>18.4억</td><td>33.0억</td><td><div class="track"><i style="width:55.8%"></i></div><b>55.8%</b></td><td>14.6억</td></tr>
+            <tr><td><span class="team-chip">브랜드2 조직</span><br><b>Y-3</b></td><td>9.7억</td><td>19.8억</td><td><div class="track"><i style="width:48.9%"></i></div><b>48.9%</b></td><td>10.1억</td></tr>
+            <tr><td><span class="team-chip">브랜드2 조직</span><br><b>마린세르</b></td><td>5.6억</td><td>12.9억</td><td><div class="track"><i style="width:43.4%"></i></div><b>43.4%</b></td><td>7.3억</td></tr>
+            <tr><td><span class="team-chip">브랜드2 조직</span><br><b>언더커버</b></td><td>7.4억</td><td>22.1억</td><td><div class="track"><i style="width:33.6%"></i></div><b>33.6%</b></td><td>14.7억</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="overview">
+      <div class="section-head">
+        <div><span class="label">Monthly Flow</span><h2>하반기 월별 GMV 목표 흐름</h2><p>막대는 조직별 구성, 선은 전체 합계입니다.</p></div>
+      </div>
+      <div class="grid-2">
+        <article class="card card-pad chart-card">
+          <div class="chart-title-row">
+            <h3 class="chart-title">7~12월 조직별 목표</h3>
+            <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>브랜드1 조직</span><span><i class="dot" style="background:#a1a1aa"></i>브랜드2 조직</span><span><i class="dot" style="background:#111"></i>전체 GMV</span></div>
+          </div>
+          <div class="canvas-box"><canvas id="monthlyChart" role="img" aria-label="2026년 하반기 월별 브랜드1 조직, 브랜드2 조직, 전체 GMV 목표 차트" width="1777" height="660"></canvas></div>
+        </article>
+        <aside class="card card-pad august-box">
+          <div><span class="label">H2 Mix</span><h3 class="chart-title">하반기 조직별 구성</h3></div>
+          <div class="compare-block">
+            <div class="compare-line"><span>브랜드1 조직</span><strong>516.0억</strong></div>
+            <div class="track orange"><i style="width:89.3%"></i></div>
+            <div class="compare-line" style="margin-top:12px"><span>전체 하반기 목표 비중</span><b>89.3%</b></div>
+          </div>
+          <div class="compare-block">
+            <div class="compare-line"><span>브랜드2 조직</span><strong>62.0억</strong></div>
+            <div class="track"><i style="width:10.7%"></i></div>
+            <div class="compare-line" style="margin-top:12px"><span>전체 하반기 목표 비중</span><b>10.7%</b></div>
+          </div>
+          <div class="variance"><strong>회사 목표 578.0억원</strong>브랜드1 조직과 브랜드2 조직의 하반기 목표를 합하면 전체 GMV 목표와 일치합니다.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="brands">
+      <div class="section-head">
+        <div><span class="label">Brand Ranking</span><h2>주요 브랜드 하반기 GMV 목표</h2><p>사용자가 지정한 브랜드1 조직 6개, 브랜드2 조직 4개 기준입니다.</p></div>
+      </div>
+      <article class="card card-pad">
+        <div id="brandBars" class="bar-list" aria-live="polite">
+        <div class="bar-row">
+          <div class="bar-brand" title="디키즈">디키즈<br><span class="team-chip">브랜드1</span></div>
+          <div class="bar-track"><div class="bar-fill " style="width:100.0%"></div></div>
+          <div class="bar-value"><b>115.1</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="잔스포츠">잔스포츠<br><span class="team-chip">브랜드1</span></div>
+          <div class="bar-track"><div class="bar-fill " style="width:92.3%"></div></div>
+          <div class="bar-value"><b>106.2</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="챔피온">챔피온<br><span class="team-chip">브랜드1</span></div>
+          <div class="bar-track"><div class="bar-fill " style="width:72.7%"></div></div>
+          <div class="bar-value"><b>83.7</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="베이프">베이프<br><span class="team-chip">브랜드1</span></div>
+          <div class="bar-track"><div class="bar-fill " style="width:48.0%"></div></div>
+          <div class="bar-value"><b>55.2</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="이스트팩">이스트팩<br><span class="team-chip">브랜드1</span></div>
+          <div class="bar-track"><div class="bar-fill " style="width:31.3%"></div></div>
+          <div class="bar-value"><b>36.0</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="토앤토">토앤토<br><span class="team-chip">브랜드1</span></div>
+          <div class="bar-track"><div class="bar-fill " style="width:16.8%"></div></div>
+          <div class="bar-value"><b>19.3</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="노아">노아<br><span class="team-chip">브랜드2</span></div>
+          <div class="bar-track"><div class="bar-fill team2" style="width:13.1%"></div></div>
+          <div class="bar-value"><b>15.1</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="언더커버">언더커버<br><span class="team-chip">브랜드2</span></div>
+          <div class="bar-track"><div class="bar-fill team2" style="width:11.7%"></div></div>
+          <div class="bar-value"><b>13.5</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="Y-3">Y-3<br><span class="team-chip">브랜드2</span></div>
+          <div class="bar-track"><div class="bar-fill team2" style="width:8.6%"></div></div>
+          <div class="bar-value"><b>9.9</b>억</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-brand" title="마린세르">마린세르<br><span class="team-chip">브랜드2</span></div>
+          <div class="bar-track"><div class="bar-fill team2" style="width:6.0%"></div></div>
+          <div class="bar-value"><b>6.9</b>억</div>
+        </div></div>
+      </article>
+    </section>
+
+    <section class="section" id="brand-monthly">
+      <div class="section-head">
+        <div><span class="label">Brand Monthly</span><h2>브랜드별 월별·채널별 GMV 목표</h2><p>각 브랜드의 토글은 해당 그래프와 세부행만 조절하며 전체 GMV 목표는 바뀌지 않습니다.</p></div>
+      </div>
+      <div id="brandMonthlyList" class="brand-list">
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드1</span><h3>챔피온</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>83.7억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>50.9억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>32.8억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>5.1억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>32.8억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#b56f6f"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="0" role="img" aria-label="챔피온 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="챔피온 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>10.27</td><td>11.29</td><td>10.99</td><td>13.92</td><td>22.76</td><td>14.43</td><td><b>83.67</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>6.09</td><td>4.63</td><td>7.74</td><td>8.00</td><td>15.74</td><td>8.69</td><td><b>50.88</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>4.18</td><td>6.66</td><td>3.25</td><td>5.92</td><td>7.03</td><td>5.74</td><td><b>32.79</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.61</td><td>0.46</td><td>0.77</td><td>0.80</td><td>1.57</td><td>0.87</td><td><b>5.09</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>4.18</td><td>6.66</td><td>3.25</td><td>5.92</td><td>7.03</td><td>5.74</td><td><b>32.79</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 무신사 편집샵 · 스타필드 코엑스 · 스타필드 수원 · 스타필드 안성 · 신세계백화점 광주</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드1</span><h3>디키즈</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>115.1억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>91.5억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>23.6억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>1.9억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>23.6억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="1" role="img" aria-label="디키즈 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="디키즈 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>14.10</td><td>15.50</td><td>15.10</td><td>19.10</td><td>31.47</td><td>19.85</td><td><b>115.11</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>10.56</td><td>11.30</td><td>12.75</td><td>15.01</td><td>26.65</td><td>15.26</td><td><b>91.54</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>3.54</td><td>4.21</td><td>2.35</td><td>4.08</td><td>4.82</td><td>4.58</td><td><b>23.58</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.21</td><td>0.22</td><td>0.25</td><td>0.29</td><td>0.60</td><td>0.30</td><td><b>1.87</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>3.54</td><td>4.21</td><td>2.35</td><td>4.08</td><td>4.82</td><td>4.58</td><td><b>23.58</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 무신사 편집샵 · 성수 · 타임스퀘어 영등포</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드1</span><h3>잔스포츠</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>106.2억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>52.7억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>53.5억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>4.0억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>53.5억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="2" role="img" aria-label="잔스포츠 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="잔스포츠 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>20.35</td><td>25.03</td><td>16.87</td><td>14.98</td><td>14.14</td><td>14.84</td><td><b>106.20</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>7.75</td><td>14.15</td><td>10.97</td><td>6.73</td><td>7.82</td><td>5.25</td><td><b>52.67</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>12.60</td><td>10.88</td><td>5.91</td><td>8.24</td><td>6.31</td><td>9.59</td><td><b>53.53</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.57</td><td>1.32</td><td>0.67</td><td>0.56</td><td>0.31</td><td>0.53</td><td><b>3.96</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>12.60</td><td>10.88</td><td>5.91</td><td>8.24</td><td>6.31</td><td>9.59</td><td><b>53.53</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 무신사 편집샵 · 스타필드 수원 · 스타필드 하남 · 롯데월드몰 잠실 · 스타필드 고양 · 신세계 센텀시티 · 롯데백화점 노원 · 롯데백화점 부산 · 롯데백화점 평촌 · 현대백화점 목동점</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드1</span><h3>이스트팩</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>36.0억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>36.0억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>0.0억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>0.0억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>0.0억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="3" role="img" aria-label="이스트팩 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="이스트팩 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>1.79</td><td>6.25</td><td>5.44</td><td>7.37</td><td>8.61</td><td>6.50</td><td><b>35.96</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>1.79</td><td>6.25</td><td>5.44</td><td>7.37</td><td>8.61</td><td>6.50</td><td><b>35.96</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td><b>0.00</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td><b>0.00</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td><b>0.00</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 하반기 매장 GMV 계획 없음</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드1</span><h3>토앤토</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>19.3억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>10.6억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>8.7억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>1.6억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>8.7억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="4" role="img" aria-label="토앤토 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="토앤토 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>11.67</td><td>4.88</td><td>1.07</td><td>0.75</td><td>0.50</td><td>0.43</td><td><b>19.30</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>6.42</td><td>2.68</td><td>0.59</td><td>0.41</td><td>0.28</td><td>0.24</td><td><b>10.61</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>5.25</td><td>2.20</td><td>0.48</td><td>0.34</td><td>0.23</td><td>0.19</td><td><b>8.68</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.96</td><td>0.40</td><td>0.09</td><td>0.06</td><td>0.04</td><td>0.04</td><td><b>1.59</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>5.25</td><td>2.20</td><td>0.48</td><td>0.34</td><td>0.23</td><td>0.19</td><td><b>8.68</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 무신사 편집샵</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드1</span><h3>베이프</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>55.2억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>55.2억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>0.0억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>11.1억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>0.0억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="5" role="img" aria-label="베이프 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="베이프 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>13.13</td><td>7.33</td><td>4.25</td><td>6.69</td><td>15.29</td><td>8.54</td><td><b>55.23</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>13.13</td><td>7.33</td><td>4.25</td><td>6.69</td><td>15.29</td><td>8.54</td><td><b>55.23</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td><b>0.00</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>1.73</td><td>1.92</td><td>1.73</td><td>1.90</td><td>1.93</td><td>1.94</td><td><b>11.14</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td><b>0.00</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 하반기 매장 GMV 계획 없음</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드2</span><h3>노아</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>15.1억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>7.2억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>8.0억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>3.7억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>8.0억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="6" role="img" aria-label="노아 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="노아 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>2.10</td><td>2.20</td><td>3.90</td><td>1.81</td><td>2.00</td><td>3.12</td><td><b>15.13</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>0.88</td><td>1.06</td><td>1.99</td><td>0.76</td><td>0.90</td><td>1.56</td><td><b>7.15</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>1.22</td><td>1.14</td><td>1.91</td><td>1.05</td><td>1.10</td><td>1.56</td><td><b>7.98</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.46</td><td>0.55</td><td>1.05</td><td>0.40</td><td>0.44</td><td>0.78</td><td><b>3.68</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>1.22</td><td>1.14</td><td>1.91</td><td>1.05</td><td>1.10</td><td>1.56</td><td><b>7.98</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 기타 (분더샵 팝업) · 압구정</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드2</span><h3>Y-3</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>9.9억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>2.7억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>7.2억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>2.1억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>7.2억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="7" role="img" aria-label="Y-3 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="Y-3 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>1.50</td><td>1.52</td><td>1.58</td><td>1.68</td><td>1.77</td><td>1.83</td><td><b>9.88</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>0.39</td><td>0.40</td><td>0.41</td><td>0.47</td><td>0.50</td><td>0.52</td><td><b>2.68</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>1.11</td><td>1.11</td><td>1.18</td><td>1.22</td><td>1.27</td><td>1.31</td><td><b>7.20</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.33</td><td>0.33</td><td>0.33</td><td>0.36</td><td>0.38</td><td>0.40</td><td><b>2.13</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>1.11</td><td>1.11</td><td>1.18</td><td>1.22</td><td>1.27</td><td>1.31</td><td><b>7.20</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 무신사 편집샵 · 더현대 서울</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드2</span><h3>마린세르</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>6.9억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>1.3억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>5.1억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>0.3억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>5.1억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="8" role="img" aria-label="마린세르 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="마린세르 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>0.82</td><td>1.12</td><td>1.17</td><td>1.25</td><td>1.22</td><td>1.30</td><td><b>6.88</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>0.15</td><td>0.20</td><td>0.20</td><td>0.22</td><td>0.24</td><td>0.26</td><td><b>1.27</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>0.61</td><td>0.81</td><td>0.78</td><td>0.87</td><td>0.98</td><td>1.04</td><td><b>5.09</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.04</td><td>0.05</td><td>0.05</td><td>0.05</td><td>0.06</td><td>0.06</td><td><b>0.32</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>0.61</td><td>0.81</td><td>0.78</td><td>0.87</td><td>0.98</td><td>1.04</td><td><b>5.09</b></td></tr>
+                    <tr class=""><td class="channel-name">기타</td><td>0.05</td><td>0.11</td><td>0.19</td><td>0.16</td><td>0.00</td><td>0.00</td><td><b>0.51</b></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 한남 · 신세계 센텀시티</p>
+          </article>
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">브랜드2</span><h3>언더커버</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>13.5억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>1.0억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>12.5억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>0.6억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>12.5억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span><span><i class="dot" style="background:#a1a1aa"></i>오프라인</span><span><i class="dot" style="background:#737373"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="9" role="img" aria-label="언더커버 월별 온라인 오프라인 공식몰 GMV 목표 차트" width="1030" height="540"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="언더커버 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th><th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th><th>하반기</th></tr></thead>
+                  <tbody>
+                    <tr class=""><td class="channel-name">전체 GMV</td><td>1.87</td><td>2.18</td><td>2.34</td><td>2.48</td><td>2.35</td><td>2.33</td><td><b>13.54</b></td></tr>
+                    <tr class=""><td class="channel-name">온라인</td><td>0.06</td><td>0.08</td><td>0.04</td><td>0.20</td><td>0.33</td><td>0.30</td><td><b>1.01</b></td></tr>
+                    <tr class=""><td class="channel-name">오프라인</td><td>1.81</td><td>2.10</td><td>2.30</td><td>2.27</td><td>2.02</td><td>2.03</td><td><b>12.53</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">공식몰 (온라인 포함)</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.15</td><td>0.22</td><td>0.22</td><td><b>0.59</b></td></tr>
+                    <tr class="sub-row"><td class="channel-name">매장 (오프라인 합계)</td><td>1.81</td><td>2.10</td><td>2.30</td><td>2.27</td><td>2.02</td><td>2.03</td><td><b>12.53</b></td></tr>
+                    
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b> · 무신사 편집샵 · 더현대 서울</p>
+          </article></div>
+    </section>
+
+    <section class="section" id="monthly-table">
+      <div class="section-head">
+        <div><span class="label">Monthly Detail</span><h2>월별 목표 상세</h2><p>각 월의 전체 GMV와 조직별 구성입니다.</p></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>월</th><th>전체 GMV</th><th>브랜드1 조직</th><th>브랜드2 조직</th><th>브랜드1 조직 비중</th></tr></thead>
+          <tbody>
+            <tr><td><b>7월</b></td><td>104.10억</td><td>95.96억</td><td>8.14억</td><td>92.2%</td></tr>
+            <tr><td><b>8월</b></td><td>97.35억</td><td>88.07억</td><td>9.28억</td><td>90.5%</td></tr>
+            <tr><td><b>9월</b></td><td>79.08억</td><td>67.15억</td><td>11.93억</td><td>84.9%</td></tr>
+            <tr><td><b>10월</b></td><td>85.87억</td><td>75.73억</td><td>10.14억</td><td>88.2%</td></tr>
+            <tr><td><b>11월</b></td><td>123.38억</td><td>112.75억</td><td>10.63억</td><td>91.4%</td></tr>
+            <tr><td><b>12월</b></td><td>88.23억</td><td>76.38억</td><td>11.85억</td><td>86.6%</td></tr>
+            <tr><td><b>하반기 합계</b></td><td><b>578.00억</b></td><td><b>516.03억</b></td><td><b>61.97억</b></td><td><b>89.3%</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="composition">
+      <div class="section-head">
+        <div><span class="label">Selected Brand Mix</span><h2>지정 브랜드 목표 합계</h2><p>앞서 지정한 브랜드1 조직 6개와 브랜드2 조직 4개만 묶어 본 값입니다.</p></div>
+      </div>
+      <div class="revisions">
+        <article class="card revision">
+          <div class="revision-head"><h3>브랜드1 조직 지정 6개</h3><span class="tag orange">브랜드1 조직의 80.5%</span></div>
+          <div class="revision-values"><b>415.5억</b></div>
+          <p>챔피온·디키즈·잔스포츠·이스트팩·토앤토·베이프 합계입니다.</p>
+        </article>
+        <article class="card revision">
+          <div class="revision-head"><h3>브랜드2 조직 지정 4개</h3><span class="tag">브랜드2 조직의 73.3%</span></div>
+          <div class="revision-values"><b>45.4억</b></div>
+          <p>노아·Y-3·마린세르·언더커버 합계입니다.</p>
+        </article>
+        <article class="card revision">
+          <div class="revision-head"><h3>지정 10개 브랜드</h3><span class="tag">전체의 79.7%</span></div>
+          <div class="revision-values"><b>460.9억</b></div>
+          <p>회사의 하반기 전체 GMV 목표 578억원 중 약 4/5를 차지합니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div><span class="label">Management View</span><h2>이 자료에서 바로 읽히는 핵심</h2></div></div>
+      <div class="insights">
+        <article class="card insight"><span class="insight-num">01 · SEASONALITY</span><h3>11월이 하반기 최대 매출월</h3><p>전체 목표 123.4억원으로, 블랙프라이데이와 FW 시즌 매출이 집중된 구조입니다.</p></article>
+        <article class="card insight"><span class="insight-num">02 · CONCENTRATION</span><h3>매출은 브랜드1 조직에 집중</h3><p>하반기 전체 목표의 약 89.3%가 브랜드1 조직입니다. 특히 디키즈·잔스포츠의 영향이 큽니다.</p></article>
+        <article class="card insight"><span class="insight-num">03 · TOP BRANDS</span><h3>디키즈·잔스포츠가 가장 큼</h3><p>두 브랜드 합계는 221.3억원으로, 회사 하반기 전체 목표의 약 38.3%입니다.</p></article>
+      </div>
+    </section>
+
+    <section class="section guide">
+      <div><span class="label">Reading Guide</span><h2>숫자를 보는 기준</h2><p>목표는 수정사업계획의 GMV, 실적은 1~5월 판매입력 실적과 6월 실적 GMV의 합계입니다. GMV는 회사가 최종적으로 가져가는 매출·이익과 다를 수 있습니다.</p></div>
+      <div class="term-list">
+        <div class="term"><b>GMV</b><span>고객이 결제한 총 거래금액. 회사가 실제로 가져가는 매출·이익과는 다를 수 있습니다.</span></div>
+        <div class="term"><b>전체 GMV</b><span>온라인, 오프라인, 공홈, 외부채널 등을 합친 브랜드 전체 목표입니다.</span></div>
+        <div class="term"><b>하반기</b><span>2026년 7월부터 12월까지 6개월의 목표 합계입니다.</span></div>
+        <div class="term"><b>달성률</b><span>2026년 6월 누적 GMV 실적 ÷ 2026년 연간 수정목표입니다.</span></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const monthly = {
+      labels: ["7월", "8월", "9월", "10월", "11월", "12월"],
+      team1: [95.96, 88.07, 67.15, 75.73, 112.75, 76.38],
+      team2: [8.14, 9.28, 11.93, 10.14, 10.63, 11.85],
+      total: [104.10, 97.35, 79.08, 85.87, 123.38, 88.23]
+    };
+
+    const brands = [
+      { name: "디키즈", team: "브랜드1", h2: 115.1 },
+      { name: "잔스포츠", team: "브랜드1", h2: 106.2 },
+      { name: "챔피온", team: "브랜드1", h2: 83.7 },
+      { name: "베이프", team: "브랜드1", h2: 55.2 },
+      { name: "이스트팩", team: "브랜드1", h2: 36.0 },
+      { name: "토앤토", team: "브랜드1", h2: 19.3 },
+      { name: "노아", team: "브랜드2", h2: 15.1 },
+      { name: "언더커버", team: "브랜드2", h2: 13.5 },
+      { name: "Y-3", team: "브랜드2", h2: 9.9 },
+      { name: "마린세르", team: "브랜드2", h2: 6.9 }
+    ];
+
+    const brandMonthly = [
+      {
+        name: "챔피온", team: "브랜드1",
+        online: [6.08643, 4.626896, 7.74045, 7.998746, 15.736249, 8.689975],
+        offline: [4.182561, 6.660617, 3.248532, 5.924152, 7.026331, 5.744271],
+        storeData: [
+          { name: "무신사 편집샵", values: [0.132561, 0.846435, 0.098532, 0.866682, 1.58748, 0.683168] },
+          { name: "스타필드 코엑스", values: [1.8, 2.506113, 1.26, 2.181654, 2.517987, 2.226885] },
+          { name: "스타필드 수원", values: [0.9, 1.303179, 0.72, 1.090827, 1.107914, 1.113443] },
+          { name: "스타필드 안성", values: [0.54, 0.701712, 0.45, 0.694163, 0.705036, 0.607332] },
+          { name: "신세계백화점 광주", values: [0.81, 1.303179, 0.72, 1.090827, 1.107914, 1.113443] }
+        ],
+        official: [0.608643, 0.462689, 0.774045, 0.799874, 1.573621, 0.868991],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: ["무신사 편집샵", "스타필드 코엑스", "스타필드 수원", "스타필드 안성", "신세계백화점 광주"]
+      },
+      {
+        name: "디키즈", team: "브랜드1",
+        online: [10.56, 11.297669, 12.7523, 15.014626, 26.646567, 15.264062],
+        offline: [3.5376, 4.206149, 2.3463, 4.082117, 4.821889, 4.582435],
+        storeData: [
+          { name: "무신사 편집샵", values: [1.1176, 1.633206, 0.6963, 1.658057, 1.744349, 1.860686] },
+          { name: "성수", values: [1.32, 1.470253, 0.88, 1.333233, 1.846524, 1.608306] },
+          { name: "타임스퀘어 영등포", values: [1.1, 1.10269, 0.77, 1.090827, 1.231016, 1.113443] }
+        ],
+        official: [0.209, 0.220538, 0.253, 0.290887, 0.596058, 0.296918],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: ["무신사 편집샵", "성수", "타임스퀘어 영등포"]
+      },
+      {
+        name: "잔스포츠", team: "브랜드1",
+        online: [7.750555, 14.147626, 10.966445, 6.734115, 7.82052, 5.251041],
+        offline: [12.598404, 10.884515, 5.905999, 8.241582, 6.314858, 9.586364],
+        storeData: [
+          { name: "무신사 편집샵", values: [5.798404, 2.363731, 0.295999, 1.45146, 0.417173, 2.99006] },
+          { name: "스타필드 수원", values: [0.765, 1.041429, 0.595, 0.749255, 0.570744, 0.66919] },
+          { name: "스타필드 하남", values: [0.935, 1.136105, 0.68, 0.88974, 0.760992, 0.955986] },
+          { name: "롯데월드몰 잠실", values: [0.85, 1.136105, 0.68, 0.842912, 0.665868, 0.764789] },
+          { name: "스타필드 고양", values: [0.935, 1.136105, 0.68, 0.842912, 0.760992, 0.860388] },
+          { name: "신세계 센텀시티", values: [0.765, 1.041429, 0.595, 0.749255, 0.570744, 0.66919] },
+          { name: "롯데백화점 노원", values: [0.765, 1.041429, 0.595, 0.749255, 0.570744, 0.66919] },
+          { name: "롯데백화점 부산", values: [0.595, 0.662728, 0.595, 0.655598, 0.665868, 0.66919] },
+          { name: "롯데백화점 평촌", values: [0.595, 0.662728, 0.595, 0.655598, 0.665868, 0.66919] },
+          { name: "현대백화점 목동점", values: [0.595, 0.662728, 0.595, 0.655598, 0.665868, 0.66919] }
+        ],
+        official: [0.57188, 1.321858, 0.66521, 0.561286, 0.312292, 0.525028],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: ["무신사 편집샵", "스타필드 수원", "스타필드 하남", "롯데월드몰 잠실", "스타필드 고양", "신세계 센텀시티", "롯데백화점 노원", "롯데백화점 부산", "롯데백화점 평촌", "현대백화점 목동점"]
+      },
+      {
+        name: "이스트팩", team: "브랜드1",
+        online: [1.79, 6.248575, 5.44, 7.371345, 8.605919, 6.500706],
+        offline: [0, 0, 0, 0, 0, 0],
+        storeData: [],
+        official: [0, 0, 0, 0, 0, 0],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: []
+      },
+      {
+        name: "토앤토", team: "브랜드1",
+        online: [6.4185, 2.683212, 0.5885, 0.41209, 0.276979, 0.23506],
+        offline: [5.2515, 2.195355, 0.4815, 0.337165, 0.226619, 0.192322],
+        storeData: [
+          { name: "무신사 편집샵", values: [5.2515, 2.195355, 0.4815, 0.337165, 0.226619, 0.192322] }
+        ],
+        official: [0.962775, 0.402482, 0.088275, 0.061814, 0.041547, 0.035259],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: ["무신사 편집샵"]
+      },
+      {
+        name: "베이프", team: "브랜드1",
+        online: [13.133, 7.326761, 4.255, 6.690405, 15.289216, 8.536394],
+        offline: [0, 0, 0, 0, 0, 0],
+        storeData: [],
+        official: [1.725, 1.921353, 1.725, 1.900683, 1.930457, 1.94009],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: []
+      },
+      {
+        name: "노아", team: "브랜드2",
+        online: [0.88, 1.06, 1.99, 0.76, 0.9, 1.56],
+        offline: [1.22, 1.14, 1.91, 1.05, 1.1, 1.56],
+        storeData: [
+          { name: "기타 (분더샵 팝업)", values: [0.02, 0.02, 0.04, 0.02, 0.02, 0.03] },
+          { name: "압구정", values: [1.2, 1.12, 1.87, 1.03, 1.08, 1.53] }
+        ],
+        official: [0.46, 0.55, 1.05, 0.4, 0.44, 0.78],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: ["기타 (분더샵 팝업)", "압구정"]
+      },
+      {
+        name: "Y-3", team: "브랜드2",
+        online: [0.39, 0.4, 0.405, 0.465, 0.5, 0.52],
+        offline: [1.115, 1.115, 1.175, 1.215, 1.27, 1.31],
+        storeData: [
+          { name: "무신사 편집샵", values: [0.015, 0.015, 0.025, 0.015, 0.02, 0.03] },
+          { name: "더현대 서울", values: [1.1, 1.1, 1.15, 1.2, 1.25, 1.28] }
+        ],
+        official: [0.33, 0.33, 0.33, 0.36, 0.38, 0.4],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: ["무신사 편집샵", "더현대 서울"]
+      },
+      {
+        name: "마린세르", team: "브랜드2",
+        online: [0.152749, 0.20335, 0.196166, 0.21673, 0.244793, 0.259673],
+        offline: [0.610995, 0.8134, 0.784665, 0.866921, 0.979171, 1.038691],
+        storeData: [
+          { name: "한남", values: [0.305498, 0.4067, 0.392332, 0.43346, 0.489586, 0.519346] },
+          { name: "신세계 센텀시티", values: [0.305498, 0.4067, 0.392332, 0.43346, 0.489586, 0.519346] }
+        ],
+        official: [0.038187, 0.050838, 0.049042, 0.054183, 0.061198, 0.064918],
+        other: [0.053836, 0.107671, 0.188425, 0.161507, 0, 0],
+        stores: ["한남", "신세계 센텀시티"]
+      },
+      {
+        name: "언더커버", team: "브랜드2",
+        online: [0.058, 0.078, 0.043, 0.203, 0.33, 0.298],
+        offline: [1.81, 2.1, 2.3, 2.275, 2.02, 2.03],
+        storeData: [
+          { name: "무신사 편집샵", values: [0.16, 0.12, 0.1, 0.075, 0.04, 0.05] },
+          { name: "더현대 서울", values: [1.65, 1.98, 2.2, 2.2, 1.98, 1.98] }
+        ],
+        official: [0, 0, 0, 0.15, 0.22, 0.22],
+        other: [0, 0, 0, 0, 0, 0],
+        stores: ["무신사 편집샵", "더현대 서울"]
+      }
+    ];
+
+    const bars = document.getElementById("brandBars");
+    const channelVisibility = brandMonthly.map(() => ({ musinsa: true, otherStore: true }));
+    const organizationLabel = team => `${team} 조직`;
+    const storeToggleKey = name => name === "무신사 편집샵" ? "musinsa" : name.startsWith("기타") ? "otherStore" : null;
+    const isStoreVisible = (brandIndex, store) => {
+      const key = storeToggleKey(store.name);
+      return key ? channelVisibility[brandIndex][key] : true;
+    };
+    const storeGroupColors = { direct: "#b8b8bf", musinsa: "#8f8f98", otherStore: "#d4d4d8" };
+
+    function renderBrandBars() {
+      const max = Math.max(...brands.map(d => d.h2));
+      bars.innerHTML = brands.map(d => `
+        <div class="bar-row">
+          <div class="bar-brand" title="${d.name}">${d.name}<br><span class="team-chip">${organizationLabel(d.team)}</span></div>
+          <div class="bar-track"><div class="bar-fill ${d.team === "브랜드2" ? "team2" : ""}" style="width:${(d.h2 / max * 100).toFixed(1)}%"></div></div>
+          <div class="bar-value"><b>${d.h2.toFixed(1)}</b>억</div>
+        </div>`).join("");
+    }
+
+    function drawMonthlyChart() {
+      const canvas = document.getElementById("monthlyChart");
+      const rect = canvas.getBoundingClientRect();
+      const ratio = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      const ctx = canvas.getContext("2d");
+      ctx.scale(ratio, ratio);
+      const W = rect.width, H = rect.height;
+      const pad = { l: 44, r: 24, t: 26, b: 42 };
+      const plotW = W - pad.l - pad.r;
+      const plotH = H - pad.t - pad.b;
+      const maxY = 140;
+      const y = v => pad.t + plotH - (v / maxY) * plotH;
+      const groupW = plotW / monthly.labels.length;
+      const barW = Math.min(44, groupW * .42);
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = "11px Pretendard, Arial";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let v = 0; v <= maxY; v += 20) {
+        const yy = y(v);
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(W - pad.r, yy); ctx.stroke();
+        ctx.fillStyle = "#71717a";
+        ctx.fillText(String(v), pad.l - 8, yy);
+      }
+
+      monthly.labels.forEach((label, i) => {
+        const cx = pad.l + groupW * (i + .5);
+        const t1 = monthly.team1[i], t2 = monthly.team2[i];
+        const y1 = y(t1), y2 = y(t1 + t2);
+        ctx.fillStyle = "#3f3f46";
+        ctx.fillRect(cx - barW / 2, y1, barW, y(0) - y1);
+        ctx.fillStyle = "#a1a1aa";
+        ctx.fillRect(cx - barW / 2, y2, barW, y1 - y2);
+        ctx.fillStyle = "#667085";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText(label, cx, H - pad.b + 13);
+      });
+
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      monthly.total.forEach((v, i) => {
+        const cx = pad.l + groupW * (i + .5);
+        const yy = y(v);
+        i ? ctx.lineTo(cx, yy) : ctx.moveTo(cx, yy);
+      });
+      ctx.stroke();
+
+      monthly.total.forEach((v, i) => {
+        const cx = pad.l + groupW * (i + .5);
+        const yy = y(v);
+        ctx.beginPath(); ctx.arc(cx, yy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff"; ctx.fill();
+        ctx.strokeStyle = "#111111"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = "#111111"; ctx.font = "700 11px Pretendard, Arial";
+        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        ctx.fillText(v.toFixed(1), cx, yy - 8);
+      });
+    }
+
+    const brandMonthlyList = document.getElementById("brandMonthlyList");
+    const sum = values => values.reduce((total, value) => total + value, 0);
+    const totalSeries = data => data.online.map((value, i) => value + data.offline[i] + data.other[i]);
+    const storeSeriesByType = (data, type) => monthly.labels.map((_, monthIndex) =>
+      data.storeData.reduce((total, store) => {
+        const storeType = storeToggleKey(store.name) || "direct";
+        return total + (storeType === type ? store.values[monthIndex] : 0);
+      }, 0)
+    );
+    const visibleStoreGroups = (data, index) => [
+      { key: "direct", label: "직영매장", values: storeSeriesByType(data, "direct") },
+      { key: "musinsa", label: "무신사 편집샵", values: storeSeriesByType(data, "musinsa") },
+      { key: "otherStore", label: "기타 매장", values: storeSeriesByType(data, "otherStore") }
+    ].filter(group => sum(group.values) > 0 && (group.key === "direct" || channelVisibility[index][group.key]));
+    const visibleOfflineSeries = (data, index) => data.offline.map((value, monthIndex) =>
+      visibleStoreGroups(data, index).reduce((total, group) => total + group.values[monthIndex], 0)
+    );
+    const visibleTotalSeries = (data, index) => {
+      const offline = visibleOfflineSeries(data, index);
+      return data.online.map((value, i) => value + offline[i] + data.other[i]);
+    };
+    const amountCells = values => values.map(value => `<td>${value.toFixed(2)}</td>`).join("");
+
+    function channelRow(label, values, className = "", overallTotal = sum(values)) {
+      const rowTotal = sum(values);
+      const share = overallTotal > 0 ? rowTotal / overallTotal * 100 : 0;
+      const shareText = Math.abs(share - 100) < .0001 ? "100%" : `${share.toFixed(1)}%`;
+      return `<tr class="${className}"><td class="channel-name">${label}</td>${amountCells(values)}<td><b>${rowTotal.toFixed(2)}</b></td><td class="share-cell"><b>${shareText}</b></td></tr>`;
+    }
+
+    brandMonthlyList.addEventListener("click", event => {
+      const btn = event.target.closest(".store-toggle");
+      if (!btn) return;
+      const index = Number(btn.dataset.brandIndex);
+      const key = btn.dataset.channelToggle;
+      channelVisibility[index][key] = !channelVisibility[index][key];
+      renderAllBrands();
+      drawAllBrandCharts();
+    });
+
+    function renderAllBrands() {
+      const sortedBrands = brandMonthly
+        .map((data, index) => ({ data, index, h2Total: sum(totalSeries(data)) }))
+        .sort((a, b) => b.h2Total - a.h2Total);
+      brandMonthlyList.innerHTML = sortedBrands.map(({ data, index }) => {
+        const total = totalSeries(data);
+        const overallTotal = sum(total);
+        const hasOther = sum(data.other) > 0;
+        const hasMusinsa = data.storeData.some(store => storeToggleKey(store.name) === "musinsa");
+        const hasOtherStore = data.storeData.some(store => storeToggleKey(store.name) === "otherStore");
+        const directStoreValues = storeSeriesByType(data, "direct");
+        const musinsaStoreValues = storeSeriesByType(data, "musinsa");
+        const otherStoreValues = storeSeriesByType(data, "otherStore");
+        const hasDirectStore = sum(directStoreValues) > 0;
+        const visibility = channelVisibility[index];
+        const stores = data.storeData.length ? data.storeData.map(store => {
+          const key = storeToggleKey(store.name);
+          if (!key) return `<span>${store.name}</span>`;
+          const active = visibility[key];
+          return `<button class="store-toggle ${active ? "active" : ""}" type="button" data-brand-index="${index}" data-channel-toggle="${key}" aria-pressed="${active}" aria-label="${store.name} 매출 ${active ? "숨기기" : "표시하기"}">${store.name}</button>`;
+        }).join('<span class="store-separator" aria-hidden="true">·</span>') : "하반기 매장 GMV 계획 없음";
+        return `
+          <article class="card brand-panel">
+            <div class="brand-head">
+              <div><span class="team-chip">${organizationLabel(data.team)}</span><h3>${data.name}</h3><p>7~12월 월별 GMV 목표 · 단위 억원</p></div>
+              <div class="brand-total"><span>하반기 전체 GMV</span><strong>${sum(total).toFixed(1)}억</strong></div>
+            </div>
+            <div class="brand-metrics">
+              <div class="brand-metric"><span>온라인 합계</span><strong>${sum(data.online).toFixed(1)}억</strong></div>
+              <div class="brand-metric"><span>오프라인 합계</span><strong>${sum(data.offline).toFixed(1)}억</strong></div>
+              <div class="brand-metric"><span>공식몰 합계 · 온라인 포함</span><strong>${sum(data.official).toFixed(1)}억</strong></div>
+              <div class="brand-metric"><span>매장 합계 · 오프라인과 동일</span><strong>${sum(data.offline).toFixed(1)}억</strong></div>
+            </div>
+            <div class="brand-layout">
+              <div class="brand-chart-box">
+                <div class="chart-title-row">
+                  <h4 class="chart-title">온라인·오프라인 월별 흐름</h4>
+                  <div class="legend"><span><i class="dot" style="background:#3f3f46"></i>온라인</span>${hasDirectStore ? `<span><i class="dot" style="background:${storeGroupColors.direct}"></i>직영매장</span>` : ""}${hasMusinsa && visibility.musinsa ? `<span><i class="dot" style="background:${storeGroupColors.musinsa}"></i>무신사 편집샵</span>` : ""}${hasOtherStore && visibility.otherStore ? `<span><i class="dot" style="background:${storeGroupColors.otherStore}"></i>기타 매장</span>` : ""}<span><i class="dot" style="background:#b56f6f"></i>공식몰</span></div>
+                </div>
+                <div class="canvas-box"><canvas data-brand-chart="${index}" role="img" aria-label="${data.name} 월별 온라인 오프라인 공식몰 GMV 목표 차트"></canvas></div>
+              </div>
+              <div class="table-wrap">
+                <table aria-label="${data.name} 월별 채널 GMV 목표">
+                  <thead><tr><th>구분</th>${monthly.labels.map(label => `<th>${label}</th>`).join("")}<th>하반기</th><th>전체 대비</th></tr></thead>
+                  <tbody>
+                    ${channelRow("전체 GMV", total, "", overallTotal)}
+                    ${channelRow("온라인", data.online, "", overallTotal)}
+                    ${channelRow("오프라인", data.offline, "", overallTotal)}
+                    ${channelRow("공식몰 (온라인 포함)", data.official, "sub-row", overallTotal)}
+                    ${hasDirectStore ? channelRow("직영매장 (오프라인 포함)", directStoreValues, "sub-row", overallTotal) : ""}
+                    ${hasMusinsa ? channelRow("무신사 편집샵 (오프라인 포함)", musinsaStoreValues, `sub-row${visibility.musinsa ? "" : " store-row-off"}`, overallTotal) : ""}
+                    ${hasOtherStore ? channelRow("기타 매장 (오프라인 포함)", otherStoreValues, `sub-row${visibility.otherStore ? "" : " store-row-off"}`, overallTotal) : ""}
+                    ${hasOther ? channelRow("기타", data.other, "", overallTotal) : ""}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="store-note"><b>매장 구성</b><span class="store-separator" aria-hidden="true">·</span>${stores}</p>
+          </article>`;
+      }).join("");
+    }
+
+    function drawBrandChannelChart(canvas, data) {
+      const index = Number(canvas.dataset.brandChart);
+      const total = totalSeries(data);
+      const displayTotal = visibleTotalSeries(data, index);
+      const rect = canvas.getBoundingClientRect();
+      const ratio = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      const ctx = canvas.getContext("2d");
+      ctx.scale(ratio, ratio);
+      const W = rect.width, H = rect.height;
+      const pad = { l: 43, r: 18, t: 28, b: 38 };
+      const plotW = W - pad.l - pad.r;
+      const plotH = H - pad.t - pad.b;
+      const peak = Math.max(...total);
+      const stepBase = peak <= 5 ? .5 : peak <= 20 ? 5 : 10;
+      const maxY = Math.max(stepBase, Math.ceil((peak * 1.18) / stepBase) * stepBase);
+      const y = value => pad.t + plotH - (value / maxY) * plotH;
+      const groupW = plotW / monthly.labels.length;
+      const barW = Math.min(42, groupW * .48);
+      const x = index => pad.l + groupW * (index + .5);
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = "11px Pretendard, Arial";
+      for (let i = 0; i <= 4; i++) {
+        const value = maxY * i / 4;
+        const yy = y(value);
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(W - pad.r, yy); ctx.stroke();
+        ctx.fillStyle = "#71717a";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillText(value.toFixed(value < 5 ? 1 : 0), pad.l - 7, yy);
+      }
+
+      displayTotal.forEach((value, i) => {
+        const xx = x(i);
+        const onlineTop = y(data.online[i]);
+        const storeGroups = visibleStoreGroups(data, index);
+        let stackValue = data.online[i];
+        let stackTop = onlineTop;
+        const totalTop = y(value);
+        ctx.fillStyle = "#3f3f46";
+        ctx.fillRect(xx - barW / 2, onlineTop, barW, y(0) - onlineTop);
+        storeGroups.forEach(group => {
+          if (group.values[i] <= 0) return;
+          stackValue += group.values[i];
+          const nextTop = y(stackValue);
+          ctx.fillStyle = storeGroupColors[group.key];
+          ctx.fillRect(xx - barW / 2, nextTop, barW, stackTop - nextTop);
+          stackTop = nextTop;
+        });
+        const offlineTop = stackTop;
+        if (data.other[i] > 0) {
+          ctx.fillStyle = "#d4d4d8";
+          ctx.fillRect(xx - barW / 2, totalTop, barW, offlineTop - totalTop);
+        }
+        ctx.fillStyle = "#52525b";
+        ctx.font = "700 11px Pretendard, Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(value.toFixed(1), xx, totalTop - 6);
+        ctx.fillStyle = "#71717a";
+        ctx.font = "11px Pretendard, Arial";
+        ctx.textBaseline = "top";
+        ctx.fillText(monthly.labels[i], xx, H - pad.b + 11);
+      });
+
+      if (sum(data.official) > 0) {
+        ctx.strokeStyle = "#b56f6f";
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        data.official.forEach((value, i) => i ? ctx.lineTo(x(i), y(value)) : ctx.moveTo(x(i), y(value)));
+        ctx.stroke();
+        data.official.forEach((value, i) => {
+          ctx.beginPath(); ctx.arc(x(i), y(value), 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = "#fff"; ctx.fill();
+          ctx.strokeStyle = "#b56f6f"; ctx.lineWidth = 2; ctx.stroke();
+        });
+      }
+    }
+
+    function drawAllBrandCharts() {
+      document.querySelectorAll("[data-brand-chart]").forEach(canvas => {
+        drawBrandChannelChart(canvas, brandMonthly[Number(canvas.dataset.brandChart)]);
+      });
+    }
+
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        drawMonthlyChart();
+        drawAllBrandCharts();
+      }, 120);
+    });
+
+    renderBrandBars();
+    drawMonthlyChart();
+    renderAllBrands();
+    drawAllBrandCharts();
+  </script>
+
+
+</body></html>
